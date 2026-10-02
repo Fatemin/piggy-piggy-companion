@@ -60,6 +60,9 @@ window.__ModuleLoader__.load({
     // shows nothing about updates.
     var UPDATE_URL = '/pig/update'
     var UPDATE_STATUSES = ['idle', 'checking', 'latest', 'available', 'downloading', 'installing']
+    // [ST0014] the cloud login of the pig server; hosts without one answer 404.
+    var CLOUD_URL = '/pig/cloud'
+    var CLOUD_PHASES = ['signed-out', 'code-sent', 'linking', 'choose', 'idle', 'syncing', 'offline', 'error']
     var POLL_MS = 4000
     var MOUNTED = 'data-dsh-pig'
     var OPEN_KEY = 'dsh-pig:open'
@@ -293,6 +296,46 @@ window.__ModuleLoader__.load({
         '检查更新': 'アップデートを確認', '正在检查更新…': 'アップデートを確認中…',
         '检查更新失败': 'アップデートを確認できませんでした', '已经是最新版本': '最新バージョンです',
         '有新版本 v{version} 啦，右键打开面板更新': '新しいバージョン v{version} が出たよ。右クリックでパネルを開いてアップデートしてね',
+        // [ST0014] cloud sync
+        '邮箱格式不对': 'メールアドレスの形式が正しくありません',
+        '服务器地址要以 https:// 开头': 'サーバーのアドレスは https:// で始めてください',
+        '刚发过验证码，{n} 秒后再试': 'コードを送ったばかりです。{n} 秒後にもう一度どうぞ',
+        '验证码发得太多了，过一会儿再试': 'コードを送りすぎました。しばらくしてからどうぞ',
+        '输错太多次，这个网络被冻结 {n} 分钟': '間違いが多すぎたので、このネットワークは {n} 分間ロックされています',
+        '验证码不对，或者已经过期': 'コードが違うか、期限が切れています',
+        '这个邮箱不在邀请名单里': 'このメールアドレスは招待リストにありません',
+        '验证码邮件没发出去，稍后再试': 'コードのメールを送れませんでした。しばらくしてからどうぞ',
+        '连不上云端': 'クラウドにつながりません',
+        '这台设备已经在别处退出登录': 'この端末はほかの場所でログアウトされました',
+        '先发送验证码': '先にコードを送ってください',
+        '出错了（{reason}）': 'エラーが起きました（{reason}）',
+        '还没同步过': 'まだ同期していません',
+        '刚刚同步': 'さっき同期しました',
+        '{n} 分钟前同步': '{n} 分前に同期',
+        '{n} 小时前同步': '{n} 時間前に同期',
+        '验证码是 6 位数字': 'コードは 6 桁の数字です',
+        '云端已经有一只猪了': 'クラウドにはもうブタがいます',
+        '云端：{name}（{coins} 🪙）· 这台电脑：{local}（{localCoins} 🪙）': 'クラウド：{name}（{coins} 🪙）・このパソコン：{local}（{localCoins} 🪙）',
+        '一个账号只能养一只猪。用云端的猪的话，这台电脑上的猪会存成备份文件。': '1 つのアカウントで飼えるブタは 1 匹だけです。クラウドのブタにすると、このパソコンのブタはバックアップファイルに保存されます。',
+        '用云端的猪': 'クラウドのブタにする',
+        '退出登录': 'ログアウト',
+        '连不上云端，联网后自动同步': 'クラウドにつながりません。つながったら自動で同期します',
+        '正在同步…': '同期中…',
+        '{n} 条待上传': '未送信 {n} 件',
+        '同步': '同期', '退出': 'ログアウト',
+        '正在连接云端…': 'クラウドに接続中…',
+        '云同步': 'クラウド同期',
+        '验证码已发到 {email}': '{email} にコードを送りました',
+        '未登录': '未ログイン', '登录': 'ログイン',
+        '输入邮件里的 6 位验证码（10 分钟内有效）': 'メールに届いた 6 桁のコードを入れてください（10 分間有効）',
+        '验证码': 'コード', '重新发送': 'もう一度送る',
+        '用邮箱登录，多台电脑养同一只猪。不用密码，每次登录发验证码。': 'メールでログインすると、何台のパソコンでも同じブタを飼えます。パスワードは不要で、ログインのたびにコードが届きます。',
+        '云端地址 https://…': 'クラウドのアドレス https://…',
+        '邮箱': 'メールアドレス', '发送验证码': 'コードを送る',
+        '验证码已发出，去邮箱看看': 'コードを送りました。メールを見てね',
+        '用了云端的猪，这台电脑的猪已经备份': 'クラウドのブタにしました。このパソコンのブタはバックアップ済みです',
+        '已退出登录，猪留在这台电脑上': 'ログアウトしました。ブタはこのパソコンに残っています',
+        '另一台电脑上先发生了别的事，刚才的操作没有生效': 'ほかのパソコンで先に別のことが起きたので、さっきの操作は取り消されました',
       },
       en: {
         // tabs
@@ -466,6 +509,46 @@ window.__ModuleLoader__.load({
         '检查更新': 'Check for updates', '正在检查更新…': 'Checking for updates…',
         '检查更新失败': 'Could not check for updates', '已经是最新版本': 'Up to date',
         '有新版本 v{version} 啦，右键打开面板更新': 'v{version} is out! Right-click to open the panel and update',
+        // [ST0014] cloud sync
+        '邮箱格式不对': 'That email address does not look right',
+        '服务器地址要以 https:// 开头': 'The server address must start with https://',
+        '刚发过验证码，{n} 秒后再试': 'A code was just sent; try again in {n} s',
+        '验证码发得太多了，过一会儿再试': 'Too many codes; try again later',
+        '输错太多次，这个网络被冻结 {n} 分钟': 'Too many wrong codes: this network is locked for {n} min',
+        '验证码不对，或者已经过期': 'Wrong or expired code',
+        '这个邮箱不在邀请名单里': 'This address is not on the invite list',
+        '验证码邮件没发出去，稍后再试': 'The code email could not be sent; try again later',
+        '连不上云端': 'Cannot reach the cloud',
+        '这台设备已经在别处退出登录': 'This device was signed out from elsewhere',
+        '先发送验证码': 'Send a code first',
+        '出错了（{reason}）': 'Something went wrong ({reason})',
+        '还没同步过': 'Not synced yet',
+        '刚刚同步': 'Synced just now',
+        '{n} 分钟前同步': 'Synced {n} min ago',
+        '{n} 小时前同步': 'Synced {n} h ago',
+        '验证码是 6 位数字': 'The code is 6 digits',
+        '云端已经有一只猪了': 'There is already a pig in the cloud',
+        '云端：{name}（{coins} 🪙）· 这台电脑：{local}（{localCoins} 🪙）': 'Cloud: {name} ({coins} 🪙) · This computer: {local} ({localCoins} 🪙)',
+        '一个账号只能养一只猪。用云端的猪的话，这台电脑上的猪会存成备份文件。': 'One account keeps one pig. If you take the cloud pig, the pig on this computer is saved to a backup file.',
+        '用云端的猪': 'Take the cloud pig',
+        '退出登录': 'Sign out',
+        '连不上云端，联网后自动同步': 'Cannot reach the cloud; it syncs once you are online',
+        '正在同步…': 'Syncing…',
+        '{n} 条待上传': '{n} waiting to upload',
+        '同步': 'Sync', '退出': 'Sign out',
+        '正在连接云端…': 'Connecting to the cloud…',
+        '云同步': 'Cloud sync',
+        '验证码已发到 {email}': 'Code sent to {email}',
+        '未登录': 'Not signed in', '登录': 'Sign in',
+        '输入邮件里的 6 位验证码（10 分钟内有效）': 'Enter the 6-digit code from the email (valid for 10 minutes)',
+        '验证码': 'Code', '重新发送': 'Send again',
+        '用邮箱登录，多台电脑养同一只猪。不用密码，每次登录发验证码。': 'Sign in with your email to keep one pig on several computers. No password: each sign-in sends a code.',
+        '云端地址 https://…': 'Cloud address https://…',
+        '邮箱': 'Email', '发送验证码': 'Send code',
+        '验证码已发出，去邮箱看看': 'Code sent. Check your email',
+        '用了云端的猪，这台电脑的猪已经备份': 'Took the cloud pig; the one on this computer is backed up',
+        '已退出登录，猪留在这台电脑上': 'Signed out. The pig stays on this computer',
+        '另一台电脑上先发生了别的事，刚才的操作没有生效': 'Something else happened first on another computer, so that last action did not count',
       },
     }
     // English singulars, picked when `params.n === 1`. Japanese and Chinese
@@ -564,6 +647,26 @@ window.__ModuleLoader__.load({
         canInstall: raw.canInstall === true,
         error: raw.error === 'check' || raw.error === 'install' ? raw.error : null,
         message: str(raw.message, ''),
+      }
+    }
+
+    /** [ST0014] The cloud login's state, or null for anything that is not one. */
+    function normalizeCloud(raw) {
+      if (!isObj(raw) || CLOUD_PHASES.indexOf(raw.phase) < 0) return null
+      var side = function (v) {
+        return isObj(v) ? { name: str(v.name, '?'), coins: num(v.coins, 0), bornAt: num(v.bornAt, 0) } : null
+      }
+      var conflict = isObj(raw.conflict) ? { cloud: side(raw.conflict.cloud), local: side(raw.conflict.local) } : null
+      return {
+        phase: raw.phase,
+        server: str(raw.server, ''),
+        email: str(raw.email, ''),
+        linked: raw.linked === true,
+        lastSyncAt: num(raw.lastSyncAt, 0),
+        lastError: str(raw.lastError, ''),
+        waiting: num(raw.waiting, 0),
+        notices: arr(raw.notices).filter(isObj).map(function (n) { return { op: str(n.op, ''), reason: str(n.reason, ''), at: num(n.at, 0) } }),
+        conflict: conflict !== null && conflict.cloud !== null && conflict.local !== null ? conflict : null,
       }
     }
 
@@ -2303,6 +2406,16 @@ window.__ModuleLoader__.load({
       var update = null
       var updateRoute = true
       var updateTold = {}
+      // [ST0014] the cloud login (null: no such host route, or not known yet),
+      // whether the login form is open, what is typed in it (the panel is
+      // rebuilt on every poll, so drafts live here), and notices already said.
+      var cloud = null
+      var cloudRoute = true
+      var cloudOpen = false
+      var cloudBusy = false
+      var cloudDraft = { server: '', email: '', code: '' }
+      var cloudFocus = null
+      var cloudSaid = {}
 
       // ---- animation ----
       /** The sprite the pig settles back to after a reaction; null = emoji. */
@@ -3055,6 +3168,7 @@ window.__ModuleLoader__.load({
         }
         wrap.appendChild(row)
         if (update !== null) wrap.appendChild(versionRow())
+        if (cloud !== null) wrap.appendChild(cloudBox())
         return wrap
       }
 
@@ -3116,6 +3230,182 @@ window.__ModuleLoader__.load({
         again.disabled = busyNow
         row.appendChild(again)
         return row
+      }
+
+      /** [ST0014] Why a cloud step failed, in words. */
+      function cloudReason(reply) {
+        var r = isObj(reply) ? str(reply.reason, '') : ''
+        var wait = isObj(reply) ? num(reply.retryAfter, 0) : 0
+        if (r === 'bad-email') return T('邮箱格式不对')
+        if (r === 'bad-server') return T('服务器地址要以 https:// 开头')
+        if (r === 'too-soon') return T('刚发过验证码，{n} 秒后再试', { n: wait })
+        if (r === 'too-many') return T('验证码发得太多了，过一会儿再试')
+        if (r === 'frozen') return T('输错太多次，这个网络被冻结 {n} 分钟', { n: Math.max(1, Math.ceil(wait / 60)) })
+        if (r === 'wrong-code' || r === 'bad-request') return T('验证码不对，或者已经过期')
+        if (r === 'not-invited') return T('这个邮箱不在邀请名单里')
+        if (r === 'mail-failed' || r === 'mail-quota') return T('验证码邮件没发出去，稍后再试')
+        if (r === 'offline') return T('连不上云端')
+        if (r === 'revoked') return T('这台设备已经在别处退出登录')
+        if (r === 'no-code') return T('先发送验证码')
+        return T('出错了（{reason}）', { reason: r || '?' })
+      }
+
+      /** [ST0014] "刚刚" / "5 分钟前" for the last sync. */
+      function cloudAgo(at) {
+        if (!(at > 0)) return T('还没同步过')
+        var minutes = Math.floor((Date.now() - at) / 60000)
+        if (minutes < 1) return T('刚刚同步')
+        if (minutes < 60) return T('{n} 分钟前同步', { n: minutes })
+        return T('{n} 小时前同步', { n: Math.floor(minutes / 60) })
+      }
+
+      /** [ST0014] One field of the login form; its text lives in `cloudDraft`. */
+      function cloudInput(key, placeholder, type) {
+        var input = document.createElement('input')
+        input.className = 'dp-input'
+        input.type = type
+        input.value = cloudDraft[key]
+        input.placeholder = placeholder
+        input.setAttribute('data-cloud', key)
+        input.setAttribute('aria-label', placeholder)
+        input.setAttribute('autocomplete', key === 'code' ? 'one-time-code' : (key === 'email' ? 'email' : 'off'))
+        if (key === 'code') { input.inputMode = 'numeric'; input.maxLength = 6 }
+        input.addEventListener('input', function () { cloudDraft[key] = String(input.value ?? '') })
+        input.addEventListener('focus', function () { cloudFocus = key })
+        input.addEventListener('blur', function () { if (cloudFocus === key) cloudFocus = null })
+        input.addEventListener('keydown', function (event) {
+          event.stopPropagation?.()
+          if (event.isComposing || event.keyCode === 229) return
+          if (event.key === 'Enter') { event.preventDefault?.(); cloudSubmit() }
+          else if (event.key === 'Escape') { event.preventDefault?.(); cloudOpen = false; cloudFocus = null; renderContent(); renderSide() }
+        })
+        return input
+      }
+
+      /** [ST0014] Is the player typing in the login form? Then polls must not rebuild it. */
+      function cloudHasFocus() {
+        return cloudFocus !== null && document.activeElement !== null && document.activeElement?.getAttribute?.('data-cloud') === cloudFocus
+      }
+
+      function cloudSubmit() {
+        if (cloud === null || cloudBusy) return
+        if (cloud.phase === 'code-sent') {
+          var code = cloudDraft.code.replace(/\s+/g, '')
+          if (!/^\d{6}$/.test(code)) { showBubble(T('验证码是 6 位数字'), 2400); return }
+          cloudAct('verify', { code: code })
+          return
+        }
+        cloudAct('code', { email: cloudDraft.email.trim(), server: (cloudDraft.server || cloud.server).trim() })
+      }
+
+      /**
+       * [ST0014] ☁️ 云同步, under the languages: log in with an emailed code,
+       * then how the sync stands. Only on hosts that run the pig server.
+       */
+      function cloudBox() {
+        var c = cloud
+        var box = el('div', 'dp-cloud')
+        var row = el('div', 'dp-row dp-version')
+        box.appendChild(row)
+
+        if (c.phase === 'choose' && c.conflict !== null) {
+          var ask = el('div', 'dp-alert dp-legacy')
+          ask.appendChild(el('b', null, '☁️ ' + T('云端已经有一只猪了')))
+          ask.appendChild(el('div', 'dp-line', T('云端：{name}（{coins} 🪙）· 这台电脑：{local}（{localCoins} 🪙）', {
+            name: c.conflict.cloud.name, coins: c.conflict.cloud.coins, local: c.conflict.local.name, localCoins: c.conflict.local.coins,
+          })))
+          ask.appendChild(el('div', 'dp-line dp-dim', T('一个账号只能养一只猪。用云端的猪的话，这台电脑上的猪会存成备份文件。')))
+          var acts = el('div', 'dp-actions')
+          var keep = button('dp-btn', { 'data-cloud-act': 'keep-cloud' }, function () { cloudAct('keep-cloud') })
+          keep.appendChild(el('span', null, T('用云端的猪')))
+          acts.appendChild(keep)
+          var leave = button('dp-btn', { 'data-cloud-act': 'sign-out' }, function () { cloudAct('sign-out') })
+          leave.appendChild(el('span', null, T('退出登录')))
+          acts.appendChild(leave)
+          ask.appendChild(acts)
+          row.appendChild(el('span', null, '☁️ ' + c.email))
+          box.appendChild(ask)
+          return box
+        }
+
+        if (c.linked) {
+          var said = c.phase === 'offline' ? T('连不上云端，联网后自动同步')
+            : c.phase === 'error' ? cloudReason({ reason: c.lastError })
+            : c.phase === 'syncing' ? T('正在同步…')
+            : cloudAgo(c.lastSyncAt)
+          row.appendChild(el('span', null, '☁️ ' + c.email + ' · ' + said + (c.waiting > 0 ? ' · ' + T('{n} 条待上传', { n: c.waiting }) : '')))
+          var now = button('dp-mini', { 'data-cloud-act': 'sync' }, function () { cloudAct('sync') })
+          now.textContent = T('同步')
+          now.disabled = cloudBusy || c.phase === 'syncing'
+          row.appendChild(now)
+          var out = button('dp-mini', { 'data-cloud-act': 'sign-out' }, function () { cloudAct('sign-out') })
+          out.textContent = T('退出')
+          out.disabled = cloudBusy
+          row.appendChild(out)
+          return box
+        }
+
+        if (c.phase === 'linking') {
+          row.appendChild(el('span', null, '☁️ ' + T('正在连接云端…')))
+          return box
+        }
+
+        row.appendChild(el('span', null, '☁️ ' + T('云同步') + ' · ' + (c.phase === 'code-sent' ? T('验证码已发到 {email}', { email: c.email }) : T('未登录'))))
+        if (!cloudOpen && c.phase !== 'code-sent') {
+          var open = button('dp-mini', { 'data-cloud-act': 'open' }, function () {
+            cloudOpen = true
+            renderContent()
+            renderSide()
+          })
+          open.textContent = T('登录')
+          row.appendChild(open)
+          if (c.lastError === 'revoked') box.appendChild(el('div', 'dp-note', cloudReason({ reason: 'revoked' })))
+          return box
+        }
+
+        var form = el('div', 'dp-rename')
+        if (c.phase === 'code-sent') {
+          form.appendChild(el('div', 'dp-note', T('输入邮件里的 6 位验证码（10 分钟内有效）')))
+          var line = el('div', 'dp-rename-row')
+          line.appendChild(cloudInput('code', T('验证码'), 'text'))
+          var go = button('dp-mini', { 'data-cloud-act': 'verify' }, cloudSubmit)
+          go.textContent = T('登录')
+          go.disabled = cloudBusy
+          line.appendChild(go)
+          form.appendChild(line)
+          var again = el('div', 'dp-rename-row')
+          var resend = button('dp-btn', { 'data-cloud-act': 'resend' }, function () {
+            cloudAct('code', { email: c.email, server: c.server })
+          })
+          resend.textContent = T('重新发送')
+          resend.disabled = cloudBusy
+          again.appendChild(resend)
+          form.appendChild(again)
+        } else {
+          form.appendChild(el('div', 'dp-note', T('用邮箱登录，多台电脑养同一只猪。不用密码，每次登录发验证码。')))
+          if (c.server === '') {
+            var where = el('div', 'dp-rename-row')
+            where.appendChild(cloudInput('server', T('云端地址 https://…'), 'url'))
+            form.appendChild(where)
+          }
+          var mail = el('div', 'dp-rename-row')
+          mail.appendChild(cloudInput('email', T('邮箱'), 'email'))
+          var send = button('dp-mini', { 'data-cloud-act': 'code' }, cloudSubmit)
+          send.textContent = T('发送验证码')
+          send.disabled = cloudBusy
+          mail.appendChild(send)
+          form.appendChild(mail)
+          var cancel = button('dp-cancel', { 'data-cloud-act': 'cancel' }, function () {
+            cloudOpen = false
+            cloudFocus = null
+            renderContent()
+            renderSide()
+          })
+          cancel.textContent = T('算了')
+          form.appendChild(cancel)
+        }
+        box.appendChild(form)
+        return box
       }
 
       /** The pig's bag for one care action: pick what to spend. */
@@ -4085,14 +4375,15 @@ window.__ModuleLoader__.load({
         relabelChrome()
         // The big panel's left column and spreadsheet chrome hold no input, so
         // they always follow the snapshot.
-        renderSide()
+        // [ST0014] …except the cloud login form, which can sit in that column.
+        if (!cloudHasFocus()) renderSide()
         updateExcel()
 
         // [dsh-piggy-claude-code mod] A poll lands every few seconds. Rebuilding
         // the field mid-word would break an IME composition (Japanese, Chinese),
         // so while the name field has focus the content area waits; the hud and
         // toasts above still update, and the next poll after blur catches up.
-        if (renameHasFocus()) return
+        if (renameHasFocus() || cloudHasFocus()) return
         renderContent()
       }
 
@@ -4120,6 +4411,67 @@ window.__ModuleLoader__.load({
           showBubble(T('连接不上宿主'), 4000)
         }
         await pollUpdate()
+        await pollCloud()
+      }
+
+      /** [ST0014] Ask the pig server how the cloud login stands; a 404 means there is none. */
+      async function pollCloud() {
+        if (!cloudRoute || stopped) return
+        try {
+          var res = await fetch(CLOUD_URL, { cache: 'no-store' })
+          if (res.status === 404) {
+            cloudRoute = false
+            return
+          }
+          if (res.ok) setCloud(await res.json())
+        } catch (error) { /* the next poll asks again */ }
+      }
+
+      async function cloudAct(action, extra) {
+        if (stopped || cloudBusy) return
+        cloudBusy = true
+        renderContent()
+        renderSide()
+        try {
+          var res = await fetch(CLOUD_URL, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(Object.assign({ action: action }, extra ?? {})),
+          })
+          var reply = await res.json()
+          if (reply.ok === false) showBubble(cloudReason(reply), 4200)
+          else if (action === 'code') { cloudDraft.code = ''; showBubble(T('验证码已发出，去邮箱看看'), 3200) }
+          else if (action === 'verify') { cloudOpen = false; cloudDraft.code = ''; cloudFocus = null }
+          else if (action === 'keep-cloud') showBubble(T('用了云端的猪，这台电脑的猪已经备份'), 4200)
+          else if (action === 'sign-out') { cloudOpen = false; showBubble(T('已退出登录，猪留在这台电脑上'), 3200) }
+          cloudBusy = false
+          if (isObj(reply.status)) setCloud(reply.status)
+          if (action === 'verify' || action === 'keep-cloud' || action === 'sync') await refresh()
+        } catch (error) {
+          showBubble(T('连接不上宿主'), 4000)
+        } finally {
+          cloudBusy = false
+          renderContent()
+          renderSide()
+        }
+      }
+
+      function setCloud(raw) {
+        var before = JSON.stringify(cloud)
+        cloud = normalizeCloud(raw)
+        if (cloud !== null) {
+          // A refused op from another device: say it once.
+          for (var i = 0; i < cloud.notices.length; i += 1) {
+            var n = cloud.notices[i]
+            var key = n.at + ':' + n.op + ':' + n.reason
+            if (cloudSaid[key]) continue
+            cloudSaid[key] = true
+            showBubble(T('另一台电脑上先发生了别的事，刚才的操作没有生效'), 4200)
+          }
+        }
+        if (JSON.stringify(cloud) === before || cloudHasFocus()) return
+        renderContent()
+        renderSide()
       }
 
       /** [ST0007] Ask the host's updater how things stand; a 404 means it has none. */
