@@ -12,6 +12,7 @@ import { join } from 'node:path'
 import { test } from 'node:test'
 
 import { TICK_MS, advance, hatchEgg, migrate, nextRandom, seedFrom } from '../core.js'
+import { blackjackTotal } from '../data.js'
 import { OP_NAMES, applyOp, opProblem, succeeded } from '../ops.js'
 import { createStore } from '../store.js'
 
@@ -68,6 +69,13 @@ function play(pig, looks) {
   assert.equal(store.startTrip('tokyo').ok, true)
   pig.wait(26 * 60 * MIN + 7_777, { looks })
   store.scratchLottery()
+  // [ST0015] a blackjack hand to its end: draw to 18, then stand (unless it ended).
+  assert.equal(store.blackjack('deal', 100).ok, true)
+  while (store.state.blackjack !== null && blackjackTotal(store.state.blackjack.cards).total < 18) {
+    assert.equal(store.blackjack('hit').ok, true)
+  }
+  if (store.state.blackjack !== null) assert.equal(store.blackjack('stand').ok, true)
+  assert.equal(store.state.stats.blackjacks, 1)
   store.act('play')
   pig.wait(9 * MIN, { looks })
   store.freshen()

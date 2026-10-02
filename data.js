@@ -416,6 +416,59 @@ export function lotteryPrize(roll) {
 }
 
 // ---------------------------------------------------------------------------
+// [ST0015] Blackjack, at the same counter: bet, draw, stand, paid by the total.
+//
+// No dealer: the hand alone decides. Below `standAt` the pig has to draw; over
+// 21 is bust and the bet is gone. A stand pays the bet times its total's
+// multiplier, and exactly 21 (on the deal or after drawing) pays 10×, so the
+// small totals pay little and the whole game is pushing toward 21. Played
+// well it returns about 2× the bet on average, about 40% of hands bust and
+// about 14% land on 21 (the owner's call, ST0015).
+//
+// Cards come from one shuffled 52-card deck per hand; `card` is 0–51, rank
+// `card % 13` (0 = A, 10–12 = J Q K) and suit `Math.floor(card / 13)`.
+// ---------------------------------------------------------------------------
+
+export const BLACKJACK = Object.freeze({
+  bets: Object.freeze([100, 200, 500]),
+  standAt: 18,
+  payouts: Object.freeze([
+    Object.freeze({ total: 18, multiplier: 1.1 }),
+    Object.freeze({ total: 19, multiplier: 1.3 }),
+    Object.freeze({ total: 20, multiplier: 1.8 }),
+    Object.freeze({ total: 21, multiplier: 10 }),
+  ]),
+  // Mood after the hand: hitting 21, any other paid stand, and a bust.
+  happiness: Object.freeze({ jackpot: 20, win: 5, bust: -5 }),
+})
+
+const CARD_RANKS = Object.freeze(['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'])
+const CARD_SUITS = Object.freeze(['♠', '♥', '♦', '♣'])
+
+/** A card (0–51) as `{ rank, suit }` for display. */
+export function blackjackCard(card) {
+  return { rank: CARD_RANKS[card % 13], suit: CARD_SUITS[Math.floor(card / 13)] }
+}
+
+/** The best total of a hand: aces count 11 while that does not bust, else 1. */
+export function blackjackTotal(cards) {
+  let total = 0
+  let aces = 0
+  for (const card of cards) {
+    const rank = card % 13
+    if (rank === 0) aces += 1
+    total += rank === 0 ? 1 : Math.min(rank + 1, 10)
+  }
+  const soft = aces > 0 && total + 10 <= 21
+  return { total: soft ? total + 10 : total, soft }
+}
+
+/** What a stand on `total` pays per coin bet; 0 below the table. */
+export function blackjackMultiplier(total) {
+  return BLACKJACK.payouts.find(row => row.total === total)?.multiplier ?? 0
+}
+
+// ---------------------------------------------------------------------------
 // Study — the nine QQ Pet subjects, each tied to one of the three traits.
 //
 // The stages are a ladder, not a menu: QQ Pet starts every pet at 小学 and the

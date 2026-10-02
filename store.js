@@ -164,6 +164,9 @@ export function createStore(filePath = defaultStatePath(), options = {}) {
     /** [mod] Buy a scratch card and scratch it. */
     scratchLottery: () => run('lottery'),
 
+    /** [ST0015] Blackjack: `'deal'` with a bet, then `'hit'` or `'stand'`. */
+    blackjack: (move, bet) => run('blackjack', move === 'deal' ? [move, bet] : [move]),
+
     /** Buy one item into the backpack. */
     buy: itemKey => run('buy', [itemKey]),
 

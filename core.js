@@ -66,6 +66,10 @@ import {
   COOP,
   RENAME_CARD,
   LOTTERY,
+  BLACKJACK,
+  blackjackCard,
+  blackjackMultiplier,
+  blackjackTotal,
   jobMissing,
   lotteryPrize,
   illnessAt,
@@ -599,6 +603,8 @@ export function layEgg(nowMs, lang = defaultLang()) {
     lastFedAt: 0,
     // [dsh-piggy-claude-code mod] when the last scratch card was bought.
     lastLotteryAt: 0,
+    // [ST0015] the blackjack hand on the table, `{ bet, cards }`, or null.
+    blackjack: null,
     lastActiveAt: nowMs,
     lastSeenAt: nowMs,
     cooldowns: {},
@@ -615,6 +621,7 @@ export function layEgg(nowMs, lang = defaultLang()) {
       levelUps: 0, feeds: 0, baths: 0, plays: 0, pets: 0,
       jobs: 0, coinsEarned: 0, purchases: 0, illnesses: 0, cures: 0, deaths: 0, revives: 0,
       courses: 0, lessons: 0, trips: 0, lotteries: 0, lotteryWon: 0,
+      blackjacks: 0, blackjackWon: 0,
     },
   }
 }
@@ -701,6 +708,9 @@ export function migrate(raw) {
   state.happiness = clamp100(state.happiness)
   state.cleanliness = clamp100(state.cleanliness)
   state.coins = Math.max(0, Math.floor(state.coins))
+  // [ST0015] a hand that no longer reads as one hands its bet back.
+  state.blackjack = sanitizeBlackjack(raw.blackjack)
+  if (state.blackjack === null) state.coins += blackjackRefund(raw.blackjack)
   state.illness = sanitizeIllness(raw.illness)
   // [dsh-piggy-claude-code mod] a trip from the retired four is refunded and dropped.
   const rawActivity = asObject(raw.activity)
@@ -748,6 +758,22 @@ function sanitizeCollected(raw) {
     if (souvenirByKey(key) !== null && Number.isFinite(count) && count > 0) out[key] = Math.floor(count)
   }
   return out
+}
+
+/** [ST0015] An open blackjack hand: a bet, two or more distinct cards, under 21. */
+function sanitizeBlackjack(raw) {
+  const source = asObject(raw)
+  if (source === null || !Number.isInteger(source.bet) || source.bet <= 0) return null
+  const cards = source.cards
+  if (!Array.isArray(cards) || cards.length < 2 || !cards.every(card => Number.isInteger(card) && card >= 0 && card < 52)) return null
+  if (new Set(cards).size !== cards.length || blackjackTotal(cards).total >= 21) return null
+  return { bet: source.bet, cards: [...cards] }
+}
+
+/** [ST0015] What a broken hand's bet was worth, to give it back; 0 if none. */
+function blackjackRefund(raw) {
+  const bet = asObject(raw)?.bet
+  return Number.isInteger(bet) && bet > 0 ? bet : 0
 }
 
 function sanitizeLastTrip(raw) {
@@ -1924,6 +1950,93 @@ export function scratchLottery(state, nowMs, random = () => nextRandom(state)) {
     ? say(state, '🎟️ 刮彩票中了{prize}，+{coins} 金币', { prize: word(state, prize.label), coins: prize.coins })
     : say(state, '🎟️ 刮彩票：谢谢参与'), nowMs)
   return { ok: true, prize: { tier: prize.tier, coins: prize.coins, mood: prize.mood } }
+}
+
+// ---------------------------------------------------------------------------
+// [ST0015] Blackjack: deal, hit, stand. The pig plays it at home; the bet goes
+// on the table at the deal and the hand stays in the save until it is over.
+// ---------------------------------------------------------------------------
+
+/** The hand as the panel shows it (cards face up, total, bet). */
+export function blackjackHand(hand) {
+  const { total, soft } = blackjackTotal(hand.cards)
+  return { bet: hand.bet, cards: hand.cards.map(blackjackCard), total, soft }
+}
+
+/** One card from what is left of this hand's deck. */
+function drawCard(cards, random) {
+  const left = []
+  for (let card = 0; card < 52; card += 1) if (!cards.includes(card)) left.push(card)
+  return left[Math.floor(random() * left.length)]
+}
+
+/** Pay the hand out (nothing when bust) and clear the table. */
+function settleBlackjack(state, nowMs) {
+  const hand = state.blackjack
+  const shown = blackjackHand(hand)
+  const outcome = shown.total > 21 ? 'bust' : shown.total === 21 ? 'jackpot' : 'win'
+  const multiplier = outcome === 'bust' ? 0 : blackjackMultiplier(shown.total)
+  const coins = Math.round(hand.bet * multiplier)
+  state.coins += coins
+  state.happiness = clamp100(state.happiness + BLACKJACK.happiness[outcome])
+  state.stats.blackjacks = (state.stats.blackjacks ?? 0) + 1
+  state.stats.blackjackWon = (state.stats.blackjackWon ?? 0) + coins
+  state.blackjack = null
+  state.lastActiveAt = nowMs
+  const vars = { total: shown.total, coins, bet: hand.bet }
+  remember(state, outcome === 'jackpot'
+    ? say(state, '🃏 21 点正好 21！+{coins} 金币', vars)
+    : outcome === 'win'
+      ? say(state, '🃏 21 点停在 {total} 点，+{coins} 金币', vars)
+      : say(state, '🃏 21 点爆了（{total} 点），输掉 {bet} 金币', vars), nowMs)
+  return { ok: true, round: { ...shown, done: true, outcome, multiplier, coins } }
+}
+
+/** Exactly 21 ends the hand at once; anything under it waits for the next move. */
+function blackjackTurn(state, nowMs) {
+  if (blackjackTotal(state.blackjack.cards).total >= 21) return settleBlackjack(state, nowMs)
+  return { ok: true, round: { ...blackjackHand(state.blackjack), done: false } }
+}
+
+/**
+ * Put `bet` on the table and deal two cards. A natural 21 is paid at once.
+ * @returns {{ok:boolean, reason?:string, price?:number, round?:object}}
+ */
+export function dealBlackjack(state, bet, nowMs, random = () => nextRandom(state)) {
+  if (state === null) return { ok: false, reason: 'absent' }
+  decay(state, nowMs)
+  if (state.dead) return { ok: false, reason: 'dead' }
+  if (state.blackjack !== null) return { ok: false, reason: 'in-hand' }
+  if (state.activity !== null) return { ok: false, reason: 'away' }
+  if (!BLACKJACK.bets.includes(bet)) return { ok: false, reason: 'bad-bet' }
+  if (state.coins < bet) return { ok: false, reason: 'poor', price: bet }
+
+  state.coins -= bet
+  const cards = []
+  cards.push(drawCard(cards, random))
+  cards.push(drawCard(cards, random))
+  state.blackjack = { bet, cards }
+  state.lastActiveAt = nowMs
+  return blackjackTurn(state, nowMs)
+}
+
+/** Draw one more card; over 21 loses the bet, exactly 21 pays 10×. */
+export function hitBlackjack(state, nowMs, random = () => nextRandom(state)) {
+  if (state === null) return { ok: false, reason: 'absent' }
+  decay(state, nowMs)
+  if (state.blackjack === null) return { ok: false, reason: 'no-hand' }
+  state.blackjack.cards = [...state.blackjack.cards, drawCard(state.blackjack.cards, random)]
+  state.lastActiveAt = nowMs
+  return blackjackTurn(state, nowMs)
+}
+
+/** Stop and get paid by the total; under `BLACKJACK.standAt` the pig must draw. */
+export function standBlackjack(state, nowMs) {
+  if (state === null) return { ok: false, reason: 'absent' }
+  decay(state, nowMs)
+  if (state.blackjack === null) return { ok: false, reason: 'no-hand' }
+  if (blackjackTotal(state.blackjack.cards).total < BLACKJACK.standAt) return { ok: false, reason: 'too-low' }
+  return settleBlackjack(state, nowMs)
 }
 
 export const canAfford = (state, itemKey) => {

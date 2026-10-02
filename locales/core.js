@@ -103,6 +103,10 @@ export default {
     // --- [dsh-piggy-claude-code mod] scratch cards --------------------------
     '🎟️ 刮彩票中了{prize}，+{coins} 金币': '🎟️ スクラッチで{prize}！ +{coins} コイン',
     '🎟️ 刮彩票：谢谢参与': '🎟️ スクラッチ：はずれ',
+    // --- [ST0015] blackjack ------------------------------------------------
+    '🃏 21 点正好 21！+{coins} 金币': '🃏 ブラックジャックでぴったり21！ +{coins} コイン',
+    '🃏 21 点停在 {total} 点，+{coins} 金币': '🃏 ブラックジャック {total} でストップ、+{coins} コイン',
+    '🃏 21 点爆了（{total} 点），输掉 {bet} 金币': '🃏 ブラックジャックでバースト（{total}）、{bet} コイン負け',
   },
   en: {
     // --- the default name (only at egg time; a name is never translated after)
@@ -199,5 +203,9 @@ export default {
     // --- [dsh-piggy-claude-code mod] scratch cards --------------------------
     '🎟️ 刮彩票中了{prize}，+{coins} 金币': '🎟️ Scratch card: {prize}, +{coins} coins',
     '🎟️ 刮彩票：谢谢参与': '🎟️ Scratch card: no luck',
+    // --- [ST0015] blackjack ------------------------------------------------
+    '🃏 21 点正好 21！+{coins} 金币': '🃏 Blackjack: exactly 21! +{coins} coins',
+    '🃏 21 点停在 {total} 点，+{coins} 金币': '🃏 Blackjack: stood on {total}, +{coins} coins',
+    '🃏 21 点爆了（{total} 点），输掉 {bet} 金币': '🃏 Blackjack: bust at {total}, lost {bet} coins',
   },
 }

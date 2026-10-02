@@ -25,7 +25,7 @@
 
 <!-- contract:state-keys -->
 ```json
-["activity", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
+["activity", "blackjack", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
 ```
 
 | 组 | 键 | 说明 |
@@ -40,6 +40,7 @@
 | 进行中 | `activity`, `illness`, `sleep`, `cooldowns`, `riskMinutes` | `activity.key` 引用 [GAME.RULES.V1](game-rules.md) 的表键；`sleep` 为 `{since, auto}` 或 `null`（外出、死亡时迁移成 `null`；`auto` 表示电脑休眠触发） |
 | 记录 | `memories`（最多 8 条）, `pending`（加载时清空）, `stats` | |
 | 时间戳 | `lastFedAt`, `lastLotteryAt`, `lastActiveAt`, `lastSeenAt` | 毫秒时间戳 |
+| 21 点（ST0015） | `blackjack` | 桌上没打完的一手：`{bet, cards}`，`cards` 是 0–51 的不重复整数（`card % 13` 为点数，0 = A），总点数小于 21；没有时为 `null`。迁移时读不成一手的，把 `bet`（正整数）退回 `coins` 后置 `null`。可默认的新键，不升版本 |
 | 可复现（ST0014） | `rng`, `utcOffsetMin` | `rng`：32 位无符号整数，猪自己的骰子（mulberry32），所有随机结果从这里取，取一次推进一次；缺失时由 `bornAt` 派生。`utcOffsetMin`：主人时区偏移（分钟），记忆里的 `[HH:MM]` 按它显示，`null` 表示用本机时区；每条操作写入。都是可默认的新键，不升版本 |
 
 ## 3. 不变量 Invariants
