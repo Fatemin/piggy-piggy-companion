@@ -278,6 +278,15 @@ window.__ModuleLoader__.load({
         '刮一张': 'けずる', '{time} 后再来': 'あと {time}',
         '中了{prize}！+{coins} 🪙': '{prize}！ +{coins} 🪙', '谢谢参与…下次一定': 'はずれ…次こそ',
         '一等奖': '1等', '二等奖': '2等', '三等奖': '3等', '安慰奖': '残念賞', '谢谢参与': 'はずれ',
+        // [ST0015] blackjack
+        '21 点': 'ブラックジャック', '下注 {min} 起 · {n} 点以上才能停': '{min} 🪙 から · {n} 以上でスタンド',
+        '{total} 点': '{total}', '{total} 点（A 算 11）': '{total}（A=11）', '爆了': 'バースト',
+        '下注 {bet} 🪙': 'ベット {bet} 🪙', '下注 {bet}': '{bet} 賭ける', '上一手': '前回',
+        '要牌': 'ヒット', '停牌': 'スタンド', '{n} 点起才能停': '{n} からスタンド',
+        '正好 21 点！+{coins} 🪙': 'ぴったり21！ +{coins} 🪙', '{total} 点，×{m}，+{coins} 🪙': '{total} で ×{m}、+{coins} 🪙',
+        '爆了！{total} 点，输掉 {bet} 🪙': 'バースト！ {total}、{bet} 🪙 負け',
+        '不到 {n} 点不能停，再要一张吧': '{n} 未満はスタンドできないよ、もう1枚引こう',
+        '先把这一手打完': 'まずこの勝負を終わらせよう', '桌上没有牌': 'テーブルにカードがないよ', '没有这个下注': 'そのベットはないよ',
         '其他': 'そのほか', '成长 {pct}%': '成長 {pct}%',
         // [dsh-piggy-claude-code mod] sleep
         '睡觉': 'ねる', '叫醒': 'おこす', '晚安…': 'おやすみ…', '早上好！': 'おはよう！',
@@ -502,6 +511,15 @@ window.__ModuleLoader__.load({
         '刮一张': 'Scratch', '{time} 后再来': 'again in {time}',
         '中了{prize}！+{coins} 🪙': '{prize}! +{coins} 🪙', '谢谢参与…下次一定': 'No luck… next time',
         '一等奖': '1st prize', '二等奖': '2nd prize', '三等奖': '3rd prize', '安慰奖': 'Consolation prize', '谢谢参与': 'No luck',
+        // [ST0015] blackjack
+        '21 点': 'Blackjack', '下注 {min} 起 · {n} 点以上才能停': 'bets from {min} 🪙 · stand on {n}+',
+        '{total} 点': '{total}', '{total} 点（A 算 11）': '{total} (A=11)', '爆了': 'bust',
+        '下注 {bet} 🪙': 'Bet {bet} 🪙', '下注 {bet}': 'Bet {bet}', '上一手': 'Last hand',
+        '要牌': 'Hit', '停牌': 'Stand', '{n} 点起才能停': 'Stand from {n}',
+        '正好 21 点！+{coins} 🪙': 'Exactly 21! +{coins} 🪙', '{total} 点，×{m}，+{coins} 🪙': '{total}, ×{m}, +{coins} 🪙',
+        '爆了！{total} 点，输掉 {bet} 🪙': 'Bust! {total}, lost {bet} 🪙',
+        '不到 {n} 点不能停，再要一张吧': 'Under {n} you can\'t stand — draw another',
+        '先把这一手打完': 'Finish this hand first', '桌上没有牌': 'No hand on the table', '没有这个下注': 'No such bet',
         '其他': 'Other', '成长 {pct}%': 'Growth {pct}%',
         // [dsh-piggy-claude-code mod] sleep
         '睡觉': 'Sleep', '叫醒': 'Wake up', '晚安…': 'Good night…', '早上好！': 'Good morning!',
@@ -935,6 +953,16 @@ window.__ModuleLoader__.load({
             coins: num(obj(prize).coins, 0),
           })).filter(prize => prize.tier !== ''),
         } : null,
+        // [ST0015] the blackjack table; null from an older host.
+        blackjack: isObj(d.blackjack) ? {
+          bets: arr(d.blackjack.bets).map(bet => Math.floor(num(bet, 0))).filter(bet => bet > 0),
+          standAt: num(d.blackjack.standAt, 18),
+          payouts: arr(d.blackjack.payouts).map(row => ({
+            total: num(obj(row).total, 0),
+            multiplier: num(obj(row).multiplier, 0),
+          })).filter(row => row.total > 0),
+          hand: normalizeHand(d.blackjack.hand),
+        } : null,
         world: normalizeWorld(d.world, L),
         // Which items each care action could spend right now.
         care: (() => {
@@ -1056,6 +1084,20 @@ window.__ModuleLoader__.load({
         },
         oldSouvenirs: arr(raw.oldSouvenirs).filter(t => typeof t === 'string' && t !== ''),
         fare: { costPerZone: num(obj(raw.fare).costPerZone, 200), hoursPerZone: num(obj(raw.fare).hoursPerZone, 1) },
+      }
+    }
+
+    /** [ST0015] A blackjack hand (open, or just settled), or null. */
+    function normalizeHand(raw) {
+      if (!isObj(raw)) return null
+      return {
+        bet: Math.max(0, Math.floor(num(raw.bet, 0))),
+        cards: arr(raw.cards).map(card => ({ rank: str(obj(card).rank, '?'), suit: str(obj(card).suit, '') })),
+        total: num(raw.total, 0),
+        soft: raw.soft === true,
+        outcome: str(raw.outcome, ''),
+        multiplier: num(raw.multiplier, 0),
+        coins: Math.max(0, Math.floor(num(raw.coins, 0))),
       }
     }
 
@@ -1568,6 +1610,20 @@ window.__ModuleLoader__.load({
       '.dp-lottery{margin:0 0 10px;padding:8px 10px;border-radius:var(--ac-radius-sm);',
       'background:#fdf7e2;border:2px solid #f0dfa8}',
       '.dp-lottery .dp-row{align-items:baseline;gap:6px;margin:0 0 5px}',
+      /* [ST0015] the blackjack table */
+      '.dp-bj{margin:0 0 10px;padding:8px 10px;border-radius:var(--ac-radius-sm);',
+      'background:#e9f5e4;border:2px solid #bcdcae}',
+      '.dp-bj .dp-row{align-items:baseline;gap:6px;margin:0 0 5px}',
+      '.dp-bj .dp-actions{grid-template-columns:repeat(3,1fr);margin-top:7px}',
+      '.dp-bj .dp-actions[data-bj="hand"]{grid-template-columns:1fr 1fr}',
+      '.dp-cards{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:6px}',
+      '.dp-card{min-width:22px;padding:3px 4px;text-align:center;font-size:12px;font-weight:700;line-height:1.2;',
+      'color:#2b2b2b;background:#fff;border:1.5px solid var(--ac-border-light);border-radius:5px;',
+      'box-shadow:var(--ac-shadow-sm)}',
+      '.dp-card[data-red="true"]{color:#c8372d}',
+      '.dp-bj-total{margin-left:4px;font-size:10.5px;font-weight:700;color:var(--ac-text)}',
+      '.dp-bj-total[data-outcome="bust"]{color:var(--ac-text-2)}',
+      '.dp-bj-total[data-outcome="jackpot"]{color:#b8860b}',
       '.dp-item[data-locked="true"]{background:var(--ac-bg-disabled)}',
       '.dp-item[data-tier="pro"]{border-color:#f0dfa8}',
       '.dp-empty{color:var(--ac-text-2);font-size:10.5px;font-weight:500;line-height:1.65;',
@@ -2449,6 +2505,8 @@ window.__ModuleLoader__.load({
       var reactTimer = null
       var stopped = false
       var busy = false
+      // [ST0015] the blackjack hand that just ended, shown until the next deal.
+      var blackjackLast = null
       // [ST0007] the updater's last state (null: none, or not known yet), whether
       // the host has one at all, and the versions the pig already announced.
       var update = null
@@ -3929,6 +3987,75 @@ window.__ModuleLoader__.load({
         return box
       }
 
+      /** [ST0015] One hand's cards face up, with its total (or how it ended). */
+      function blackjackCards(hand, caption) {
+        var row = el('div', 'dp-cards')
+        if (caption) row.appendChild(el('span', 'dp-note', caption))
+        for (var i = 0; i < hand.cards.length; i += 1) {
+          var card = el('span', 'dp-card', hand.cards[i].rank + hand.cards[i].suit)
+          card.setAttribute('data-red', hand.cards[i].suit === '♥' || hand.cards[i].suit === '♦' ? 'true' : 'false')
+          row.appendChild(card)
+        }
+        var total = el('span', 'dp-bj-total', hand.soft && hand.outcome === ''
+          ? T('{total} 点（A 算 11）', { total: hand.total })
+          : T('{total} 点', { total: hand.total }))
+        if (hand.outcome !== '') {
+          total.setAttribute('data-outcome', hand.outcome)
+          total.textContent += ' · ' + (hand.outcome === 'bust' ? T('爆了') : '+' + hand.coins + ' 🪙')
+        }
+        row.appendChild(total)
+        return row
+      }
+
+      /** [ST0015] The blackjack table under the scratch cards: bet, hit, stand. */
+      function blackjackBlock() {
+        var bj = view.blackjack
+        var box = el('div', 'dp-bj')
+        var head = el('div', 'dp-row')
+        head.appendChild(el('b', null, '🃏 ' + T('21 点')))
+        head.appendChild(el('span', 'dp-note', T('下注 {min} 起 · {n} 点以上才能停', {
+          min: bj.bets.length > 0 ? Math.min.apply(null, bj.bets) : 0, n: bj.standAt,
+        })))
+        box.appendChild(head)
+        var chips = el('div', 'dp-chips')
+        for (var i = 0; i < bj.payouts.length; i += 1) {
+          chips.appendChild(el('span', 'dp-chip', T('{total} 点', { total: bj.payouts[i].total }) + ' ×' + bj.payouts[i].multiplier))
+        }
+        box.appendChild(chips)
+        var hand = bj.hand
+        if (hand !== null) {
+          box.appendChild(blackjackCards(hand, T('下注 {bet} 🪙', { bet: hand.bet })))
+          var moves = el('div', 'dp-actions')
+          moves.setAttribute('data-bj', 'hand')
+          var hit = button('dp-btn', { 'data-blackjack': 'hit' }, function () { send('blackjack', { move: 'hit' }) })
+          hit.appendChild(el('span', null, '🃏'))
+          hit.appendChild(el('span', null, T('要牌')))
+          moves.appendChild(hit)
+          var canStand = hand.total >= bj.standAt
+          var stand = button('dp-btn', { 'data-blackjack': 'stand' }, function () { send('blackjack', { move: 'stand' }) })
+          stand.appendChild(el('span', null, '✋'))
+          stand.appendChild(el('span', null, canStand ? T('停牌') : T('{n} 点起才能停', { n: bj.standAt })))
+          stand.disabled = !canStand
+          moves.appendChild(stand)
+          box.appendChild(moves)
+          return box
+        }
+        if (blackjackLast !== null) box.appendChild(blackjackCards(blackjackLast, T('上一手')))
+        var row = el('div', 'dp-actions')
+        for (var b = 0; b < bj.bets.length; b += 1) {
+          (function (bet) {
+            var go = button('dp-btn', { 'data-blackjack': 'deal', 'data-bet': String(bet) }, function () {
+              send('blackjack', { move: 'deal', bet: bet })
+            })
+            go.appendChild(el('span', null, T('下注 {bet}', { bet: bet })))
+            go.disabled = view.pig === null || view.pig.coins < bet || view.activity !== null || view.dead
+            row.appendChild(go)
+          })(bj.bets[b])
+        }
+        box.appendChild(row)
+        return box
+      }
+
       /** "9:05" for a wait in seconds. */
       function formatWait(seconds) {
         var m = Math.floor(seconds / 60)
@@ -3946,6 +4073,7 @@ window.__ModuleLoader__.load({
         head.appendChild(el('span', null, '🪙 ' + view.pig.coins))
         content.appendChild(head)
         if (view.lottery !== null) content.appendChild(lotteryBlock())
+        if (view.blackjack !== null) content.appendChild(blackjackBlock())
         var list = el('div', 'dp-list')
         var shelf = ''
         // The host sends the shop in shelf order, but sort defensively so a
@@ -4754,6 +4882,9 @@ window.__ModuleLoader__.load({
             else if (!refused) renameDraft = ''
           }
           if (action === 'study' && !refused) studyPicks = { stage: null, keys: [] }
+          // [ST0015] a blackjack hand that just ended stays on the table until the next deal.
+          var round = action === 'blackjack' && !refused ? normalizeHand(next.round) : null
+          if (action === 'blackjack' && !refused) blackjackLast = round !== null && round.outcome !== '' ? round : null
           render(next)
           if (action === 'rename' && renaming) focusRename(null)
           // [dsh-piggy-claude-code mod] the scratch card's result, said by the pig.
@@ -4772,6 +4903,17 @@ window.__ModuleLoader__.load({
               else if (verdict === 'win') burst(['🎉', '🎊'], 3)
               showBubble(line, 3600)
             }, 1400)
+          }
+          // [ST0015] a blackjack hand that ended: the pig reacts and says the total.
+          if (round !== null && round.outcome !== '') {
+            react(round.outcome === 'bust' ? 'lose' : round.outcome, 2400)
+            if (round.outcome === 'jackpot') burst(['🃏', '🪙', '🎉'], 5)
+            else if (round.outcome === 'win') burst(['🪙', '🎊'], 3)
+            showBubble(round.outcome === 'jackpot'
+              ? T('正好 21 点！+{coins} 🪙', { coins: round.coins })
+              : round.outcome === 'win'
+                ? T('{total} 点，×{m}，+{coins} 🪙', { total: round.total, m: round.multiplier, coins: round.coins })
+                : T('爆了！{total} 点，输掉 {bet} 🪙', { total: round.total, bet: round.bet }), 3600)
           }
           if (next && next.ok === false) {
             react('refuse', 520)
@@ -4798,6 +4940,10 @@ window.__ModuleLoader__.load({
               'same-name': '和现在的名字一样',
               asleep: '它已经在睡了',
               awake: '它本来就醒着',
+              // [ST0015] blackjack
+              'in-hand': '先把这一手打完',
+              'no-hand': '桌上没有牌',
+              'bad-bet': '没有这个下注',
             }
             // [dsh-piggy-claude-code mod] refusals that carry a number.
             if (next.reason === 'too-many') {
@@ -4815,6 +4961,11 @@ window.__ModuleLoader__.load({
                 return (title === undefined ? '' : title[0] + T(title[1])) + ' ' + num(obj(m).need, 0)
               })
               showBubble(T('这份工作要求：{list}', { list: lacking.join(' · ') }), 3200)
+              return
+            }
+            if (next.reason === 'too-low') {
+              var line18 = view.blackjack === null ? 18 : view.blackjack.standAt
+              showBubble(T('不到 {n} 点不能停，再要一张吧', { n: line18 }), 2600)
               return
             }
             if (next.reason === 'need-card') {

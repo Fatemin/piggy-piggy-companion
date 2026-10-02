@@ -2137,6 +2137,65 @@ test('a scratch card plays scratching first, then the verdict and the line', asy
   assert.ok(findByClass(hostOf(dom), 'dp-bubble').allText().includes('2000'))
 })
 
+// [ST0015] Blackjack at the shop counter
+const findAllByAttr = (root, attr, value) => {
+  const found = []
+  root.walk(node => { if (node.attributes?.[attr] === value) found.push(node) })
+  return found
+}
+const BLACKJACK_TABLE = {
+  bets: [100, 200, 500], standAt: 18,
+  payouts: [{ total: 18, multiplier: 1.1 }, { total: 19, multiplier: 1.3 }, { total: 20, multiplier: 1.8 }, { total: 21, multiplier: 10 }],
+  hand: null,
+}
+
+test('blackjack: the shop offers the bets the pig can afford, and a bet POSTs the deal', async () => {
+  const status = { ...SNAPSHOT, blackjack: BLACKJACK_TABLE, pig: { ...PIG, coins: 250 } }
+  const { dom, net } = await loadWithPoll({ status, actResult: { ...status, ok: true } })
+  openPanel(dom)
+  pickTab(dom, 'shop')
+  const deals = findAllByAttr(contentOf(dom), 'data-blackjack', 'deal')
+  assert.deepEqual(deals.map(b => [b.attributes['data-bet'], b.disabled]), [['100', false], ['200', false], ['500', true]])
+  assert.ok(contentOf(dom).allText().includes('21 点 ×10'), contentOf(dom).allText())
+  deals[0].fire('click')
+  await settle()
+  assert.deepEqual(postsOf(net).at(-1), { action: 'blackjack', move: 'deal', bet: 100 })
+})
+
+test('blackjack: an open hand shows its cards; stand waits for 18', async () => {
+  const hand = { bet: 100, cards: [{ rank: '10', suit: '♠' }, { rank: '7', suit: '♥' }], total: 17, soft: false }
+  const status = { ...SNAPSHOT, blackjack: { ...BLACKJACK_TABLE, hand } }
+  const { dom, net } = await loadWithPoll({ status, actResult: { ...status, ok: true } })
+  openPanel(dom)
+  pickTab(dom, 'shop')
+  assert.equal(findAllByAttr(contentOf(dom), 'data-blackjack', 'deal').length, 0, 'no new bet mid-hand')
+  assert.ok(contentOf(dom).allText().includes('10♠'))
+  assert.equal(findByAttr(contentOf(dom), 'data-blackjack', 'stand').disabled, true)
+  findByAttr(contentOf(dom), 'data-blackjack', 'hit').fire('click')
+  await settle()
+  assert.deepEqual(postsOf(net).at(-1), { action: 'blackjack', move: 'hit' })
+})
+
+test('blackjack: a hand that ends says how, and stays on the table until the next deal', async () => {
+  const status = { ...SNAPSHOT, blackjack: { ...BLACKJACK_TABLE, hand: { bet: 100, cards: [{ rank: '10', suit: '♠' }, { rank: '9', suit: '♦' }], total: 19, soft: false } } }
+  const round = { bet: 100, cards: [{ rank: '10', suit: '♠' }, { rank: '9', suit: '♦' }, { rank: '2', suit: '♣' }], total: 21, soft: false, done: true, outcome: 'jackpot', multiplier: 10, coins: 1000 }
+  const { dom } = await loadWithPoll({ status, actResult: { ...SNAPSHOT, blackjack: BLACKJACK_TABLE, ok: true, round } })
+  openPanel(dom)
+  pickTab(dom, 'shop')
+  findByAttr(contentOf(dom), 'data-blackjack', 'hit').fire('click')
+  await settle()
+  await settle()
+  assert.ok(findByClass(hostOf(dom), 'dp-bubble').allText().includes('1000'))
+  assert.ok(lastByClass(hostOf(dom), 'dp-bj').allText().includes('2♣'), 'the last hand is still shown')
+})
+
+test('blackjack: an older host without the table shows no blackjack', async () => {
+  const { dom } = await loadWithPoll({ status: SNAPSHOT })
+  openPanel(dom)
+  pickTab(dom, 'shop')
+  assert.equal(findAllByAttr(contentOf(dom), 'data-blackjack', 'deal').length, 0)
+})
+
 // ===========================================================================
 // [ST0007] Updates, shown in the panel (the desktop app's /pig/update route)
 // ===========================================================================

@@ -1597,6 +1597,119 @@ test('scratch cards: the prize table, the price and one card every ten minutes',
   assert.equal(scratchLottery(poor, T0, () => 0).reason, 'poor')
 })
 
+// ---------------------------------------------------------------------------
+// [ST0015] Blackjack: bet, draw, stand; paid by the total, exactly 21 pays 10×
+// ---------------------------------------------------------------------------
+
+import { BLACKJACK, blackjackTotal } from '../data.js'
+import { dealBlackjack, hitBlackjack, standBlackjack } from '../core.js'
+
+/** Rolls that deal exactly `cards` (0–51, A♠ = 0, K♠ = 12) from a deck missing `dealt`. */
+function deck(cards, dealt = []) {
+  const rolls = []
+  dealt = [...dealt]
+  for (const card of cards) {
+    const left = [...Array(52).keys()].filter(c => !dealt.includes(c))
+    rolls.push((left.indexOf(card) + 0.5) / left.length)
+    dealt.push(card)
+  }
+  return () => rolls.shift()
+}
+
+const A = 0, FIVE = 4, SEVEN = 6, NINE = 8, TEN = 9, KING = 12, QUEEN_H = 24, NINE_H = 21
+
+test('blackjack: the table is 18→1.1 up to 21→10, bets from 100, stand on 18', () => {
+  assert.deepEqual(BLACKJACK.payouts.map(row => [row.total, row.multiplier]), [[18, 1.1], [19, 1.3], [20, 1.8], [21, 10]])
+  assert.equal(Math.min(...BLACKJACK.bets), 100)
+  assert.equal(BLACKJACK.standAt, 18)
+  assert.deepEqual(blackjackTotal([A, KING]), { total: 21, soft: true })
+  assert.deepEqual(blackjackTotal([A, FIVE]), { total: 16, soft: true })
+  assert.deepEqual(blackjackTotal([A, FIVE, KING]), { total: 16, soft: false }, 'the ace drops to 1 rather than bust')
+  assert.deepEqual(blackjackTotal([A, A + 13, NINE]), { total: 21, soft: true })
+})
+
+test('blackjack: a natural 21 is paid 10× on the deal', () => {
+  const pig = hatchEgg(T0)
+  pig.coins = 1000
+  const out = dealBlackjack(pig, 100, T0, deck([A, KING]))
+  assert.equal(out.ok, true)
+  assert.equal(out.round.done, true)
+  assert.equal(out.round.outcome, 'jackpot')
+  assert.equal(out.round.coins, 1000)
+  assert.equal(pig.coins, 1000 - 100 + 1000)
+  assert.equal(pig.blackjack, null)
+  assert.deepEqual(out.round.cards, [{ rank: 'A', suit: '♠' }, { rank: 'K', suit: '♠' }])
+})
+
+test('blackjack: under 18 the pig must draw; a stand pays by the total', () => {
+  const pig = hatchEgg(T0)
+  pig.coins = 1000
+  const dealt = dealBlackjack(pig, 200, T0, deck([TEN, SEVEN]))
+  assert.equal(dealt.ok, true)
+  assert.equal(dealt.round.done, false)
+  assert.equal(dealt.round.total, 17)
+  assert.equal(pig.coins, 800, 'the bet is on the table')
+  assert.equal(standBlackjack(pig, T0).reason, 'too-low')
+  assert.equal(dealBlackjack(pig, 100, T0).reason, 'in-hand')
+
+  const hit = hitBlackjack(pig, T0, deck([A + 13], pig.blackjack.cards))
+  assert.equal(hit.round.total, 18)
+  assert.equal(hit.round.done, false)
+  const stood = standBlackjack(pig, T0)
+  assert.equal(stood.ok, true)
+  assert.equal(stood.round.outcome, 'win')
+  assert.equal(stood.round.multiplier, 1.1)
+  assert.equal(pig.coins, 800 + 220)
+  assert.equal(pig.stats.blackjacks, 1)
+  assert.equal(standBlackjack(pig, T0).reason, 'no-hand')
+})
+
+test('blackjack: over 21 is bust and the bet is gone; drawing to exactly 21 pays 10×', () => {
+  const pig = hatchEgg(T0)
+  pig.coins = 1000
+  dealBlackjack(pig, 100, T0, deck([TEN, FIVE]))
+  const bust = hitBlackjack(pig, T0, deck([QUEEN_H], pig.blackjack.cards))
+  assert.equal(bust.round.outcome, 'bust')
+  assert.equal(bust.round.total, 25)
+  assert.equal(bust.round.coins, 0)
+  assert.equal(pig.coins, 900)
+
+  dealBlackjack(pig, 500, T0, deck([TEN, 1]))
+  const twentyOne = hitBlackjack(pig, T0, deck([NINE_H], pig.blackjack.cards))
+  assert.equal(twentyOne.round.total, 21)
+  assert.equal(twentyOne.round.outcome, 'jackpot')
+  assert.equal(pig.coins, 900 - 500 + 5000)
+})
+
+test('blackjack: refusals — bets off the table, too poor, out of the house, dead', () => {
+  const pig = hatchEgg(T0)
+  pig.coins = 150
+  assert.equal(dealBlackjack(pig, 50, T0).reason, 'bad-bet')
+  assert.equal(dealBlackjack(pig, 200, T0).reason, 'poor')
+  assert.equal(hitBlackjack(pig, T0).reason, 'no-hand')
+  pig.coins = 5000
+  assert.equal(startWorkAgain(pig, 'rider', T0).ok, true)
+  assert.equal(dealBlackjack(pig, 100, T0).reason, 'away')
+  const dead = hatchEgg(T0)
+  dead.dead = true
+  assert.equal(dealBlackjack(dead, 100, T0).reason, 'dead')
+})
+
+test('blackjack: an open hand survives a reload; a broken one gives its bet back', () => {
+  const pig = hatchEgg(T0)
+  pig.coins = 1000
+  dealBlackjack(pig, 100, T0, deck([TEN, SEVEN]))
+  const kept = migrate(JSON.parse(JSON.stringify(pig)))
+  assert.deepEqual(kept.blackjack, { bet: 100, cards: [TEN, SEVEN] })
+  assert.equal(kept.coins, 900)
+
+  const broken = migrate({ ...JSON.parse(JSON.stringify(pig)), blackjack: { bet: 100, cards: [TEN, TEN] } })
+  assert.equal(broken.blackjack, null)
+  assert.equal(broken.coins, 1000, 'the bet came back')
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(broken))), broken, 'and only once')
+  assert.equal(migrate({ bornAt: T0 }).blackjack, null)
+})
+
 test('a VTuber stream pays a roll but still runs its full, trainable length', () => {
   const vtuber = JOBS.find(job => job.key === 'vtuber')
   assert.deepEqual(vtuber.random, [200, 2400])

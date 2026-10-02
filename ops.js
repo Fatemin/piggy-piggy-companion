@@ -19,16 +19,19 @@ import {
   applyDevPatch,
   buy,
   callOffActivity,
+  dealBlackjack,
   feed,
   goToSleep,
   hatch,
   hatchEgg,
+  hitBlackjack,
   rename,
   renamePig,
   reset,
   scratchLottery,
   setLang,
   setLook,
+  standBlackjack,
   startStudy,
   startTogether,
   startTrip,
@@ -54,6 +57,8 @@ const TABLE = {
   wake: (s, [auto], at) => ({ state: s, result: wakeUp(s, at, { auto: auto === true }) }),
   calloff: (s, _args, at) => ({ state: s, result: callOffActivity(s, at) }),
   lottery: (s, _args, at) => ({ state: s, result: scratchLottery(s, at) }),
+  // [ST0015] one op for the whole table: ['deal', bet], ['hit'] or ['stand'].
+  blackjack: (s, [move, bet], at) => ({ state: s, result: blackjackMove(s, move, bet, at) }),
   buy: (s, [itemKey], at) => ({ state: s, result: buy(s, itemKey, at) }),
   look: (s, [look], at) => ({ state: s, result: setLook(s, look, at) }),
   wear: (s, [key, on], at) => ({ state: s, result: wear(s, key, on, at) }),
@@ -81,6 +86,13 @@ const TABLE = {
     if (s === null) return { state: s, result: false }
     return { state: applyDevPatch(s, patch, at), result: true }
   },
+}
+
+function blackjackMove(state, move, bet, at) {
+  if (move === 'deal') return dealBlackjack(state, bet, at)
+  if (move === 'hit') return hitBlackjack(state, at)
+  if (move === 'stand') return standBlackjack(state, at)
+  return { ok: false, reason: 'bad-move' }
 }
 
 /** Every op name. */

@@ -60,8 +60,9 @@ import {
   traitView,
   growthPercent,
   lotteryWaitSeconds,
+  blackjackHand,
 } from './core.js'
-import { ALL_ITEMS, ILLNESS_CHAINS, KIND_LABEL, KIND_ORDER, LOTTERY, PARALLEL_COURSES, RENAME_CARD, WEARABLES, WEAR_FOR_SALE, jobByKey, wearableByKey, jobMissing, traitBonus } from './data.js'
+import { ALL_ITEMS, BLACKJACK, ILLNESS_CHAINS, KIND_LABEL, KIND_ORDER, LOTTERY, PARALLEL_COURSES, RENAME_CARD, WEARABLES, WEAR_FOR_SALE, jobByKey, wearableByKey, jobMissing, traitBonus } from './data.js'
 import { FARE, PLACES, REGIONS, WORLD_BONUS, souvenirByKey, placeByKey, systemTimeZone, systemUtcOffset } from './world.js'
 import {
   renderAbout,
@@ -158,6 +159,8 @@ const OPERATIONS = {
   use: (store, body) => store.useItem(str(body.item)),
   // [dsh-piggy-claude-code mod] buy a scratch card and scratch it.
   lottery: store => store.scratchLottery(),
+  // [ST0015] blackjack: `{move: 'deal', bet}`, then `{move: 'hit'}` / `{move: 'stand'}`.
+  blackjack: (store, body) => store.blackjack(str(body.move), Number.isInteger(body.bet) ? body.bet : 0),
 }
 
 const str = value => (typeof value === 'string' ? value : '')
@@ -261,6 +264,8 @@ export function apply(ctx, config = {}) {
             // [mod] what a scratch card paid out; which trait points a career lacks
             prize: result.prize,
             missing: result.missing,
+            // [ST0015] the blackjack hand after the move, settled or not
+            round: result.round,
             // [mod] the subjects a capped stage has used up
             full: result.full,
           }, { 'cache-control': 'no-store' })
@@ -360,6 +365,7 @@ export function snapshot(store, options = {}) {
       inventory: inventoryView({ inventory: {} }),
       bag: [],
       lottery: lotteryFor(null, nowMs),
+      blackjack: blackjackFor(null),
       activity: null, canGoOut: false, awayBlocked: 'absent',
       // The box has a size of its own; the client must not hard-code it.
       boxStage: boxStageView(lang),
@@ -450,6 +456,7 @@ export function snapshot(store, options = {}) {
     inventory: inventoryView(state),
     bag: bagFor(state),
     lottery: lotteryFor(state, nowMs),
+    blackjack: blackjackFor(state),
     care: Object.fromEntries(Object.entries(careView(state))
       .map(([action, items]) => [action, items.map(item => ({ ...item, label: tr(lang, item.label) }))])),
     activity: activity === null ? null : {
@@ -667,6 +674,17 @@ function lotteryFor(state, nowMs) {
     waitSeconds: state === null ? 0 : lotteryWaitSeconds(state, nowMs),
     affordable: state !== null && state.coins >= LOTTERY.price,
     prizes: LOTTERY.prizes.map(prize => ({ tier: prize.tier, label: tr(lang, prize.label), emoji: prize.emoji, coins: prize.coins })),
+  }
+}
+
+/** [ST0015] The blackjack table: bets, the stand line, the payouts and the open hand. */
+function blackjackFor(state) {
+  const hand = state?.blackjack ?? null
+  return {
+    bets: [...BLACKJACK.bets],
+    standAt: BLACKJACK.standAt,
+    payouts: BLACKJACK.payouts.map(row => ({ total: row.total, multiplier: row.multiplier })),
+    hand: hand === null ? null : blackjackHand(hand),
   }
 }
 
