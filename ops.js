@@ -115,19 +115,22 @@ export function opProblem(op) {
 
 /**
  * Apply one op: fold time in up to `op.at` on the grid, then do it at `op.at`.
- * @returns {{ state: object|null, result: unknown, ok: boolean }}
+ * @returns {{ state: object|null, result: unknown, ok: boolean, at: number }} `at` is when it really happened
  */
 export function applyOp(state, op) {
   const run = Object.hasOwn(TABLE, op.op) ? TABLE[op.op] : null
-  if (run === null) return { state, result: { ok: false, reason: 'unknown-op' }, ok: false }
-  if (state === null && !WORKS_ON_NOTHING.has(op.op)) return { state, result: { ok: false, reason: 'absent' }, ok: false }
+  if (run === null) return { state, result: { ok: false, reason: 'unknown-op' }, ok: false, at: op.at }
+  if (state === null && !WORKS_ON_NOTHING.has(op.op)) return { state, result: { ok: false, reason: 'absent' }, ok: false, at: op.at }
   const args = Array.isArray(op.args) ? op.args : []
   const tz = Number.isFinite(op.tz) ? op.tz : 0
+  // Never before the pig's own clock: decay would rewind it and fold the same
+  // stretch in twice. A device whose clock lags the server's lands here.
+  const at = state !== null && Number.isFinite(state.lastSeenAt) ? Math.max(op.at, state.lastSeenAt) : op.at
   if (state !== null) {
     state.utcOffsetMin = tz
-    advance(state, op.at)
+    advance(state, at)
   }
-  const out = run(state, args, op.at, tz)
+  const out = run(state, args, at, tz)
   if (out.state !== null && out.state !== undefined) out.state.utcOffsetMin = tz
-  return { state: out.state ?? null, result: out.result, ok: succeeded(out.result) }
+  return { state: out.state ?? null, result: out.result, ok: succeeded(out.result), at }
 }

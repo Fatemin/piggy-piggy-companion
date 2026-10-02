@@ -17,3 +17,7 @@ node_modules/
 
 # style reference images (third-party, not redistributed)
 sample/
+
+# [ST0014] the cloud pig: local wrangler config and state
+server/wrangler.toml
+.wrangler/

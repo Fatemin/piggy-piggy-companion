@@ -150,6 +150,17 @@
       "tests": [
         "$self"
       ]
+    },
+    {
+      "paths": [
+        "server/**",
+        "lib/cloud-proto.js",
+        "ops.js"
+      ],
+      "tests": [
+        "test/server.test.js",
+        "test/ops.test.js"
+      ]
     }
   ],
   "gates": {
