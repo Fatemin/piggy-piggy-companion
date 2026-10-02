@@ -194,7 +194,7 @@ node ~/piggy-piggy-companion/bin/pig.js serve
 - 右键开菜单、左键摸摸、拖动移动，猪以外的区域点击穿透；托盘 / 菜单栏图标可隐藏、复位、开机自启、退出
 - 电脑休眠时猪跟着睡，电脑醒来就起床；你亲手哄睡的猪不会被电脑叫醒
 - 自动检查更新：GitHub 上有新版本时，猪猪冒个气泡说一声，面板顶部出现更新卡片，点「立即更新」就下载、替换并重启；语言下面的版本行可以随时「检查更新」。不弹窗
-- 存档在系统的应用数据目录（Mac `~/Library/Application Support/DSH Piggy/`，Windows `%APPDATA%\DSH Piggy\`），和 Claude Code 版互不影响
+- 存档在系统的应用数据目录（Mac `~/Library/Application Support/piggy-piggy-companion/`，Windows `%APPDATA%\piggy-piggy-companion\`），和 Claude Code 版互不影响。App 原名「DSH Piggy」：改名后第一次启动会自动把旧目录里的猪搬过来，旧目录原样留作备份
 
 ```bash
 cd app && npm install

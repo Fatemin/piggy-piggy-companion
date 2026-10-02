@@ -194,7 +194,7 @@ node ~/piggy-piggy-companion/bin/pig.js serve
 - 右クリックでメニュー、左クリックでなでる、ドラッグで移動、ブタ以外はクリック透過。トレイ / メニューバーのアイコンで非表示、位置リセット、ログイン時に起動、終了
 - パソコンがスリープするとブタもねて、復帰するとおきます。自分でねかせたブタはパソコンの復帰ではおきません
 - アップデート確認：GitHub に新しいバージョンが出ると、ブタが吹き出しで教えてくれて、パネルの上にアップデートのカードが出ます。「今すぐアップデート」でダウンロード・入れ替え・再起動まで自動です。言語の下のバージョン行からいつでも「アップデートを確認」できます。ポップアップは出ません
-- セーブはシステムのアプリデータフォルダ（Mac `~/Library/Application Support/DSH Piggy/`、Windows `%APPDATA%\DSH Piggy\`）にあり、Claude Code 版とは別です
+- セーブはシステムのアプリデータフォルダ（Mac `~/Library/Application Support/piggy-piggy-companion/`、Windows `%APPDATA%\piggy-piggy-companion\`）にあり、Claude Code 版とは別です。アプリの旧名は「DSH Piggy」で、新しい名前での初回起動時に旧フォルダのブタを自動で引っ越します（旧フォルダはバックアップとしてそのまま残ります）
 
 ```bash
 cd app && npm install

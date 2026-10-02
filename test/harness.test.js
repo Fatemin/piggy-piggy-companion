@@ -74,10 +74,13 @@ test('pigs: ps rows, env values and roles', async () => {
     '  500     1   05:00 /bin/zsh -c left behind',
     '  501   500   05:00 /w/app/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron .',
     '  600     1   05:00 node /r/bin/pig.js serve',
+    '  700     1   01:00 /Applications/piggy-piggy-companion.app/Contents/MacOS/piggy-piggy-companion',
   ].join('\n'))
   const env = { 300: 'DSH Piggy PIGGY_USER_DATA=/tmp/e2e/userdata', 501: 'Electron . PIGGY_USER_DATA=/tmp/ud', 600: 'node PIG_STATE=/tmp/s.json' }
   const pigs = Object.fromEntries(classify(procs, (pid) => env[pid] ?? null).map((p) => [p.pid, p]))
-  assert.deepEqual(Object.keys(pigs).map(Number), [300, 403, 501, 600])
+  assert.deepEqual(Object.keys(pigs).map(Number), [300, 403, 501, 600, 700])
+  assert.equal(pigs[700].kind, 'desk-app', '[ST0012] the renamed app is a pig too')
+  assert.equal(pigs[700].role, 'real')
   assert.equal(pigs[300].role, 'test')
   assert.equal(pigs[300].orphan, false)
   assert.equal(pigs[403].role, 'real')

@@ -113,6 +113,33 @@ test('the macOS swap replaces the bundle and cleans up', { skip: process.platfor
   assert.equal(readFileSync(join(target, 'Contents', 'version'), 'utf8'), 'new')
 })
 
+// [ST0012] a renamed app lands under its new name; the old bundle goes.
+test('the macOS swap installs a renamed app under its new name', { skip: process.platform === 'win32' }, () => {
+  const dir = temp()
+  const run = args => {
+    const script = join(dir, 'swap.sh')
+    writeFileSync(script, MAC_SWAP_SCRIPT, { mode: 0o755 })
+    execFileSync('/bin/sh', [script, String(deadPid()), ...args], { env: { ...process.env, PIGGY_UPDATE_NO_OPEN: '1' }, stdio: 'pipe' })
+  }
+  const target = join(dir, 'DSH Piggy.app')
+  const dest = join(dir, 'piggy-piggy-companion.app')
+  fakeApp(target, 'old')
+  fakeApp(`${target}.update`, 'new')
+  writeFileSync(join(dir, 'a.dmg'), '')
+  run([target, `${target}.update`, join(dir, 'a.dmg'), dest])
+  assert.equal(readFileSync(join(dest, 'Contents', 'version'), 'utf8'), 'new')
+  assert.equal(existsSync(target), false, 'the old bundle is gone')
+
+  // Something already has the new name: update in place rather than nest inside it.
+  fakeApp(target, 'old')
+  fakeApp(`${target}.update`, 'newer')
+  writeFileSync(join(dir, 'b.dmg'), '')
+  run([target, `${target}.update`, join(dir, 'b.dmg'), dest])
+  assert.equal(readFileSync(join(target, 'Contents', 'version'), 'utf8'), 'newer')
+  assert.equal(readFileSync(join(dest, 'Contents', 'version'), 'utf8'), 'new', 'left alone')
+  assert.equal(existsSync(join(dest, 'DSH Piggy.app.update')), false, 'nothing nested')
+})
+
 test('the app is copied out of a real dmg', { skip: process.platform !== 'darwin' }, async () => {
   const dir = temp()
   const src = join(dir, 'src')
@@ -120,7 +147,7 @@ test('the app is copied out of a real dmg', { skip: process.platform !== 'darwin
   const dmg = join(dir, 'new.dmg')
   execFileSync('hdiutil', ['create', '-quiet', '-fs', 'HFS+', '-srcfolder', src, '-volname', 'DSH Piggy', dmg])
   const staged = join(dir, 'DSH Piggy.app.update')
-  await stageMacApp(dmg, staged)
+  assert.equal(await stageMacApp(dmg, staged), 'DSH Piggy.app', 'says what the app is called in the dmg')
   assert.equal(readFileSync(join(staged, 'Contents', 'version'), 'utf8'), 'from-dmg')
   assert.deepEqual(execFileSync('ls', ['-a', dir], { encoding: 'utf8' }).split('\n').filter(n => n.startsWith('.piggy-dmg-')), [], 'mount point removed')
 })

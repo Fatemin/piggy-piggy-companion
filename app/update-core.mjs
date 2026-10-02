@@ -72,7 +72,7 @@ export function readRelease(release, current, platform = process.platform) {
 /** Ask GitHub for the newest release; resolves to `readRelease`'s answer. */
 export async function fetchLatest({ current, repo = REPO, feed, platform = process.platform, fetchImpl = fetch }) {
   const response = await fetchImpl(feed ?? `https://api.github.com/repos/${repo}/releases/latest`, {
-    headers: { accept: 'application/vnd.github+json', 'user-agent': 'dsh-piggy-desk' },
+    headers: { accept: 'application/vnd.github+json', 'user-agent': 'piggy-piggy-companion' },
     signal: AbortSignal.timeout(15000),
   })
   // No release published yet.
@@ -88,7 +88,7 @@ export async function fetchLatest({ current, repo = REPO, feed, platform = proce
 export async function download(asset, dir, { onProgress = () => {}, fetchImpl = fetch } = {}) {
   mkdirSync(dir, { recursive: true })
   const file = join(dir, basename(asset.name))
-  const response = await fetchImpl(asset.browser_download_url, { headers: { 'user-agent': 'dsh-piggy-desk' } })
+  const response = await fetchImpl(asset.browser_download_url, { headers: { 'user-agent': 'piggy-piggy-companion' } })
   if (!response.ok || response.body === null) throw new Error(`download ${response.status}`)
   const total = Number(asset.size) || Number(response.headers.get('content-length')) || 0
   const hash = createHash('sha256')
@@ -121,7 +121,8 @@ export function bundleOf(exePath) {
 
 /**
  * Copy the app out of a downloaded dmg into `staging`, next to the installed
- * bundle so the final swap is a rename on the same volume.
+ * bundle so the final swap is a rename on the same volume. Resolves to the
+ * app's name in the dmg (`piggy-piggy-companion.app`).
  */
 export async function stageMacApp(dmg, staging) {
   const mount = mkdtempSync(join(dirname(staging), '.piggy-dmg-'))
@@ -132,6 +133,7 @@ export async function stageMacApp(dmg, staging) {
     rmSync(staging, { recursive: true, force: true })
     await run('ditto', [join(mount, name), staging])
     if (!statSync(join(staging, 'Contents', 'MacOS')).isDirectory()) throw new Error('broken app in the dmg')
+    return name
   } finally {
     await run('hdiutil', ['detach', mount, '-quiet']).catch(() => run('hdiutil', ['detach', mount, '-force', '-quiet']).catch(() => {}))
     rmSync(mount, { recursive: true, force: true })
@@ -142,21 +144,26 @@ export async function stageMacApp(dmg, staging) {
  * The shell script that finishes a macOS update once the running pig has quit:
  * wait for its pid, swap the staged bundle in (putting the old one back if the
  * swap fails), clean up and start the new version.
- * Arguments: pid, installed bundle, staged bundle, downloaded dmg.
+ * Arguments: pid, installed bundle, staged bundle, downloaded dmg, and where
+ * the new bundle goes (default: where the old one was). [ST0012] A renamed
+ * app lands under its new name; if something already sits there, in the old
+ * place instead.
  */
 export const MAC_SWAP_SCRIPT = `#!/bin/sh
-pid="$1"; target="$2"; staged="$3"; dmg="$4"
+pid="$1"; target="$2"; staged="$3"; dmg="$4"; dest="\${5:-$2}"
 i=0
 while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 600 ]; do sleep 0.1; i=$((i + 1)); done
+[ "$dest" != "$target" ] && [ -e "$dest" ] && dest="$target"
 old="$target.old-$$"
 if mv "$target" "$old"; then
-  if mv "$staged" "$target"; then
+  if mv "$staged" "$dest"; then
     rm -rf "$old"
   else
     mv "$old" "$target"
+    dest="$target"
   fi
 fi
 rm -rf "$staged" "$dmg" "$0"
-[ -z "$PIGGY_UPDATE_NO_OPEN" ] && open "$target"
+[ -z "$PIGGY_UPDATE_NO_OPEN" ] && open "$dest"
 exit 0
 `

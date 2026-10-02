@@ -1,4 +1,4 @@
-🐖 DSH Piggy 桌面猪猪 · 使用说明
+🐖 piggy-piggy-companion 桌面猪猪 · 使用说明
 =====================================
 
 一只住在你桌面右下角的小猪。它会饿、会脏、会生病，
@@ -11,12 +11,12 @@
 【苹果电脑 Mac】用 “piggy-piggy-companion-0.15.0-universal.dmg”
 
   1. 双击这个 .dmg 文件
-  2. 在弹出的窗口里，把 “DSH Piggy” 图标拖到 “Applications（应用程序）” 文件夹
-  3. 打开 “应用程序”，双击 “DSH Piggy”
+  2. 在弹出的窗口里，把 “piggy-piggy-companion” 图标拖到 “Applications（应用程序）” 文件夹
+  3. 打开 “应用程序”，双击 “piggy-piggy-companion”
   4. 如果弹窗说 “无法验证开发者” 或 “Apple 无法检查其是否包含恶意软件”：
        - 先点 “完成”（或 “取消”）
        - 打开 “系统设置” → “隐私与安全性”
-       - 往下翻，看到 “已阻止 ‘DSH Piggy’ …”，点旁边的 “仍要打开”
+       - 往下翻，看到 “已阻止 ‘piggy-piggy-companion’ …”，点旁边的 “仍要打开”
        - 输入电脑密码，再点一次 “打开”
      这一步只需要做一次。
   5. 第一次打开要等几秒钟，然后猪猪就会出现在屏幕右下角，
@@ -27,7 +27,7 @@
   1. 双击这个 .exe 文件
   2. 如果出现蓝色窗口 “Windows 已保护你的电脑”：
        点 “更多信息” → 再点 “仍要运行”
-  3. 它会自己装好并打开，桌面上也会有 “DSH Piggy” 快捷方式
+  3. 它会自己装好并打开，桌面上也会有 “piggy-piggy-companion” 快捷方式
   4. 猪猪出现在屏幕右下角；屏幕右下角的任务栏托盘里也有小猪图标
      （看不到的话，点任务栏上的 “^” 小箭头展开）
 
@@ -86,18 +86,22 @@
 --------------------------------------------
 
   直接安装新版就行，猪猪不会丢：
-  Mac：先在小猪图标菜单里点 “退出”，再把新的 DSH Piggy 拖进 “应用程序”，
+  Mac：先在小猪图标菜单里点 “退出”，再把新的 piggy-piggy-companion 拖进 “应用程序”，
        提示已存在时选 “替换”
   Windows：先在托盘小猪菜单里点 “退出”，再双击新的 Setup.exe
+
+  旧版本叫 “DSH Piggy”：新版第一次打开时会自动把原来的猪搬过来。
+  Mac 上确认猪猪都在之后，可以把 “应用程序” 里旧的 DSH Piggy 拖到废纸篓
+  （旧存档 ~/Library/Application Support/DSH Piggy/ 会留着当备份）。
 
 --------------------------------------------
 五、卸载
 --------------------------------------------
 
-  Mac：先在小猪图标菜单里点 “退出”，再把 “应用程序” 里的 DSH Piggy 拖到废纸篓
-  Windows：“设置” → “应用” → 找到 DSH Piggy → “卸载”
+  Mac：先在小猪图标菜单里点 “退出”，再把 “应用程序” 里的 piggy-piggy-companion 拖到废纸篓
+  Windows：“设置” → “应用” → 找到 piggy-piggy-companion → “卸载”
 
   猪猪的存档在：
-    Mac     ~/Library/Application Support/DSH Piggy/
-    Windows %APPDATA%\DSH Piggy\
+    Mac     ~/Library/Application Support/piggy-piggy-companion/
+    Windows %APPDATA%\piggy-piggy-companion\
   卸载程序不会删掉它，重新安装后还是原来那只猪。
