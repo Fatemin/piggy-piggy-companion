@@ -5,13 +5,15 @@
 //   node scripts/harness/pigs.mjs reap [--mine] [--all-tests] [--max-age <min>] [--dry-run] [--json]
 //   node scripts/harness/pigs.mjs restart [--dry-run] [--json]
 //
-// A *test* pig runs on its own save: the desktop app with PIGGY_USER_DATA, or
-// `pig serve` with PIG_STATE. Everything else is the *real* pig (the user's
-// profile, or the native DshPiggyDesk) and is never reaped. `reap` stops test
-// pigs that are orphaned (no live launcher), older than --max-age (default
-// 120 min), or, with --mine, started under this Claude session; --all-tests
-// takes every test pig. `restart` replaces the real desktop pig with
-// `npm start` from the main checkout (CLAUDE.md §2.7). Only macOS/Linux (`ps`).
+// [AC0013] The *real* pig is the user's own: the native DshPiggyDesk and the
+// `pig serve` on the default save (~/.claude/pig/state.json). Every Electron
+// desktop pig is a *test* pig, whatever its profile, and so is `pig serve`
+// with PIG_STATE. `reap` never touches the real pig; it stops test pigs that
+// are orphaned (no live launcher), older than --max-age (default 120 min), or,
+// with --mine, started under this Claude session; --all-tests takes every test
+// pig. `restart` quits the real DshPiggyDesk and starts the main checkout's
+// build in its own session; only on the user's request, never after a merge.
+// Only macOS/Linux (`ps`).
 import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -21,7 +23,8 @@ import { requireConfig } from './lib/config.mjs'
 
 export const DEFAULT_MAX_AGE_MIN = 120
 const TERM_GRACE_MS = 10_000
-const LOG = path.join(os.tmpdir(), 'dsh-piggy-desk.log')
+const LOG = path.join(os.tmpdir(), 'dsh-piggy-native.log')
+const NATIVE_BIN = path.join('desktop', '.build', 'release', 'DshPiggyDesk')
 
 /** Processes that only pass a launch along; a pig whose ancestors are all these has no live launcher. */
 const WRAPPER = /^-?(sh|bash|zsh|dash|fish|npm|npx|node|env|nohup|caffeinate|timeout)$/
@@ -75,12 +78,15 @@ export function classify(procs, envOf) {
     if (!kind) continue
     const env = envOf(p.pid)
     const testData = kind === 'serve' ? envValue(env, 'PIG_STATE') : kind.startsWith('desk') ? envValue(env, 'PIGGY_USER_DATA') : null
+    // [AC0013] Electron is for testing only, even on its default profile.
+    const role = kind.startsWith('desk') || testData ? 'test' : 'real'
     const ancestors = []
     for (let up = byPid.get(p.ppid); up && up.pid > 1 && ancestors.length < 32; up = byPid.get(up.ppid)) ancestors.push(up)
     const launcher = ancestors.find((a) => !WRAPPER.test(exe(a))) ?? null
-    const checkout = kind === 'desk-dev' ? p.command.split('/app/node_modules/')[0] : null
+    const checkout = kind === 'desk-dev' ? p.command.split('/app/node_modules/')[0]
+      : kind === 'native' && p.command.startsWith('/') ? p.command.split('/desktop/.build/')[0] : null
     pigs.push({
-      pid: p.pid, kind, role: testData ? 'test' : 'real', age_min: Math.floor(p.age_s / 60),
+      pid: p.pid, kind, role, age_min: Math.floor(p.age_s / 60),
       data: testData, checkout, orphan: launcher === null,
       launcher: launcher ? { pid: launcher.pid, command: launcher.command.slice(0, 120) } : null,
       ancestors: ancestors.map((a) => a.pid),
@@ -168,35 +174,52 @@ async function reap(flags) {
     stuck.length ? [`still running: ${stuck.map((r) => r.pid).join(', ')}; check them by hand`] : [], { reaped, kept })
 }
 
+/** Newest mtime under `dir`, in ms. */
+function newest(dir) {
+  let latest = 0
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name)
+    latest = Math.max(latest, entry.isDirectory() ? newest(full) : fs.statSync(full).mtimeMs)
+  }
+  return latest
+}
+
 async function restart(root, flags) {
   const cfg = requireConfig(root)
   const main = worktrees(root).find((w) => w.branch === cfg.main_branch)?.path
   if (!main) throw new HarnessError(`${cfg.main_branch} is not checked out in any worktree`)
-  const app = path.join(main, 'app')
-  if (!fs.existsSync(path.join(app, 'node_modules', 'electron'))) throw new HarnessError(`no electron in ${app}/node_modules: run npm ci there first`)
-  // One profile, one instance: every real desktop pig holds the lock a new start needs.
-  const old = scan().filter((p) => p.role === 'real' && p.kind.startsWith('desk'))
-  const plan = { main_checkout: main, stop: old.map(brief), start: `(cd ${app} && npm start)`, log: LOG }
-  if (flags['dry-run']) return result('success', `would stop ${old.length} real desktop pig(s) and start ${cfg.main_branch}`, ['rerun without --dry-run'], plan)
+  const bin = path.join(main, NATIVE_BIN)
+  if (!fs.existsSync(bin)) throw new HarnessError(`no ${bin}: build it with desktop/build.command first`)
+  const sources = path.join(main, 'desktop', 'Sources')
+  const stale = fs.existsSync(sources) && newest(sources) > fs.statSync(bin).mtimeMs
+  // The desk app's child `pig serve` quits with it and flushes the save.
+  const pigs = scan()
+  const old = pigs.filter((p) => p.role === 'real' && p.kind === 'native')
+  const children = pigs.filter((p) => p.kind === 'serve' && old.some((o) => p.ancestors.includes(o.pid)))
+  const plan = { main_checkout: main, stop: old.map(brief), start: bin, log: LOG, stale_build: stale }
+  const warn = stale ? ['desktop/Sources is newer than the build: run desktop/build.command, then restart again'] : []
+  if (flags['dry-run']) return result('success', `would stop ${old.length} real pig(s) and start ${bin}`, ['rerun without --dry-run', ...warn], plan)
   const stopped = []
   for (const p of old) stopped.push({ ...brief(p), outcome: await stop(p, { force: false }) })
   const stuck = stopped.filter((s) => s.outcome === 'still running')
   if (stuck.length) {
     return result('error', `real pig ${stuck.map((s) => s.pid).join(', ')} did not quit on SIGTERM; nothing started`,
-      ['quit it from its tray menu, then rerun'], { ...plan, stopped })
+      ['quit it from its menu-bar item, then rerun'], { ...plan, stopped })
   }
+  for (const c of children) await waitGone(c.pid, TERM_GRACE_MS)
   const log = fs.openSync(LOG, 'a')
-  const child = spawn('npm', ['start'], { cwd: app, detached: true, stdio: ['ignore', log, log] })
+  // Its own session, so it outlives this command and the Claude session.
+  const child = spawn(bin, [], { cwd: path.dirname(bin), detached: true, stdio: ['ignore', log, log] })
   child.unref()
   fs.closeSync(log)
-  const deadline = Date.now() + 60_000
+  const deadline = Date.now() + 20_000
   let started = null
   while (!started && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    started = scan().find((p) => p.role === 'real' && p.kind === 'desk-dev' && p.checkout === main) ?? null
+    started = scan().find((p) => p.pid === child.pid && p.kind === 'native') ?? null
   }
-  if (!started) return result('error', `npm start did not bring up a pig within 60 s`, [`read ${LOG}`], { ...plan, stopped, npm_pid: child.pid })
-  return result('success', `real pig restarted from ${main} (pid ${started.pid})`, [], { ...plan, stopped, started: brief(started) })
+  if (!started) return result('error', `${bin} did not come up within 20 s`, [`read ${LOG}`], { ...plan, stopped, spawned_pid: child.pid })
+  return result(stale ? 'warning' : 'success', `real pig restarted from ${main} (pid ${started.pid})`, warn, { ...plan, stopped, started: brief(started) })
 }
 
 if (isMain(process.argv[1], import.meta.url)) {

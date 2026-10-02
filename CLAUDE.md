@@ -28,8 +28,8 @@
 4. **Remote updates are separate.** Push `origin/main` only on an explicit push request. If `origin/main` has commits missing locally, stop and integrate them; never force-push, never `--no-verify`.
 5. **No destructive shortcuts.** No `git reset --hard`, `git checkout -- .`, `git clean`, `git worktree remove --force`, or branch deletion without looking at the target and getting explicit approval.
 6. **Never conflate** local commit, merge, push and release as "done". Report each layer separately.
-7. **Restart after merge.** After every local commit/merge, restart the Electron desktop app with `node scripts/harness/pigs.mjs restart` so it runs the merged result (user's standing rule).
-8. **Leave no test pigs.** A pig you start for testing runs on its own save (`PIGGY_USER_DATA` / `PIG_STATE`) and is yours to stop: before your final reply run `node scripts/harness/pigs.mjs reap --mine`. Never `pkill`/`killall` by name, never stop the real pig except through `restart` ([delivery §3.2](docs/agent/delivery.md#32-local-pig-processes)).
+7. **The Swift pig is the user's; Electron is for testing.** The native `DshPiggyDesk` (save `~/.claude/pig/state.json`) is the pig the user plays with. Do not restart it after a commit or merge; restart it only when the user asks, with `node scripts/harness/pigs.mjs restart` (user's standing rule).
+8. **Leave no test pigs.** Every Electron desktop pig is a test pig; run it on its own save (`PIGGY_USER_DATA`, or `PIG_STATE` for `pig serve`). It is yours to stop: before your final reply run `node scripts/harness/pigs.mjs reap --mine`. Never `pkill`/`killall` by name, never stop the real pig except through `restart` ([delivery §3.2](docs/agent/delivery.md#32-local-pig-processes)).
 
 ## 3. Task routing
 

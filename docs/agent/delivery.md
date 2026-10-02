@@ -53,14 +53,15 @@ Every desktop pig is a visible window plus a tray icon, and test pigs run on the
 node scripts/harness/pigs.mjs list              # real vs test pigs, age, launcher, orphaned or not
 node scripts/harness/pigs.mjs reap --mine       # stop the test pigs this Claude session started
 node scripts/harness/pigs.mjs reap              # stop orphaned test pigs and those older than 120 min
-node scripts/harness/pigs.mjs restart           # replace the real desktop pig with main's `npm start`
+node scripts/harness/pigs.mjs restart           # on the user's request only: restart their Swift pig from main's build
 ```
 
-- A *test* pig is the desktop app with `PIGGY_USER_DATA`, or `bin/pig.js serve` with `PIG_STATE`; point both into your scratchpad. Everything else (the user's profile, the native `DshPiggyDesk`) is the *real* pig: `reap` never touches it, and only `restart` stops it.
+- The *real* pig is the user's own: the native `DshPiggyDesk` and the `bin/pig.js serve` on the default save (`~/.claude/pig/state.json`). `reap` never touches it, and only `restart` stops it.
+- Every Electron desktop pig (`npm start`, a packaged app) is a *test* pig, even on its default profile, and so is `bin/pig.js serve` with `PIG_STATE`. Give it its own save (`PIGGY_USER_DATA` / `PIG_STATE` in your scratchpad).
 - A test desktop pig leaves by itself when its launcher process dies (`PIGGY_PARENT_PID`, default the parent; 0 = don't watch) and after `PIGGY_TTL_MIN` minutes (default 30; 0 = no limit). A self-check run (`PIGGY_DEBUG_SNAPSHOT`) quits after writing its report. Builds made before this rule (packaged copies in scratchpads) have none of that; `reap` is the backstop.
 - Launch test pigs in the foreground or as a tracked background task, never with `&`/`nohup`/`open` that drop the launcher: a pig born without a launcher only has its TTL.
 - Before the final reply, `reap --mine`; report anything it could not stop. `--all-tests` stops every test pig, other sessions' included: only on the user's request.
-- `restart` sends the real pig SIGTERM (it saves on the way out), waits, and starts `npm start` from the main checkout detached, logging to `$TMPDIR/dsh-piggy-desk.log`. It never SIGKILLs the real pig; if it does not quit, nothing is started.
+- `restart` runs only when the user asks; never after a commit or merge. It sends `DshPiggyDesk` SIGTERM (it quits normally; its `pig serve` child flushes the save), waits, and starts the main checkout's `desktop/.build/release/DshPiggyDesk` in its own session, logging to `$TMPDIR/dsh-piggy-native.log`. It never SIGKILLs the real pig; if it does not quit, nothing is started. It does not build: when `desktop/Sources` is newer than the binary it warns, and you run `desktop/build.command` first.
 
 ## 4. Precise commits
 
@@ -84,7 +85,7 @@ git -C <main-checkout> status --short        # main must not overlap incoming pa
 git -C <main-checkout> merge --no-ff feature/<name>
 ```
 
-Check first that `origin/main` is not ahead and that main's dirty paths do not overlap the incoming paths; if they do, stop. A conflict is aborted (`git merge --abort`), not guessed through. Merge success does not prove testing; report verification separately. Then restart the desktop app (`node scripts/harness/pigs.mjs restart`, `CLAUDE.md` §2.7) and stop for user acceptance; do not push.
+Check first that `origin/main` is not ahead and that main's dirty paths do not overlap the incoming paths; if they do, stop. A conflict is aborted (`git merge --abort`), not guessed through. Merge success does not prove testing; report verification separately. Then stop for user acceptance; do not restart the user's pig (`CLAUDE.md` §2.7) and do not push.
 
 ## 6. Cleanup
 
