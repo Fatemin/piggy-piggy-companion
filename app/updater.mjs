@@ -79,10 +79,12 @@ export function createUpdater() {
       } else {
         const bundle = bundleOf(app.getPath('exe'))
         const staged = `${bundle}.update`
-        await stageMacApp(file, staged)
+        // [ST0012] The new app keeps the name it has in the dmg, so a renamed
+        // app lands under its new name next to where the old one was.
+        const name = await stageMacApp(file, staged)
         const script = join(dir, 'swap.sh')
         writeFileSync(script, MAC_SWAP_SCRIPT, { mode: 0o755 })
-        spawn('/bin/sh', [script, String(process.pid), bundle, staged, file], { detached: true, stdio: 'ignore' }).unref()
+        spawn('/bin/sh', [script, String(process.pid), bundle, staged, file, join(dirname(bundle), name)], { detached: true, stdio: 'ignore' }).unref()
       }
       // Give the panel a moment to show "installing"; before-quit saves the
       // pig as on any other quit.

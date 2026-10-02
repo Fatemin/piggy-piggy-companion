@@ -1,8 +1,8 @@
 {
   "name": "dsh-piggy-desk",
-  "productName": "DSH Piggy",
+  "productName": "piggy-piggy-companion",
   "version": "0.15.0",
-  "description": "🐖 dsh-piggy as a standalone desktop pet for Windows and macOS",
+  "description": "🐖 piggy-piggy-companion: the pig as a standalone desktop pet for Windows and macOS",
   "main": "main.mjs",
   "private": true,
   "license": "MIT",
@@ -16,7 +16,7 @@
   },
   "build": {
     "appId": "io.github.dsh-piggy.desk",
-    "productName": "DSH Piggy",
+    "productName": "piggy-piggy-companion",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -26,6 +26,7 @@
       "preload.cjs",
       "update-core.mjs",
       "updater.mjs",
+      "migrate-save.mjs",
       "package.json",
       "pig/**",
       "build/tray.png",
@@ -50,7 +51,7 @@
       "hardenedRuntime": false
     },
     "dmg": {
-      "title": "DSH Piggy",
+      "title": "piggy-piggy-companion",
       "artifactName": "piggy-piggy-companion-${version}-${arch}.${ext}"
     },
     "win": {
@@ -68,7 +69,7 @@
       "artifactName": "piggy-piggy-companion-Setup-${version}.${ext}",
       "oneClick": true,
       "perMachine": false,
-      "shortcutName": "DSH Piggy",
+      "shortcutName": "piggy-piggy-companion",
       "createDesktopShortcut": true,
       "runAfterFinish": true
     }

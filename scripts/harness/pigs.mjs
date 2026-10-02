@@ -29,7 +29,8 @@ const WRAPPER = /^-?(sh|bash|zsh|dash|fish|npm|npx|node|env|nohup|caffeinate|tim
 const KINDS = [
   // Main processes only: helpers live under Frameworks/ and die with them.
   ['desk-dev', /\/app\/node_modules\/electron\/dist\/Electron\.app\/Contents\/MacOS\/Electron(?= |$)/],
-  ['desk-app', /DSH Piggy\.app\/Contents\/MacOS\/DSH Piggy(?= |$)/],
+  // [ST0012] the app was "DSH Piggy"; an older install may still run under it.
+  ['desk-app', /(?:DSH Piggy|piggy-piggy-companion)\.app\/Contents\/MacOS\/(?:DSH Piggy|piggy-piggy-companion)(?= |$)/],
   ['native', /\/DshPiggyDesk(?= |$)/],
   ['serve', /bin\/pig\.js serve(?= |$)/],
 ]

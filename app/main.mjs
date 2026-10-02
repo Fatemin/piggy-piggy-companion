@@ -1,5 +1,6 @@
 /**
- * DSH Piggy — the pig as a standalone desktop pet (Windows + macOS).
+ * piggy-piggy-companion — the pig as a standalone desktop pet (Windows + macOS).
+ * [ST0012] Named after the GitHub project; it was "DSH Piggy" (see migrate-save.mjs).
  *
  * No Claude Code, no terminal: double-click and the pig sits in the corner of
  * the screen. Electron's main process is Node, so the adapter's panel server
@@ -15,7 +16,11 @@ import { fileURLToPath } from 'node:url'
 import { LANGS, LANG_NAMES, tr } from './pig/i18n.js'
 import { startServer } from './pig/lib/server.js'
 import { readSnapshot } from './pig/lib/status.js'
+import { migrateSave } from './migrate-save.mjs'
 import { createUpdater } from './updater.mjs'
+
+/** [ST0012] What the window and the tray call the app: its product name. */
+const APP_TITLE = 'piggy-piggy-companion'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 // Room for the panel above a 200 px (120 kg) pig, and for the player to
@@ -256,7 +261,7 @@ function openPanelWindow() {
     height: 760,
     minWidth: 420,
     minHeight: 560,
-    title: 'DSH Piggy',
+    title: APP_TITLE,
     autoHideMenuBar: true,
     backgroundColor: '#f7f3df',
     icon: join(HERE, 'build', 'tray@2x.png'),
@@ -310,7 +315,7 @@ function refreshTray(force = false) {
 function createTray() {
   const icon = nativeImage.createFromPath(join(HERE, 'build', 'tray.png'))
   tray = new Tray(icon)
-  tray.setToolTip('DSH Piggy')
+  tray.setToolTip(APP_TITLE)
   refreshTray(true)
   tray.on('click', () => { if (process.platform === 'win32') tray.popUpContextMenu(trayMenu()) })
   setInterval(() => refreshTray(), 3000).unref?.()
@@ -369,6 +374,16 @@ function leaveWithLauncher() {
 // Tests and self-checks keep their save (and window position) out of the real profile.
 const testInstance = Boolean(process.env.PIGGY_USER_DATA)
 if (testInstance) app.setPath('userData', process.env.PIGGY_USER_DATA)
+// [ST0012] The first start under the new name brings the pig over from the
+// old app's folder (before the single-instance lock, which lives there too).
+else {
+  try {
+    const moved = migrateSave(app.getPath('appData'), app.getPath('userData'))
+    if (moved !== null) console.log(`🐖 save moved from ${moved.from}: ${moved.copied.join(', ')}`)
+  } catch (error) {
+    console.error('🐖 could not move the old save:', error)
+  }
+}
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()

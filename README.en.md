@@ -194,7 +194,7 @@ Self-check: launch with `PIGGY_DEBUG_SNAPSHOT=<dir>` and the app writes window r
 - Right-click for the menu, left-click to pet, drag to move, click-through outside the pig; tray / menu-bar icon to hide, reset position, launch at login and quit
 - The pig falls asleep when the computer sleeps and gets up when it wakes; a pig you put to bed yourself is not woken by the computer
 - Update check: when GitHub has a newer version the pig says so in a bubble and the panel shows an update card on top; "Update now" downloads it, swaps it in and restarts. The version row under the languages has "Check for updates". No pop-up dialogs
-- Saves live in the system app-data folder (Mac `~/Library/Application Support/DSH Piggy/`, Windows `%APPDATA%\DSH Piggy\`), separate from the Claude Code pig
+- Saves live in the system app-data folder (Mac `~/Library/Application Support/piggy-piggy-companion/`, Windows `%APPDATA%\piggy-piggy-companion\`), separate from the Claude Code pig. The app used to be called "DSH Piggy": its first start under the new name brings the pig over from the old folder, which stays as a backup
 
 ```bash
 cd app && npm install

@@ -8,6 +8,7 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
 ## [Unreleased]
 
 ### Changed
+- **App 改名为 `piggy-piggy-companion`（ST0012）。** 窗口标题、托盘、Mac 的 `.app`、Windows 快捷方式都用 GitHub 项目名（原「DSH Piggy」）。存档目录随之变为 `piggy-piggy-companion`：改名后第一次启动自动把旧「DSH Piggy」目录里的猪（`state.json`、窗口位置）复制过来，新目录已有猪时不动，旧目录原样留作备份。Mac 一键更新会把新版本装成 `piggy-piggy-companion.app` 并删掉旧的 `DSH Piggy.app`（新名字已被占用时原地更新）。
 - **安装包按 GitHub 项目名命名（ST0012）。** `piggy-piggy-companion-<版本>-universal.dmg`、`piggy-piggy-companion-Setup-<版本>.exe`（原 `DSH Piggy-…` / `DSH Piggy Setup …`）；App 名称和存档位置不变。v0.15.0 的 Release 附件与分享文件夹已同步改名。
 
 ## [0.15.0] — 2026-10-02
