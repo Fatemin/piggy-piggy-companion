@@ -19,6 +19,7 @@ import { test } from 'node:test'
 import { dispatch, snapshot } from '../index.js'
 import { createStore } from '../store.js'
 import { hatchEgg, mood, setLang } from '../core.js'
+import { setRandomForTests } from '../core.js'
 import { tr } from '../i18n.js'
 import coreLocale from '../locales/core.js'
 import dataLocale from '../locales/data.js'
@@ -39,6 +40,9 @@ function playThrough(lang) {
     clearTimer: () => {},
   })
   const tick = minutes => { clock += minutes * MIN }
+  // [ST0014] time is folded in minute by minute, so a pig left a whole day after
+  // it came home would be a neglected one: wait just until it is back.
+  const untilBack = () => Math.ceil((store.state.activity.endsAt - clock) / MIN) + 1
   const seen = []
   const collected = () => seen
 
@@ -99,14 +103,13 @@ function playThrough(lang) {
     store.freshen()
     store.state.coins = 50_000
     store.state.satiety = 100
-    const real = Math.random
     try {
       // [mod] a world trip that always brings back loot (the place's specialty).
-      Math.random = () => 0
+      setRandomForTests(() => 0)
       assert.equal(store.startTrip('tokyo').ok, true)
       tick(5)
       shot()
-      tick(24 * 60)
+      tick(untilBack())
       store.freshen()
       const back = shot()
       assert.ok(back.pending.some(event => event.kind === 'trip'))
@@ -118,7 +121,7 @@ function playThrough(lang) {
       store.state.regionsDone = REGIONS.map(region => region.key).filter(key => key !== 'china')
       store.state.satiety = 100
       assert.equal(store.startTrip('beijing').ok, true)
-      tick(24 * 60)
+      tick(untilBack())
       store.freshen()
       const world = shot()
       assert.ok(world.pending.some(event => event.kind === 'region'))
@@ -133,7 +136,7 @@ function playThrough(lang) {
       assert.equal(store.state.activity?.kind, 'study')
       tick(5)
       shot()
-      tick(24 * 60)
+      tick(untilBack())
       store.freshen()
       const doctor = shot()
       assert.equal(doctor.pig.doctor, true)
@@ -141,7 +144,7 @@ function playThrough(lang) {
       reply(dispatch(store, 'pig', 'status').text.split('🕘')[0])
       reply(dispatch(store, 'pig', 'weigh').text)
     } finally {
-      Math.random = real
+      setRandomForTests(null)
     }
     store.state.satiety = 100
     store.state.coins = 50_000

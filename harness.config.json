@@ -30,10 +30,12 @@
       "paths": [
         "core.js",
         "data.js",
-        "world.js"
+        "world.js",
+        "ops.js"
       ],
       "tests": [
         "test/core.test.js",
+        "test/ops.test.js",
         "test/host.test.js",
         "test/client.test.js",
         "test/features-cli.test.js",
@@ -46,6 +48,7 @@
       ],
       "tests": [
         "test/host.test.js",
+        "test/ops.test.js",
         "test/core.test.js",
         "test/features-cli.test.js",
         "test/contracts.test.js"

@@ -25,7 +25,7 @@
 
 <!-- contract:state-keys -->
 ```json
-["activity", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "pending", "regionsDone", "riskMinutes", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
+["activity", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
 ```
 
 | 组 | 键 | 说明 |
@@ -40,6 +40,7 @@
 | 进行中 | `activity`, `illness`, `sleep`, `cooldowns`, `riskMinutes` | `activity.key` 引用 [GAME.RULES.V1](game-rules.md) 的表键；`sleep` 为 `{since, auto}` 或 `null`（外出、死亡时迁移成 `null`；`auto` 表示电脑休眠触发） |
 | 记录 | `memories`（最多 8 条）, `pending`（加载时清空）, `stats` | |
 | 时间戳 | `lastFedAt`, `lastLotteryAt`, `lastActiveAt`, `lastSeenAt` | 毫秒时间戳 |
+| 可复现（ST0014） | `rng`, `utcOffsetMin` | `rng`：32 位无符号整数，猪自己的骰子（mulberry32），所有随机结果从这里取，取一次推进一次；缺失时由 `bornAt` 派生。`utcOffsetMin`：主人时区偏移（分钟），记忆里的 `[HH:MM]` 按它显示，`null` 表示用本机时区；每条操作写入。都是可默认的新键，不升版本 |
 
 ## 3. 不变量 Invariants
 
@@ -48,8 +49,9 @@
 3. **不丢进度**：金币、经验、背包、属性、课程、纪念品在迁移中保留；退役内容必须给出补偿（先例：旧旅行退款、v5 起始金币补足到 500）。
 4. **一次性修正以磁盘上的旧版本号为键**：例如“`version < 5` 时补金币”，保证只执行一次。
    v6（ST0004）：旧键 `look` 删除；`version < 6` 且 `look === 'original'`、没有 `outfit` 的存档迁成 `outfit: []`（主人摘掉过胡子，就保持不戴），其余为 `null`（跟着阶段，与之前的样子一致）。
-5. **原子写盘**：写临时文件 → `fsync` → `rename`，不会出现半个文件。
-6. **单写者**：同一存档同一时刻只有一个进程写（`lib/lock.js`，目录锁，持有者已死时可接管）。
+5. **可复现（ST0014）**：时间只在整分钟与 `activity.endsAt` 处结算（`core.advance`），随机数只来自 `rng`；同一存档加同一串操作（`ops.js`），在任何机器上得到逐字节相同的存档（`pending` 除外，它是本机的待播公告）。
+6. **原子写盘**：写临时文件 → `fsync` → `rename`，不会出现半个文件。
+7. **单写者**：同一存档同一时刻只有一个进程写（`lib/lock.js`，目录锁，持有者已死时可接管）。
 
 ## 4. 变更规则 Change rules
 

@@ -19,33 +19,9 @@ import { closeSync, fsyncSync, mkdirSync, openSync, readFileSync, renameSync, wr
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
-import {
-  act as coreAct,
-  buy as coreBuy,
-  setLook as coreSetLook,
-  wear as coreWear,
-  wearAuto as coreWearAuto,
-  goToSleep as coreGoToSleep,
-  wakeUp as coreWakeUp,
-  setLang as coreSetLang,
-  callOffActivity as coreCallOff,
-  decay,
-  drainPending,
-  feed as coreFeed,
-  adopt as coreAdopt,
-  hatch as coreHatch,
-  applyDevPatch as coreDevPatch,
-  reset as coreReset,
-  hatchEgg,
-  migrate,
-  rename as coreRename,
-  renamePig as coreRenamePig,
-  startStudy as coreStartStudy,
-  startTrip as coreStartTrip,
-  startWork as coreStartWork,
-  scratchLottery as coreScratchLottery,
-  useItem as coreUseItem,
-} from './core.js'
+import { advance, drainPending, migrate } from './core.js'
+import { defaultLang } from './i18n.js'
+import { applyOp, localOffsetMinutes } from './ops.js'
 
 /** The harness home, matching the launcher's own resolution. */
 export function dshHome() {
@@ -72,6 +48,10 @@ export function createStore(filePath = defaultStatePath(), options = {}) {
   const now = options.now ?? (() => Date.now())
   const setTimer = options.setTimer ?? setTimeout
   const clearTimer = options.clearTimer ?? clearTimeout
+  // [ST0014] every change is an op; `onOp(op, result)` hears the ones that took.
+  const onOp = typeof options.onOp === 'function' ? options.onOp : null
+  const offsetAt = options.offsetMinutes ?? localOffsetMinutes
+  const newId = options.newId ?? (() => globalThis.crypto.randomUUID())
 
   let dirty = false
   let timer = null
@@ -113,13 +93,21 @@ export function createStore(filePath = defaultStatePath(), options = {}) {
     if (typeof timer?.unref === 'function') timer.unref()
   }
 
-  /** Run a core mutator, saving when it reports success. */
-  function mutate(fn) {
-    if (state === null) return { ok: false, reason: 'absent' }
+  /**
+   * [ST0014] Do one op: build it, apply it through ops.js (which folds time in
+   * on the grid first), save, and report it when it took.
+   */
+  function run(name, args = []) {
+    const at = now()
+    const op = { id: newId(), at, tz: offsetAt(at), op: name, args }
     try {
-      const result = fn(state)
+      const out = applyOp(state, op)
+      state = out.state
       scheduleSave()
-      return result
+      if (out.ok && onOp !== null) {
+        try { onOp(op, out.result) } catch { /* a listener must never break the pig */ }
+      }
+      return out.result
     } catch (error) {
       return { ok: false, reason: 'error', message: error instanceof Error ? error.message : String(error) }
     }
@@ -135,124 +123,89 @@ export function createStore(filePath = defaultStatePath(), options = {}) {
     /** Digest one observed harness event; silently ignored before hatching. */
     feed(event) {
       if (state === null) return []
-      try {
-        const crossed = coreFeed(state, event, now())
-        scheduleSave()
-        return crossed
-      } catch {
-        return []
-      }
+      const crossed = run('feed', [event])
+      return Array.isArray(crossed) ? crossed : []
     },
 
     /** Fold wall-clock decay in (and resolve work/illness) then hand back state. */
     freshen() {
       if (state === null) return null
       try {
-        decay(state, now())
+        advance(state, now())
         scheduleSave()
       } catch { /* keep the stale-but-valid state */ }
       return state
     },
 
     /** Apply one care action with its cooldown, spending `itemKey` when given. */
-    act: (action, itemKey) => mutate(live => coreAct(live, action, now(), itemKey)),
+    act: (action, itemKey) => run('act', [action, itemKey]),
 
     /** Send the pig out to work. */
-    startWork: jobKey => mutate(live => coreStartWork(live, jobKey, now())),
+    startWork: jobKey => run('work', [jobKey]),
 
     /** Send the pig to class. */
-    startStudy: (subjectKey, stageKey) => mutate(live => coreStartStudy(live, subjectKey, stageKey, now())),
+    startStudy: (subjectKey, stageKey) => run('study', [subjectKey, stageKey]),
 
     /** Send the pig travelling. */
-    startTrip: tripKey => mutate(live => coreStartTrip(live, tripKey, now())),
+    startTrip: tripKey => run('trip', [tripKey]),
 
     /** [mod] Put the pig to bed; `auto` when the computer is going to sleep. */
-    sleep: auto => mutate(live => coreGoToSleep(live, now(), { auto: auto === true })),
+    sleep: auto => run('sleep', [auto === true]),
 
     /** [mod] Wake the pig; with `auto`, only a nap the computer started ends. */
-    wake: auto => mutate(live => coreWakeUp(live, now(), { auto: auto === true })),
+    wake: auto => run('wake', [auto === true]),
 
     /** Bring the pig home early (work forfeits pay; study/trips are refunded). */
-    callOffActivity: () => mutate(live => coreCallOff(live, now())),
+    callOffActivity: () => run('calloff'),
 
     /** Back-compat alias. */
-    callOffWork: () => mutate(live => coreCallOff(live, now())),
+    callOffWork: () => run('calloff'),
 
     /** [mod] Buy a scratch card and scratch it. */
-    scratchLottery: () => mutate(live => coreScratchLottery(live, now())),
+    scratchLottery: () => run('lottery'),
 
     /** Buy one item into the backpack. */
-    buy: itemKey => mutate(live => coreBuy(live, itemKey)),
+    buy: itemKey => run('buy', [itemKey]),
 
     /** [dsh-piggy-claude-code mod] Elder look: 'elder' or 'original'. */
-    setLook: look => mutate(live => coreSetLook(live, look, now())),
+    setLook: look => run('look', [look]),
 
     /** [ST0004] Put a decoration on (`on`) or take it off; `wearAuto` follows the stage again. */
-    wear: (key, on) => mutate(live => coreWear(live, key, on, now())),
-    wearAuto: () => mutate(live => coreWearAuto(live, now())),
+    wear: (key, on) => run('wear', [key, on]),
+    wearAuto: () => run('wearAuto'),
 
     /** [mod] Name the pig: free while it has a default name, then a 更名卡 each time. */
-    renamePig: name => mutate(live => coreRenamePig(live, name, now())),
+    renamePig: name => run('renamePig', [name]),
 
     /**
      * [dsh-piggy-claude-code mod] Language: zh · ja · en. Works before there is a
      * pig too — the choice is kept on an unopened box.
      */
-    setLang(lang) {
-      if (state === null) state = coreReset(now())
-      return mutate(live => coreSetLang(live, lang, now()))
-    },
+    setLang: lang => run('lang', [lang, defaultLang()]),
 
     /** Use one item from the backpack. */
-    useItem: itemKey => mutate(live => coreUseItem(live, itemKey, now())),
+    useItem: itemKey => run('use', [itemKey]),
 
     /** Open the box. Only works when there is no pig at all. */
-    hatch() {
-      // A save that exists but is not hatched is a box — reset and adopt both
-      // produce one. Refusing because `state !== null` left the box unopenable.
-      if (state !== null && state.hatched === true) return false
-      state = state === null ? hatchEgg(now()) : coreHatch(state, now())
-      scheduleSave()
-      return true
-    },
+    hatch: () => run('hatch', [defaultLang()]) === true,
 
     /** Developer mode: force the pig into any state. */
-    dev(patch) {
-      if (state === null) return false
-      state = coreDevPatch(state, patch, now())
-      scheduleSave()
-      return true
-    },
+    dev: patch => run('dev', [patch]) === true,
 
     /** Start from a brand new box, living pig or not. */
-    reset() {
-      state = coreReset(now())
-      scheduleSave()
-      return true
-    },
+    reset: () => run('reset', [defaultLang()]) === true,
 
     /**
      * Start over with a fresh box, keeping the old pig's memories. Only offered
      * once a pig has died — you cannot throw a living one away.
      */
-    adopt() {
-      if (state === null) return false
-      if (state.dead !== true) return false
-      state = coreAdopt(state, now())
-      scheduleSave()
-      return true
-    },
+    adopt: () => run('adopt') === true,
 
     /** Rename the pig; null when the name is unusable or the pig is absent. */
     rename(rawName) {
       if (state === null) return null
-      try {
-        const cleaned = coreRename(state, rawName, now())
-        if (cleaned !== null) scheduleSave()
-        return cleaned
-      } catch {
-        return null
-      }
+      const cleaned = run('rename', [rawName])
+      return typeof cleaned === 'string' ? cleaned : null
     },
 
     /** Take the queued announcements (work done, got sick, got better…). */
