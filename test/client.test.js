@@ -223,6 +223,11 @@ function patPig(dom) {
 }
 
 /** Switch to one of the six icons. */
+/** [ST0015] From the shop tab, step into the casino (scratch cards, blackjack). */
+function openCasino(dom) {
+  findByAttr(contentOf(dom), 'data-casino', 'open').fire('click')
+}
+
 function pickTab(dom, key) {
   findByAttr(barOf(dom), 'data-tab', key).fire('click')
 }
@@ -2127,6 +2132,7 @@ test('a scratch card plays scratching first, then the verdict and the line', asy
   await settle()
   openPanel(dom)
   pickTab(dom, 'shop')
+  openCasino(dom)
   findByAttr(contentOf(dom), 'data-lottery', 'go').fire('click')
   await settle()
   await settle()
@@ -2154,6 +2160,7 @@ test('blackjack: the shop offers the bets the pig can afford, and a bet POSTs th
   const { dom, net } = await loadWithPoll({ status, actResult: { ...status, ok: true } })
   openPanel(dom)
   pickTab(dom, 'shop')
+  openCasino(dom)
   const deals = findAllByAttr(contentOf(dom), 'data-blackjack', 'deal')
   assert.deepEqual(deals.map(b => [b.attributes['data-bet'], b.disabled]), [['100', false], ['200', false], ['500', true]])
   assert.ok(contentOf(dom).allText().includes('21 点 ×10'), contentOf(dom).allText())
@@ -2168,6 +2175,7 @@ test('blackjack: an open hand shows its cards; stand waits for 18', async () => 
   const { dom, net } = await loadWithPoll({ status, actResult: { ...status, ok: true } })
   openPanel(dom)
   pickTab(dom, 'shop')
+  openCasino(dom)
   assert.equal(findAllByAttr(contentOf(dom), 'data-blackjack', 'deal').length, 0, 'no new bet mid-hand')
   assert.ok(contentOf(dom).allText().includes('10♠'))
   assert.equal(findByAttr(contentOf(dom), 'data-blackjack', 'stand').disabled, true)
@@ -2182,6 +2190,7 @@ test('blackjack: a hand that ends says how, and stays on the table until the nex
   const { dom } = await loadWithPoll({ status, actResult: { ...SNAPSHOT, blackjack: BLACKJACK_TABLE, ok: true, round } })
   openPanel(dom)
   pickTab(dom, 'shop')
+  openCasino(dom)
   findByAttr(contentOf(dom), 'data-blackjack', 'hit').fire('click')
   await settle()
   await settle()
@@ -2189,11 +2198,42 @@ test('blackjack: a hand that ends says how, and stays on the table until the nex
   assert.ok(lastByClass(hostOf(dom), 'dp-bj').allText().includes('2♣'), 'the last hand is still shown')
 })
 
+test('the shop opens on a casino door; the games live behind it, with a way back', async () => {
+  const lottery = { price: 100, cooldownMinutes: 10, waitSeconds: 0, affordable: true, prizes: [] }
+  const status = { ...SNAPSHOT, lottery, blackjack: BLACKJACK_TABLE }
+  const { dom } = await loadWithPoll({ status })
+  openPanel(dom)
+  pickTab(dom, 'shop')
+  const door = findByAttr(contentOf(dom), 'data-casino', 'open')
+  assert.ok(door, 'a casino door')
+  const kids = contentOf(dom).children
+  assert.ok(kids.indexOf(door) >= 0 && kids.indexOf(door) < kids.indexOf(lastByClass(contentOf(dom), 'dp-list')), 'above every shelf')
+  assert.equal(findByAttr(contentOf(dom), 'data-lottery', 'go'), undefined, 'no games on the shelves page')
+  assert.ok(door.allText().includes('刮彩票') && door.allText().includes('21 点'), door.allText())
+
+  // The fake DOM keeps cleared children, so read what the latest render ended with.
+  const lastShown = () => contentOf(dom).children.at(-1).className
+  door.fire('click')
+  assert.ok(findByAttr(contentOf(dom), 'data-lottery', 'go'), 'scratch cards inside')
+  assert.equal(findAllByAttr(contentOf(dom), 'data-blackjack', 'deal').length, 3, 'blackjack inside')
+  assert.equal(lastShown(), 'dp-bj', 'the casino page ends with blackjack, no shelves after it')
+
+  findByAttr(contentOf(dom), 'data-casino', 'back').fire('click')
+  assert.equal(lastShown(), 'dp-list', 'back on the shelves')
+
+  findAllByAttr(contentOf(dom), 'data-casino', 'open').at(-1).fire('click')
+  assert.equal(lastShown(), 'dp-bj')
+  pickTab(dom, 'status')
+  pickTab(dom, 'shop')
+  assert.equal(lastShown(), 'dp-list', 'another tab and back lands on the shelves')
+})
+
 test('blackjack: an older host without the table shows no blackjack', async () => {
   const { dom } = await loadWithPoll({ status: SNAPSHOT })
   openPanel(dom)
   pickTab(dom, 'shop')
   assert.equal(findAllByAttr(contentOf(dom), 'data-blackjack', 'deal').length, 0)
+  assert.equal(findByAttr(contentOf(dom), 'data-casino', 'open'), undefined, 'nor a casino with nothing in it')
 })
 
 // ===========================================================================

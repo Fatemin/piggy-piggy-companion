@@ -279,6 +279,7 @@ window.__ModuleLoader__.load({
         '中了{prize}！+{coins} 🪙': '{prize}！ +{coins} 🪙', '谢谢参与…下次一定': 'はずれ…次こそ',
         '一等奖': '1等', '二等奖': '2等', '三等奖': '3等', '安慰奖': '残念賞', '谢谢参与': 'はずれ',
         // [ST0015] blackjack
+        '赌场': 'カジノ', '返回商店': 'ショップにもどる',
         '21 点': 'ブラックジャック', '下注 {min} 起 · {n} 点以上才能停': '{min} 🪙 から · {n} 以上でスタンド',
         '{total} 点': '{total}', '{total} 点（A 算 11）': '{total}（A=11）', '爆了': 'バースト',
         '下注 {bet} 🪙': 'ベット {bet} 🪙', '下注 {bet}': '{bet} 賭ける', '上一手': '前回',
@@ -512,6 +513,7 @@ window.__ModuleLoader__.load({
         '中了{prize}！+{coins} 🪙': '{prize}! +{coins} 🪙', '谢谢参与…下次一定': 'No luck… next time',
         '一等奖': '1st prize', '二等奖': '2nd prize', '三等奖': '3rd prize', '安慰奖': 'Consolation prize', '谢谢参与': 'No luck',
         // [ST0015] blackjack
+        '赌场': 'Casino', '返回商店': 'Back to the shop',
         '21 点': 'Blackjack', '下注 {min} 起 · {n} 点以上才能停': 'bets from {min} 🪙 · stand on {n}+',
         '{total} 点': '{total}', '{total} 点（A 算 11）': '{total} (A=11)', '爆了': 'bust',
         '下注 {bet} 🪙': 'Bet {bet} 🪙', '下注 {bet}': 'Bet {bet}', '上一手': 'Last hand',
@@ -1610,6 +1612,21 @@ window.__ModuleLoader__.load({
       '.dp-lottery{margin:0 0 10px;padding:8px 10px;border-radius:var(--ac-radius-sm);',
       'background:#fdf7e2;border:2px solid #f0dfa8}',
       '.dp-lottery .dp-row{align-items:baseline;gap:6px;margin:0 0 5px}',
+      /* [ST0015] the casino: its door at the top of the shop, and its page */
+      '.dp-casino-door{display:flex;align-items:center;gap:9px;width:100%;margin:0 0 10px;padding:9px 11px;',
+      'font:inherit;text-align:left;color:var(--ac-text);cursor:pointer;border-radius:var(--ac-radius-sm);',
+      'background:linear-gradient(135deg,#fdf0d5,#f6dcc8);border:2px solid #e8c48f;box-shadow:var(--ac-shadow-sm);',
+      'transition:all .2s var(--ac-ease)}',
+      '.dp-casino-door:hover{transform:translateY(-1px);box-shadow:var(--ac-shadow)}',
+      '.dp-casino-door:focus-visible{outline:2px solid var(--ac-primary);outline-offset:1px}',
+      '.dp-casino-door b{font-size:12px}',
+      '.dp-casino-door .dp-grow{flex:1;min-width:0}',
+      '.dp-casino-icon{font-size:22px;line-height:1}',
+      '.dp-casino-go{font-size:18px;font-weight:700;color:var(--ac-text-2)}',
+      '.dp-casino-back{font:inherit;font-size:11px;font-weight:700;color:var(--ac-text);cursor:pointer;',
+      'padding:2px 8px;border-radius:var(--ac-pill);background:var(--ac-bg-input);border:1.5px solid var(--ac-border-light)}',
+      '.dp-casino-back:focus-visible{outline:2px solid var(--ac-primary);outline-offset:1px}',
+      '.dp-casino-title{margin:0 0 8px;font-size:13px;font-weight:700;color:var(--ac-text)}',
       /* [ST0015] the blackjack table */
       '.dp-bj{margin:0 0 10px;padding:8px 10px;border-radius:var(--ac-radius-sm);',
       'background:#e9f5e4;border:2px solid #bcdcae}',
@@ -2507,6 +2524,8 @@ window.__ModuleLoader__.load({
       var busy = false
       // [ST0015] the blackjack hand that just ended, shown until the next deal.
       var blackjackLast = null
+      // [ST0015] which page of the shop tab is open: the shelves, or the casino.
+      var shopPage = 'shop'
       // [ST0007] the updater's last state (null: none, or not known yet), whether
       // the host has one at all, and the versions the pig already announced.
       var update = null
@@ -2691,6 +2710,7 @@ window.__ModuleLoader__.load({
       function select(next) {
         tab = next
         picker = null
+        shopPage = 'shop'
         renderContent()
         for (var k in icons) icons[k].setAttribute('data-active', k === tab ? 'true' : 'false')
         if (split) {
@@ -4063,7 +4083,51 @@ window.__ModuleLoader__.load({
         return m + ':' + (r < 10 ? '0' : '') + r
       }
 
+      /** [ST0015] The games the host offers, by name, for the casino entry. */
+      function casinoGames() {
+        var games = []
+        if (view.lottery !== null) games.push(T('刮彩票'))
+        if (view.blackjack !== null) games.push(T('21 点'))
+        return games
+      }
+
+      /** [ST0015] The casino door at the top of the shop. */
+      function casinoEntry(games) {
+        var door = button('dp-casino-door', { 'data-casino': 'open' }, function () {
+          shopPage = 'casino'
+          renderContent()
+        })
+        door.appendChild(el('span', 'dp-casino-icon', '🎰'))
+        var grow = el('div', 'dp-grow')
+        grow.appendChild(el('b', null, T('赌场')))
+        grow.appendChild(el('div', 'dp-note', games.join(' · ')))
+        door.appendChild(grow)
+        door.appendChild(el('span', 'dp-casino-go', '›'))
+        return door
+      }
+
+      /** [ST0015] The casino page: scratch cards and blackjack, and the way back. */
+      function casinoPage() {
+        var head = el('div', 'dp-title')
+        var back = button('dp-casino-back', { 'data-casino': 'back' }, function () {
+          shopPage = 'shop'
+          renderContent()
+        })
+        back.textContent = '‹ ' + T('返回商店')
+        head.appendChild(back)
+        head.appendChild(el('span', null, '🪙 ' + view.pig.coins))
+        content.appendChild(head)
+        content.appendChild(el('div', 'dp-casino-title', '🎰 ' + T('赌场')))
+        if (view.lottery !== null) content.appendChild(lotteryBlock())
+        if (view.blackjack !== null) content.appendChild(blackjackBlock())
+      }
+
       function shopTab() {
+        if (shopPage === 'casino' && casinoGames().length > 0) {
+          casinoPage()
+          return
+        }
+        shopPage = 'shop'
         if (view.shop.length === 0) {
           content.appendChild(el('div', 'dp-empty', T('宿主还没提供货架。')))
           return
@@ -4072,8 +4136,8 @@ window.__ModuleLoader__.load({
         head.appendChild(el('b', null, '🛒 ' + T('商店')))
         head.appendChild(el('span', null, '🪙 ' + view.pig.coins))
         content.appendChild(head)
-        if (view.lottery !== null) content.appendChild(lotteryBlock())
-        if (view.blackjack !== null) content.appendChild(blackjackBlock())
+        var games = casinoGames()
+        if (games.length > 0) content.appendChild(casinoEntry(games))
         var list = el('div', 'dp-list')
         var shelf = ''
         // The host sends the shop in shelf order, but sort defensively so a
