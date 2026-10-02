@@ -39,7 +39,8 @@
         "test/host.test.js",
         "test/client.test.js",
         "test/features-cli.test.js",
-        "test/contracts.test.js"
+        "test/contracts.test.js",
+        "test/pens.test.js"
       ]
     },
     {
@@ -162,7 +163,8 @@
       "tests": [
         "test/server.test.js",
         "test/ops.test.js",
-        "test/cloud.test.js"
+        "test/cloud.test.js",
+        "test/pens.test.js"
       ]
     }
   ],

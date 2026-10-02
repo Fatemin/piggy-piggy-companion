@@ -7,6 +7,8 @@
  *   GET  /v1/sync                                       (signed)  the pig as it stands
  *   POST /v1/sync            { ops, snapshot? }         (signed)  replay ops, get the pig
  *   POST /v1/devices/revoke  { deviceId }               (signed)
+ *   GET  /v1/pen                                        (signed)  my pig pen, its pigs and invites
+ *   POST /v1/pen/create|join|leave|invite|accept|cancel (signed)  see pens.js
  *   GET  /v1/health
  *
  * Design: docs/design/ST0014-online-design.md. Locally, server/dev.mjs runs
@@ -15,6 +17,7 @@
 
 import { authenticate, me, requestCode, revokeDevice, verifyCode } from './auth.js'
 import { fail, json, readText } from './http.js'
+import { acceptInvite, cancelInvite, createPen, getPen, invite, joinPen, leavePen } from './pens.js'
 import { getPig, postSync } from './sync.js'
 
 const SIGNED = {
@@ -22,6 +25,14 @@ const SIGNED = {
   'GET /v1/sync': (env, device, now) => getPig(env, device, now),
   'POST /v1/sync': (env, device, now, text) => postSync(env, device, now, text),
   'POST /v1/devices/revoke': (env, device, now, text) => revokeDevice(env, device, now, text),
+  // [ST0014 P3] pig pens
+  'GET /v1/pen': (env, device, now) => getPen(env, device, now),
+  'POST /v1/pen/create': createPen,
+  'POST /v1/pen/join': joinPen,
+  'POST /v1/pen/leave': (env, device, now) => leavePen(env, device, now),
+  'POST /v1/pen/invite': invite,
+  'POST /v1/pen/accept': acceptInvite,
+  'POST /v1/pen/cancel': cancelInvite,
 }
 
 const OPEN = {

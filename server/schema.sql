@@ -72,3 +72,42 @@ CREATE TABLE IF NOT EXISTS ops (
   PRIMARY KEY (account_id, id)
 );
 CREATE INDEX IF NOT EXISTS ops_age ON ops (at);
+
+-- [ST0014 P3] Pig pens: friends' pigs that can go out together.
+CREATE TABLE IF NOT EXISTS pens (
+  id TEXT PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  owner_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+-- An account is in at most one pen.
+CREATE TABLE IF NOT EXISTS pen_members (
+  account_id TEXT PRIMARY KEY,
+  pen_id TEXT NOT NULL,
+  joined_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS pen_members_pen ON pen_members (pen_id);
+
+-- An invite to go out together; the first other member to accept takes it.
+CREATE TABLE IF NOT EXISTS coops (
+  id TEXT PRIMARY KEY,
+  pen_id TEXT NOT NULL,
+  inviter_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  args TEXT NOT NULL,
+  label TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  status TEXT NOT NULL,
+  partner_id TEXT,
+  token TEXT
+);
+CREATE INDEX IF NOT EXISTS coops_pen ON coops (pen_id, status);
+
+-- Accepting writes two pigs and the invite in one batch; this row only fits
+-- when all three writes landed (n = 3), so a half-done accept rolls back.
+CREATE TABLE IF NOT EXISTS coop_guard (
+  n INTEGER NOT NULL CHECK (n = 3)
+);

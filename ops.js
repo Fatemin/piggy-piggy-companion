@@ -30,6 +30,7 @@ import {
   setLang,
   setLook,
   startStudy,
+  startTogether,
   startTrip,
   startWork,
   useItem,
@@ -74,6 +75,8 @@ const TABLE = {
     if (s === null || s.dead !== true) return { state: s, result: false }
     return { state: adopt(s, at), result: true }
   },
+  // [ST0014] issued by the server only, to both pigs of an accepted pen invite.
+  coop: (s, [kind, args, coop], at, tz) => ({ state: s, result: startTogether(s, kind, args, coop, at, tz / 60) }),
   dev: (s, [patch], at) => {
     if (s === null) return { state: s, result: false }
     return { state: applyDevPatch(s, patch, at), result: true }
@@ -85,6 +88,9 @@ export const OP_NAMES = Object.freeze(Object.keys(TABLE))
 
 /** Ops that only make sense on the machine that did them; never synced. */
 export const LOCAL_OPS = Object.freeze(['dev'])
+
+/** Ops only the server may write into a pig's log; a device sending one is refused. */
+export const SERVER_OPS = Object.freeze(['coop'])
 
 /** Ops that work on an empty save (no pig, no box). */
 const WORKS_ON_NOTHING = new Set(['lang', 'hatch', 'reset'])

@@ -336,6 +336,17 @@ window.__ModuleLoader__.load({
         '用了云端的猪，这台电脑的猪已经备份': 'クラウドのブタにしました。このパソコンのブタはバックアップ済みです',
         '已退出登录，猪留在这台电脑上': 'ログアウトしました。ブタはこのパソコンに残っています',
         '另一台电脑上先发生了别的事，刚才的操作没有生效': 'ほかのパソコンで先に別のことが起きたので、さっきの操作は取り消されました',
+        // [ST0014 P3] pig pen
+        '猪圈': 'ブタ小屋', '和朋友的猪一起出门：快 30%、收获多 30%': '友だちのブタといっしょにおでかけ：30% 速く、30% 多くもらえる',
+        '建一个': 'つくる', '加入': '入る', '6 位邀请码': '6 文字の招待コード', '邀请码 {code}': '招待コード {code}',
+        '退出猪圈': '小屋を出る', '已经走了': 'もういない', '在睡觉': '寝ている', '在家': 'おうちにいる', '（你）': '（あなた）',
+        '等朋友接受：一起去 {what}': '友だちの返事待ち：いっしょに {what}', '撤回': '取り消す',
+        '{from} 邀请一起去 {what}': '{from} から「いっしょに {what}」のおさそい', '一起去': 'いっしょに行く', '邀请': 'さそう',
+        '没有这个邀请码的猪圈': 'その招待コードの小屋はありません', '这个猪圈满了': 'この小屋はいっぱいです',
+        '已经在一个猪圈里了': 'もう小屋に入っています', '这个邀请已经失效了': 'このおさそいはもう終わりました',
+        '条件还不够': '条件が足りない', '身体太虚': '体が弱っている', '这门课在这个学段上满了': 'この学年ではもう受けられない',
+        '朋友的猪去不了：{why}': '友だちのブタは行けません：{why}', '你的猪去不了：{why}': 'あなたのブタは行けません：{why}',
+        '邀请发出去了，10 分钟内有效': 'おさそいを送りました（10 分間有効）', '一起出发！': 'いっしょに出発！',
       },
       en: {
         // tabs
@@ -549,6 +560,17 @@ window.__ModuleLoader__.load({
         '用了云端的猪，这台电脑的猪已经备份': 'Took the cloud pig; the one on this computer is backed up',
         '已退出登录，猪留在这台电脑上': 'Signed out. The pig stays on this computer',
         '另一台电脑上先发生了别的事，刚才的操作没有生效': 'Something else happened first on another computer, so that last action did not count',
+        // [ST0014 P3] pig pen
+        '猪圈': 'Pig pen', '和朋友的猪一起出门：快 30%、收获多 30%': "Head out with friends' pigs: 30% faster, 30% more",
+        '建一个': 'Make one', '加入': 'Join', '6 位邀请码': '6-letter code', '邀请码 {code}': 'code {code}',
+        '退出猪圈': 'Leave', '已经走了': 'Gone', '在睡觉': 'Asleep', '在家': 'At home', '（你）': '(you)',
+        '等朋友接受：一起去 {what}': 'Waiting for a friend: {what} together', '撤回': 'Withdraw',
+        '{from} 邀请一起去 {what}': '{from} asks you along: {what}', '一起去': 'Go together', '邀请': 'Invite',
+        '没有这个邀请码的猪圈': 'No pen has that code', '这个猪圈满了': 'That pen is full',
+        '已经在一个猪圈里了': 'Already in a pen', '这个邀请已经失效了': 'That invite is over',
+        '条件还不够': 'not qualified yet', '身体太虚': 'too weak', '这门课在这个学段上满了': 'that class is used up at this stage',
+        '朋友的猪去不了：{why}': "Your friend's pig cannot go: {why}", '你的猪去不了：{why}': 'Your pig cannot go: {why}',
+        '邀请发出去了，10 分钟内有效': 'Invite sent (valid for 10 minutes)', '一起出发！': 'Off together!',
       },
     }
     // English singulars, picked when `params.n === 1`. Japanese and Chinese
@@ -667,6 +689,32 @@ window.__ModuleLoader__.load({
         waiting: num(raw.waiting, 0),
         notices: arr(raw.notices).filter(isObj).map(function (n) { return { op: str(n.op, ''), reason: str(n.reason, ''), at: num(n.at, 0) } }),
         conflict: conflict !== null && conflict.cloud !== null && conflict.local !== null ? conflict : null,
+        pen: normalizePen(raw.pen),
+      }
+    }
+
+    /** [ST0014 P3] The pig pen, or null when not in one. */
+    function normalizePen(raw) {
+      if (!isObj(raw) || typeof raw.code !== 'string') return null
+      return {
+        name: str(raw.name, ''),
+        code: raw.code,
+        limit: num(raw.limit, 6),
+        members: arr(raw.members).filter(isObj).map(function (m) {
+          var pig = isObj(m.pig) ? m.pig : null
+          var a = pig !== null && isObj(pig.activity) ? pig.activity : null
+          return {
+            you: m.you === true,
+            owner: m.owner === true,
+            name: pig === null ? '?' : str(pig.name, '?'),
+            dead: pig !== null && pig.dead === true,
+            asleep: pig !== null && pig.asleep === true,
+            activity: a === null ? null : { kind: str(a.kind, ''), key: str(a.key, ''), label: str(a.label, ''), emoji: str(a.emoji, ''), partner: str(a.partner, '') },
+          }
+        }),
+        invites: arr(raw.invites).filter(isObj).map(function (i) {
+          return { id: str(i.id, ''), from: str(i.from, '?'), mine: i.mine === true, kind: str(i.kind, ''), args: arr(i.args), label: str(i.label, '') }
+        }).filter(function (i) { return i.id !== '' }),
       }
     }
 
@@ -2413,9 +2461,13 @@ window.__ModuleLoader__.load({
       var cloudRoute = true
       var cloudOpen = false
       var cloudBusy = false
-      var cloudDraft = { server: '', email: '', code: '' }
+      var cloudDraft = { server: '', email: '', code: '', pen: '' }
       var cloudFocus = null
       var cloudSaid = {}
+      // [ST0014 P3] the pen's join form and invite picker.
+      var penJoining = false
+      var penKind = 'work'
+      var penPick = ''
 
       // ---- animation ----
       /** The sprite the pig settles back to after a reaction; null = emoji. */
@@ -3247,6 +3299,17 @@ window.__ModuleLoader__.load({
         if (r === 'offline') return T('连不上云端')
         if (r === 'revoked') return T('这台设备已经在别处退出登录')
         if (r === 'no-code') return T('先发送验证码')
+        if (r === 'no-such-pen') return T('没有这个邀请码的猪圈')
+        if (r === 'pen-full') return T('这个猪圈满了')
+        if (r === 'in-a-pen') return T('已经在一个猪圈里了')
+        if (r === 'no-such-invite') return T('这个邀请已经失效了')
+        if (r === 'cannot-go') {
+          var why = isObj(reply) ? str(reply.why, '') : ''
+          var whyText = why === 'away' ? T('在外面') : why === 'job-locked' || why === 'locked' ? T('条件还不够') : why === 'poor' ? T('钱不够') : why === 'hungry' ? T('太饿了') : why === 'weak' ? T('身体太虚') : why === 'capped' ? T('这门课在这个学段上满了') : why
+          return isObj(reply) && reply.who === 'partner'
+            ? T('朋友的猪去不了：{why}', { why: whyText })
+            : T('你的猪去不了：{why}', { why: whyText })
+        }
         return T('出错了（{reason}）', { reason: r || '?' })
       }
 
@@ -3257,6 +3320,152 @@ window.__ModuleLoader__.load({
         if (minutes < 1) return T('刚刚同步')
         if (minutes < 60) return T('{n} 分钟前同步', { n: minutes })
         return T('{n} 小时前同步', { n: Math.floor(minutes / 60) })
+      }
+
+      /** [ST0014 P3] An outing's name in the panel's language, from the tables the snapshot sent. */
+      function outingLabel(kind, key, fallback) {
+        var list = kind === 'work' ? view.jobs : kind === 'study' ? view.subjects : []
+        if (kind === 'trip' && view.world !== null) {
+          for (var r = 0; r < view.world.regions.length; r += 1) list = list.concat(view.world.regions[r].places)
+        }
+        for (var i = 0; i < list.length; i += 1) if (list[i].key === key) return list[i].emoji + ' ' + list[i].label
+        return fallback
+      }
+
+      /** [ST0014 P3] What can be picked for an invite of `kind`: `{ value, label }`, value = JSON args. */
+      function penChoices(kind) {
+        var out = []
+        if (kind === 'work') {
+          for (var i = 0; i < view.jobs.length; i += 1) out.push({ value: JSON.stringify([view.jobs[i].key]), label: view.jobs[i].emoji + ' ' + view.jobs[i].label })
+        } else if (kind === 'study') {
+          for (var s = 0; s < view.stages.length; s += 1) {
+            if (!view.stages[s].unlocked) continue
+            for (var j = 0; j < view.subjects.length; j += 1) {
+              out.push({ value: JSON.stringify([[view.subjects[j].key], view.stages[s].key]), label: view.stages[s].label + ' · ' + view.subjects[j].emoji + ' ' + view.subjects[j].label })
+            }
+          }
+        } else if (kind === 'trip' && view.world !== null) {
+          for (var r = 0; r < view.world.regions.length; r += 1) {
+            var places = view.world.regions[r].places
+            for (var p = 0; p < places.length; p += 1) out.push({ value: JSON.stringify([places[p].key]), label: places[p].emoji + ' ' + places[p].label })
+          }
+        }
+        return out
+      }
+
+      function penSelect(key, options, current, onPick) {
+        var select = document.createElement('select')
+        select.className = 'dp-input'
+        select.setAttribute('data-cloud', key)
+        for (var i = 0; i < options.length; i += 1) {
+          var option = document.createElement('option')
+          option.value = options[i].value
+          option.textContent = options[i].label
+          if (options[i].value === current) option.selected = true
+          select.appendChild(option)
+        }
+        select.addEventListener('focus', function () { cloudFocus = key })
+        select.addEventListener('blur', function () { if (cloudFocus === key) cloudFocus = null })
+        select.addEventListener('change', function () { onPick(String(select.value)) })
+        return select
+      }
+
+      /**
+       * [ST0014 P3] 🐷 猪圈: friends' pigs and what they are up to, invites to
+       * head out together (30% faster, 30% more), and the code to share.
+       */
+      function penBox() {
+        var pen = cloud.pen
+        var wrap = el('div', 'dp-pen')
+        var head = el('div', 'dp-row dp-version')
+        wrap.appendChild(head)
+        if (pen === null) {
+          head.appendChild(el('span', null, '🐷 ' + T('猪圈') + ' · ' + T('和朋友的猪一起出门：快 30%、收获多 30%')))
+          if (!penJoining) {
+            var make = button('dp-mini', { 'data-cloud-act': 'pen-create' }, function () { cloudAct('pen-create', { name: T('猪圈') }) })
+            make.textContent = T('建一个')
+            make.disabled = cloudBusy
+            head.appendChild(make)
+            var join = button('dp-mini', { 'data-cloud-act': 'pen-join-open' }, function () { penJoining = true; renderContent(); renderSide() })
+            join.textContent = T('加入')
+            head.appendChild(join)
+            return wrap
+          }
+          var line = el('div', 'dp-rename-row')
+          line.appendChild(cloudInput('pen', T('6 位邀请码'), 'text'))
+          var go = button('dp-mini', { 'data-cloud-act': 'pen-join' }, function () {
+            cloudAct('pen-join', { code: cloudDraft.pen.trim() })
+          })
+          go.textContent = T('加入')
+          go.disabled = cloudBusy
+          line.appendChild(go)
+          var back = button('dp-btn', { 'data-cloud-act': 'pen-join-cancel' }, function () { penJoining = false; renderContent(); renderSide() })
+          back.textContent = T('算了')
+          line.appendChild(back)
+          wrap.appendChild(line)
+          return wrap
+        }
+
+        head.appendChild(el('span', null, '🐷 ' + pen.name + ' · ' + T('邀请码 {code}', { code: pen.code })))
+        var leave = button('dp-mini', { 'data-cloud-act': 'pen-leave' }, function () { cloudAct('pen-leave') })
+        leave.textContent = T('退出猪圈')
+        leave.disabled = cloudBusy
+        head.appendChild(leave)
+
+        var list = el('div', 'dp-list')
+        for (var i = 0; i < pen.members.length; i += 1) {
+          var m = pen.members[i]
+          var doing = m.dead ? T('已经走了')
+            : m.activity !== null ? outingLabel(m.activity.kind, m.activity.key, m.activity.emoji + ' ' + m.activity.label) + (m.activity.partner !== '' ? ' 🤝 ' + m.activity.partner : '')
+            : m.asleep ? T('在睡觉') : T('在家')
+          var item = el('div', 'dp-item')
+          item.appendChild(el('span', null, m.owner ? '👑' : '🐷'))
+          var grow = el('div', 'dp-grow')
+          grow.appendChild(el('div', null, m.name + (m.you ? ' ' + T('（你）') : '')))
+          grow.appendChild(el('div', 'dp-dim', doing))
+          item.appendChild(grow)
+          list.appendChild(item)
+        }
+        wrap.appendChild(list)
+
+        for (var k = 0; k < pen.invites.length; k += 1) {
+          (function (inv) {
+            var what = outingLabel(inv.kind, inv.kind === 'study' ? arr(inv.args[0])[0] : inv.args[0], inv.label)
+            var inviteCard = el('div', 'dp-alert dp-work')
+            if (inv.mine) {
+              inviteCard.appendChild(el('div', null, T('等朋友接受：一起去 {what}', { what: what })))
+              var withdraw = button('dp-mini', { 'data-cloud-act': 'pen-cancel' }, function () { cloudAct('pen-cancel', { inviteId: inv.id }) })
+              withdraw.textContent = T('撤回')
+              withdraw.disabled = cloudBusy
+              inviteCard.appendChild(withdraw)
+            } else {
+              inviteCard.appendChild(el('b', null, '🤝 ' + T('{from} 邀请一起去 {what}', { from: inv.from, what: what })))
+              var yes = button('dp-mini', { 'data-cloud-act': 'pen-accept' }, function () { cloudAct('pen-accept', { inviteId: inv.id }) })
+              yes.textContent = T('一起去')
+              yes.disabled = cloudBusy || view.activity !== null
+              inviteCard.appendChild(yes)
+            }
+            wrap.appendChild(inviteCard)
+          })(pen.invites[k])
+        }
+
+        if (pen.members.length > 1 && view.activity === null && !pen.invites.some(function (inv) { return inv.mine })) {
+          var kinds = [{ value: 'work', label: T('打工') }, { value: 'study', label: T('学习') }, { value: 'trip', label: T('旅行') }]
+          var choices = penChoices(penKind)
+          if (!choices.some(function (c) { return c.value === penPick })) penPick = choices.length > 0 ? choices[0].value : ''
+          var pick = el('div', 'dp-rename-row')
+          pick.appendChild(penSelect('pen-kind', kinds, penKind, function (value) { penKind = value; penPick = ''; renderContent(); renderSide() }))
+          pick.appendChild(penSelect('pen-item', choices, penPick, function (value) { penPick = value }))
+          var ask = button('dp-mini', { 'data-cloud-act': 'pen-invite' }, function () {
+            if (penPick === '') return
+            cloudAct('pen-invite', { kind: penKind, args: JSON.parse(penPick) })
+          })
+          ask.textContent = T('邀请')
+          ask.disabled = cloudBusy || penPick === ''
+          pick.appendChild(ask)
+          wrap.appendChild(pick)
+        }
+        return wrap
       }
 
       /** [ST0014] One field of the login form; its text lives in `cloudDraft`. */
@@ -3270,13 +3479,14 @@ window.__ModuleLoader__.load({
         input.setAttribute('aria-label', placeholder)
         input.setAttribute('autocomplete', key === 'code' ? 'one-time-code' : (key === 'email' ? 'email' : 'off'))
         if (key === 'code') { input.inputMode = 'numeric'; input.maxLength = 6 }
+        if (key === 'pen') { input.maxLength = 6; input.style.textTransform = 'uppercase' }
         input.addEventListener('input', function () { cloudDraft[key] = String(input.value ?? '') })
         input.addEventListener('focus', function () { cloudFocus = key })
         input.addEventListener('blur', function () { if (cloudFocus === key) cloudFocus = null })
         input.addEventListener('keydown', function (event) {
           event.stopPropagation?.()
           if (event.isComposing || event.keyCode === 229) return
-          if (event.key === 'Enter') { event.preventDefault?.(); cloudSubmit() }
+          if (event.key === 'Enter') { event.preventDefault?.(); if (key === 'pen') cloudAct('pen-join', { code: cloudDraft.pen.trim() }); else cloudSubmit() }
           else if (event.key === 'Escape') { event.preventDefault?.(); cloudOpen = false; cloudFocus = null; renderContent(); renderSide() }
         })
         return input
@@ -3309,12 +3519,12 @@ window.__ModuleLoader__.load({
         box.appendChild(row)
 
         if (c.phase === 'choose' && c.conflict !== null) {
-          var ask = el('div', 'dp-alert dp-legacy')
-          ask.appendChild(el('b', null, '☁️ ' + T('云端已经有一只猪了')))
-          ask.appendChild(el('div', 'dp-line', T('云端：{name}（{coins} 🪙）· 这台电脑：{local}（{localCoins} 🪙）', {
+          var chooseBox = el('div', 'dp-alert dp-legacy')
+          chooseBox.appendChild(el('b', null, '☁️ ' + T('云端已经有一只猪了')))
+          chooseBox.appendChild(el('div', 'dp-line', T('云端：{name}（{coins} 🪙）· 这台电脑：{local}（{localCoins} 🪙）', {
             name: c.conflict.cloud.name, coins: c.conflict.cloud.coins, local: c.conflict.local.name, localCoins: c.conflict.local.coins,
           })))
-          ask.appendChild(el('div', 'dp-line dp-dim', T('一个账号只能养一只猪。用云端的猪的话，这台电脑上的猪会存成备份文件。')))
+          chooseBox.appendChild(el('div', 'dp-line dp-dim', T('一个账号只能养一只猪。用云端的猪的话，这台电脑上的猪会存成备份文件。')))
           var acts = el('div', 'dp-actions')
           var keep = button('dp-btn', { 'data-cloud-act': 'keep-cloud' }, function () { cloudAct('keep-cloud') })
           keep.appendChild(el('span', null, T('用云端的猪')))
@@ -3322,9 +3532,9 @@ window.__ModuleLoader__.load({
           var leave = button('dp-btn', { 'data-cloud-act': 'sign-out' }, function () { cloudAct('sign-out') })
           leave.appendChild(el('span', null, T('退出登录')))
           acts.appendChild(leave)
-          ask.appendChild(acts)
+          chooseBox.appendChild(acts)
           row.appendChild(el('span', null, '☁️ ' + c.email))
-          box.appendChild(ask)
+          box.appendChild(chooseBox)
           return box
         }
 
@@ -3342,6 +3552,7 @@ window.__ModuleLoader__.load({
           out.textContent = T('退出')
           out.disabled = cloudBusy
           row.appendChild(out)
+          box.appendChild(penBox())
           return box
         }
 
@@ -4444,9 +4655,12 @@ window.__ModuleLoader__.load({
           else if (action === 'verify') { cloudOpen = false; cloudDraft.code = ''; cloudFocus = null }
           else if (action === 'keep-cloud') showBubble(T('用了云端的猪，这台电脑的猪已经备份'), 4200)
           else if (action === 'sign-out') { cloudOpen = false; showBubble(T('已退出登录，猪留在这台电脑上'), 3200) }
+          else if (action === 'pen-join') { penJoining = false; cloudDraft.pen = ''; cloudFocus = null }
+          else if (action === 'pen-invite') showBubble(T('邀请发出去了，10 分钟内有效'), 3200)
+          else if (action === 'pen-accept') showBubble(T('一起出发！'), 3200)
           cloudBusy = false
           if (isObj(reply.status)) setCloud(reply.status)
-          if (action === 'verify' || action === 'keep-cloud' || action === 'sync') await refresh()
+          if (action === 'verify' || action === 'keep-cloud' || action === 'sync' || action === 'pen-accept') await refresh()
         } catch (error) {
           showBubble(T('连接不上宿主'), 4000)
         } finally {

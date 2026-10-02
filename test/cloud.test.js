@@ -274,3 +274,37 @@ test('the panel server logs in and syncs through /pig/cloud', async () => {
     rmSync(dir, { recursive: true, force: true })
   }
 })
+
+test('[P3] two friends: a pen, an invite, and both pigs head out together', async () => {
+  const w = cloudWorld()
+  try {
+    const ann = w.device('ann')
+    ann.store.hatch()
+    ann.store.renamePig('Ann')
+    ann.store.dev({ coins: 3000 })
+    await ann.login('ann@example.com')
+    const bo = w.device('bo')
+    bo.store.hatch()
+    bo.store.renamePig('Bo')
+    await bo.login('bo@example.com')
+
+    const made = await ann.cloud.penCreate('猪圈')
+    assert.equal(made.ok, true, JSON.stringify(made))
+    const joined = await bo.cloud.penJoin(made.pen.code)
+    assert.equal(joined.ok, true)
+    assert.equal(bo.cloud.status().pen.members.length, 2)
+
+    const asked = await ann.cloud.penInvite('work', ['tutor'])
+    assert.equal(asked.ok, true, JSON.stringify(asked))
+    await bo.cloud.penRefresh()
+    const invite = bo.cloud.status().pen.invites[0]
+    assert.equal(invite.from, 'Ann')
+    const accepted = await bo.cloud.penAccept(invite.id)
+    assert.equal(accepted.ok, true, JSON.stringify(accepted))
+    assert.equal(bo.store.state.activity?.coop?.partner, 'Ann', 'synced right after accepting')
+    await ann.cloud.syncNow()
+    assert.equal(ann.store.state.activity?.coop?.partner, 'Bo', 'and the inviter sees it on its next sync')
+  } finally {
+    w.done()
+  }
+})

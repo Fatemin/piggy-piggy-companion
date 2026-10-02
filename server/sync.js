@@ -12,7 +12,7 @@
  */
 
 import { advance, migrate } from '../core.js'
-import { LOCAL_OPS, applyOp, opProblem } from '../ops.js'
+import { LOCAL_OPS, SERVER_OPS, applyOp, opProblem } from '../ops.js'
 import { fail, json, parseObject } from './http.js'
 
 export const MAX_OPS_PER_SYNC = 500
@@ -24,7 +24,7 @@ const feedEveryMs = env => {
   return (Number.isFinite(minutes) && minutes >= 0 ? minutes : 30) * 60_000
 }
 
-async function loadPig(env, accountId) {
+export async function loadPig(env, accountId) {
   const row = await env.DB.prepare('SELECT rev, state, last_at, last_feed_at, token FROM pigs WHERE account_id = ?').bind(accountId).first()
   if (row === null) return { exists: false, rev: 0, state: null, lastAt: 0, lastFeedAt: 0 }
   let state = null
@@ -33,7 +33,7 @@ async function loadPig(env, accountId) {
 }
 
 /** The pig as it stands right now: folded in to `now`, no announcements. */
-function settled(state, now) {
+export function settled(state, now) {
   if (state === null) return null
   advance(state, now)
   state.pending = []
@@ -105,6 +105,7 @@ function replay(pig, body, ops, known, env, now) {
     const at = Math.min(Math.max(op.at, floor), now)
     let reason = null
     if (LOCAL_OPS.includes(op.op)) reason = 'local-only'
+    else if (SERVER_OPS.includes(op.op)) reason = 'server-only'
     else if (op.op === 'feed' && lastFeedAt > 0 && at - lastFeedAt < feedEveryMs(env)) reason = 'feed-cooldown'
     else {
       const out = applyOp(state, { ...op, at })

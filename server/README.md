@@ -64,6 +64,9 @@ node server/dev.mjs
 | GET | `/v1/sync` | 签名 | 当前的猪 |
 | POST | `/v1/sync` | 签名 | `{ ops, snapshot? }` 重放操作，返回权威存档 |
 | POST | `/v1/devices/revoke` | 签名 | `{ deviceId }` 吊销设备 |
+| GET | `/v1/pen` | 签名 | 我的猪圈：成员的猪、进行中的邀请 |
+| POST | `/v1/pen/create` · `/join` · `/leave` | 签名 | 建猪圈 `{ name }` / 用邀请码加入 `{ code }` / 退出 |
+| POST | `/v1/pen/invite` · `/accept` · `/cancel` | 签名 | 邀请一起出门 `{ kind, args }` / 接受 `{ inviteId }` / 撤回 |
 | GET | `/v1/health` | — | 存活检查 |
 
 签名格式见 [`lib/cloud-proto.js`](../lib/cloud-proto.js)。

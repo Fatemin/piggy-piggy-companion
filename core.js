@@ -63,6 +63,7 @@ import {
   DIPLOMAS,
   diplomaCount,
   PARALLEL_COURSES,
+  COOP,
   RENAME_CARD,
   LOTTERY,
   jobMissing,
@@ -894,6 +895,14 @@ function sanitizeActivity(raw) {
     startedAt: Number(source.startedAt) || 0,
     endsAt: source.endsAt,
     cost: Number(source.cost) || 0,
+    // [ST0014] a pig pen outing keeps its bonus through a save and a sync.
+    ...(asObject(source.coop) !== null && Number.isFinite(source.coop.bonus) ? {
+      coop: {
+        id: typeof source.coop.id === 'string' ? source.coop.id.slice(0, 64) : '',
+        partner: typeof source.coop.partner === 'string' ? source.coop.partner.slice(0, 32) : '',
+        bonus: Math.min(COOP.bonus, Math.max(1, source.coop.bonus)),
+      },
+    } : {}),
   }
 }
 
@@ -1190,14 +1199,14 @@ function finishWork(state, activity, nowMs) {
   // [mod] a gig's pay is a roll; the trait bonus still multiplies it.
   const base = job.random === null ? job.coins : rollPay(job.random, () => nextRandom(state))
   // [mod] 土豪 (Middle East & Africa complete): +15% pay.
-  const withTrait = base * traitBonus(job.trait, points).pay * (hasPerk(state, 'tycoon') ? 1.15 : 1)
+  const withTrait = base * traitBonus(job.trait, points).pay * (hasPerk(state, 'tycoon') ? 1.15 : 1) * coopBonus(activity)
   const coins = sick ? Math.max(1, Math.round(withTrait * SICK_PAY_MULTIPLIER)) : Math.round(withTrait)
   state.coins += coins
   state.satiety = clamp100(state.satiety + job.satiety)
   state.cleanliness = clamp100(state.cleanliness + job.cleanliness)
   state.stats.jobs += 1
   state.stats.coinsEarned += coins
-  applyEffects(state, { xp: job.xp }, nowMs)
+  applyEffects(state, { xp: Math.round(job.xp * coopBonus(activity)) }, nowMs)
   const tag = sick
     ? say(state, '（带病上工，只有一半）')
     : (points > 0 ? say(state, '（{trait} {points}）', { trait: word(state, TRAITS[job.trait].label), points }) : '')
@@ -1208,6 +1217,9 @@ function finishWork(state, activity, nowMs) {
     ? say(state, '{name} 带病打工回来了，只赚到 {coins} 金币 🤒', { name: state.name, coins })
     : say(state, '{name} 打工回来了！赚到 {coins} 金币 💰', { name: state.name, coins }))
 }
+
+/** [ST0014] The pay multiplier of an outing: COOP.bonus when it was a pig pen one. */
+const coopBonus = activity => (Number.isFinite(activity?.coop?.bonus) && activity.coop.bonus > 1 ? activity.coop.bonus : 1)
 
 /** [mod] A whole number of coins in [min, max]. */
 function rollPay([min, max], random) {
@@ -1225,8 +1237,18 @@ function finishStudy(state, activity, nowMs) {
   state.lessonsByStage = { ...(state.lessonsByStage ?? {}) }
   state.stageCourses = { ...(state.stageCourses ?? {}), [stage.key]: { ...(state.stageCourses?.[stage.key] ?? {}) } }
   // [mod] several subjects in one sitting: each pays out, each is tiring.
+  // [ST0014] together: more points on average, the fraction rolled.
+  const gainFor = () => {
+    const bonus = coopBonus(activity)
+    if (bonus === 1) return stage.gain
+    const extra = stage.gain * (bonus - 1)
+    return stage.gain + Math.floor(extra) + (nextRandom(state) < extra - Math.floor(extra) ? 1 : 0)
+  }
+  const gained = {}
   for (const subject of subjects) {
-    state.traits[subject.trait] = (state.traits[subject.trait] ?? 0) + stage.gain
+    const gain = gainFor()
+    gained[subject.trait] = (gained[subject.trait] ?? 0) + gain
+    state.traits[subject.trait] = (state.traits[subject.trait] ?? 0) + gain
     state.courses[subject.key] = (state.courses[subject.key] ?? 0) + 1
     state.stageCourses[stage.key][subject.key] = (state.stageCourses[stage.key][subject.key] ?? 0) + 1
     // Counted per stage, because that is what unlocks the next school.
@@ -1236,11 +1258,11 @@ function finishStudy(state, activity, nowMs) {
   }
   state.satiety = clamp100(state.satiety + stage.satiety * subjects.length)
   state.happiness = clamp100(state.happiness + stage.happiness * subjects.length)
-  applyEffects(state, { xp: stage.xp * subjects.length }, nowMs)
+  applyEffects(state, { xp: Math.round(stage.xp * subjects.length * coopBonus(activity)) }, nowMs)
   const traits = [...new Set(subjects.map(subject => subject.trait))]
     .map(trait => say(state, '{trait} +{gain}', {
       trait: word(state, TRAITS[trait].label),
-      gain: stage.gain * subjects.filter(subject => subject.trait === trait).length,
+      gain: gained[trait],
     }))
     .join(word(state, '，'))
   const params = { name: state.name, emoji: activity.emoji, lesson: lessonLabel(langOf(state), stage.key, subjects.map(s => s.key)), gains: traits }
@@ -1343,11 +1365,11 @@ function finishTrip(state, activity, nowMs) {
   }
 
   // [mod] 博物馆通票 (Europe complete): half as much joy again from every trip.
-  const joy = Math.round((activity.happiness || 0) * (hasPerk(state, 'museum') ? 1.5 : 1))
+  const joy = Math.round((activity.happiness || 0) * (hasPerk(state, 'museum') ? 1.5 : 1) * coopBonus(activity))
   state.happiness = clamp100(state.happiness + joy)
   state.satiety = clamp100(state.satiety + (activity.satiety || 0))
   state.stats.trips += 1
-  applyEffects(state, { xp: activity.xp || 0 }, nowMs)
+  applyEffects(state, { xp: Math.round((activity.xp || 0) * coopBonus(activity)) }, nowMs)
 
   const lootText = loot.length === 0 ? '' : say(state, '，还带回了 {items}', {
     items: loot.map(key => { const item = itemByKey(key); return `${item.emoji}${word(state, item.label)}` }).join(word(state, '、')),
@@ -1773,6 +1795,31 @@ export function startTrip(state, placeKey, nowMs, homeUtc = systemUtcOffset()) {
   }
   remember(state, say(state, '{emoji} 出发去{trip}（花了 {cost} 金币）', { emoji: place.emoji, trip: word(state, place.label), cost: quote.cost }), nowMs)
   return result
+}
+
+/**
+ * [ST0014] Head out together with a pig from the pen: the ordinary start
+ * (same checks, same costs — each pig must qualify on its own), then 30%
+ * faster and marked as a pen outing, which pays 30% more when it settles.
+ * Only the server issues this, for both pigs at once, when an invite is
+ * accepted. `args` are what the ordinary op takes.
+ */
+export function startTogether(state, kind, args, coop, nowMs, homeUtc = systemUtcOffset()) {
+  if (!COOP.kinds.includes(kind)) return { ok: false, reason: 'unknown' }
+  const list = Array.isArray(args) ? args : []
+  const result = kind === 'work' ? startWork(state, list[0], nowMs)
+    : kind === 'study' ? startStudy(state, list[0], list[1], nowMs)
+    : startTrip(state, list[0], nowMs, homeUtc)
+  if (!result.ok) return result
+  const activity = state.activity
+  activity.endsAt = activity.startedAt + Math.max(60_000, Math.round((activity.endsAt - activity.startedAt) / COOP.speed))
+  activity.coop = {
+    id: typeof coop?.id === 'string' ? coop.id.slice(0, 64) : '',
+    partner: typeof coop?.partner === 'string' ? coop.partner.slice(0, 32) : '',
+    bonus: COOP.bonus,
+  }
+  remember(state, say(state, '🤝 和{partner}一起出发，快 30%、收获多 30%', { partner: activity.coop.partner }), nowMs)
+  return { ok: true, activity }
 }
 
 /** Seconds left on the current activity (0 when idle). */
