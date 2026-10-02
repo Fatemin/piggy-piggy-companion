@@ -5,6 +5,11 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **安装包按 GitHub 项目名命名（ST0012）。** `piggy-piggy-companion-<版本>-universal.dmg`、`piggy-piggy-companion-Setup-<版本>.exe`（原 `DSH Piggy-…` / `DSH Piggy Setup …`）；App 名称和存档位置不变。v0.15.0 的 Release 附件与分享文件夹已同步改名。
+
 ## [0.15.0] — 2026-10-02
 
 ### Changed
