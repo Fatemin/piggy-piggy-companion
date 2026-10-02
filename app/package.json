@@ -50,7 +50,8 @@
       "hardenedRuntime": false
     },
     "dmg": {
-      "title": "DSH Piggy"
+      "title": "DSH Piggy",
+      "artifactName": "piggy-piggy-companion-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -64,6 +65,7 @@
       "icon": "build/icon.png"
     },
     "nsis": {
+      "artifactName": "piggy-piggy-companion-Setup-${version}.${ext}",
       "oneClick": true,
       "perMachine": false,
       "shortcutName": "DSH Piggy",

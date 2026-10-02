@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
 
-import { bundleOf, compareVersions, download, fetchLatest, MAC_SWAP_SCRIPT, pickAsset, readRelease, stageMacApp } from '../app/update-core.mjs'
+import { bundleOf, compareVersions, download, fetchLatest, MAC_SWAP_SCRIPT, pickAsset, readRelease, REPO, stageMacApp } from '../app/update-core.mjs'
 
 const temp = () => mkdtempSync(join(tmpdir(), 'pig-update-'))
 const url = name => `https://github.com/x/y/releases/download/v0.7.0/${name}`
@@ -123,4 +123,21 @@ test('the app is copied out of a real dmg', { skip: process.platform !== 'darwin
   await stageMacApp(dmg, staged)
   assert.equal(readFileSync(join(staged, 'Contents', 'version'), 'utf8'), 'from-dmg')
   assert.deepEqual(execFileSync('ls', ['-a', dir], { encoding: 'utf8' }).split('\n').filter(n => n.startsWith('.piggy-dmg-')), [], 'mount point removed')
+})
+
+// [ST0012] Installers are named after the GitHub project the updater reads,
+// so a download, a release asset and the share folder all say what it is.
+test('installers are named after the GitHub project', () => {
+  const app = JSON.parse(readFileSync(new URL('../app/package.json', import.meta.url), 'utf8'))
+  const project = REPO.split('/')[1]
+  const fill = (pattern, ext) => pattern.replace('${version}', app.version).replace('${arch}', 'universal').replace('${ext}', ext)
+  const dmg = fill(app.build.dmg.artifactName, 'dmg')
+  const exe = fill(app.build.nsis.artifactName, 'exe')
+  assert.equal(dmg, `${project}-${app.version}-universal.dmg`)
+  assert.equal(exe, `${project}-Setup-${app.version}.exe`)
+  const asset = name => ({ name, browser_download_url: `https://example.invalid/${name}` })
+  assert.equal(pickAsset([asset(exe), asset(dmg)], 'darwin').name, dmg, 'the updater still finds the dmg')
+  assert.equal(pickAsset([asset(dmg), asset(exe)], 'win32').name, exe, 'and the Setup exe')
+  const readme = readFileSync(new URL('../app/share-readme.txt', import.meta.url), 'utf8')
+  for (const name of [dmg, exe]) assert.ok(readme.includes(`“${name}”`), `the share readme names ${name}`)
 })
