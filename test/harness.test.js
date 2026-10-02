@@ -75,20 +75,30 @@ test('pigs: ps rows, env values and roles', async () => {
     '  501   500   05:00 /w/app/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron .',
     '  600     1   05:00 node /r/bin/pig.js serve',
     '  700     1   01:00 /Applications/piggy-piggy-companion.app/Contents/MacOS/piggy-piggy-companion',
+    '  800     1 2:40:00 /r/desktop/.build/release/DshPiggyDesk',
+    '  801   800 2:40:00 /n/bin/node /r/bin/pig.js serve',
   ].join('\n'))
   const env = { 300: 'DSH Piggy PIGGY_USER_DATA=/tmp/e2e/userdata', 501: 'Electron . PIGGY_USER_DATA=/tmp/ud', 600: 'node PIG_STATE=/tmp/s.json' }
   const pigs = Object.fromEntries(classify(procs, (pid) => env[pid] ?? null).map((p) => [p.pid, p]))
-  assert.deepEqual(Object.keys(pigs).map(Number), [300, 403, 501, 600, 700])
+  assert.deepEqual(Object.keys(pigs).map(Number), [300, 403, 501, 600, 700, 800, 801])
   assert.equal(pigs[700].kind, 'desk-app', '[ST0012] the renamed app is a pig too')
-  assert.equal(pigs[700].role, 'real')
+  assert.equal(pigs[700].role, 'test', '[AC0013] every Electron pig is a test pig')
   assert.equal(pigs[300].role, 'test')
   assert.equal(pigs[300].orphan, false)
-  assert.equal(pigs[403].role, 'real')
+  assert.equal(pigs[403].role, 'test', '[AC0013] even on the default profile')
+  assert.equal(pigs[403].data, null)
   assert.equal(pigs[403].checkout, '/r')
   assert.equal(pigs[403].orphan, true)
   assert.equal(pigs[501].orphan, true)
   assert.equal(pigs[600].role, 'test')
-  assert.equal(reapReason(pigs[403], { allTests: true }), null, 'the real pig is never reaped')
+  assert.equal(pigs[800].kind, 'native')
+  assert.equal(pigs[800].role, 'real', "the Swift desk app is the user's own pig")
+  assert.equal(pigs[800].checkout, '/r')
+  assert.equal(pigs[801].role, 'real', 'its serve owns the default save')
+  assert.deepEqual(pigs[801].ancestors, [800])
+  assert.equal(reapReason(pigs[800], { allTests: true }), null, 'the real pig is never reaped')
+  assert.equal(reapReason(pigs[801], { allTests: true }), null)
+  assert.match(reapReason(pigs[403]), /orphaned/)
   assert.match(reapReason(pigs[501]), /orphaned/)
   assert.match(reapReason(pigs[300]), /older than/)
   assert.equal(reapReason(pigs[300], { maxAgeMin: 500 }), null)

@@ -233,16 +233,5 @@
     "changelog": "CHANGELOG.md",
     "changelog_heading": "^## \\[(?<version>\\d+\\.\\d+\\.\\d+)\\]",
     "tag_prefix": "v"
-  },
-  "post_integrate": {
-    "restart": {
-      "cwd": ".",
-      "command": [
-        "node",
-        "scripts/harness/pigs.mjs",
-        "restart"
-      ],
-      "reason": "standing user rule: the desktop app must run the merged result"
-    }
   }
 }
