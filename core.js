@@ -63,6 +63,7 @@ import {
   DIPLOMAS,
   diplomaCount,
   PARALLEL_COURSES,
+  COOP,
   RENAME_CARD,
   LOTTERY,
   jobMissing,
@@ -442,8 +443,8 @@ function die(state, nowMs, why) {
  * running host holds the state in memory, so editing the file does not even
  * work while it is up.
  */
-export function reset(nowMs) {
-  return layEgg(nowMs)
+export function reset(nowMs, lang) {
+  return layEgg(nowMs, lang)
 }
 
 /**
@@ -546,9 +547,10 @@ export function adopt(state, nowMs) {
 // Creation and migration
 // ---------------------------------------------------------------------------
 
-export function layEgg(nowMs) {
-  // [dsh-piggy-claude-code mod] a new pig speaks the host's default language.
-  const lang = defaultLang()
+export function layEgg(nowMs, lang = defaultLang()) {
+  // [dsh-piggy-claude-code mod] a new pig speaks the host's default language;
+  // [ST0014] a replayed op names it, since the server has no host language.
+  lang = normalizeLang(lang) ?? defaultLang()
   return {
     lang,
     version: STATE_VERSION,
@@ -600,6 +602,12 @@ export function layEgg(nowMs) {
     lastActiveAt: nowMs,
     lastSeenAt: nowMs,
     cooldowns: {},
+    // [ST0014] the pig's own dice: every roll comes from here, so the same ops
+    // give the same pig on any machine (see nextRandom).
+    rng: seedFrom(nowMs),
+    // [ST0014] the owner's UTC offset in minutes, for the [HH:MM] in memories;
+    // null means the machine's own zone.
+    utcOffsetMin: null,
     pending: [],
     memories: [],
     stats: {
@@ -631,8 +639,8 @@ export function hatch(state, nowMs) {
   return state
 }
 
-export function hatchEgg(nowMs) {
-  const state = layEgg(nowMs)
+export function hatchEgg(nowMs, lang) {
+  const state = layEgg(nowMs, lang)
   state.hatched = true
   state.bornAt = nowMs
   state.weightG += HATCH_WEIGHT_G
@@ -684,6 +692,9 @@ export function migrate(raw) {
   if (typeof state.name !== 'string' || state.name.trim() === '') state.name = egg.name
   // [dsh-piggy-claude-code mod] saves from before languages existed stay Chinese.
   state.lang = normalizeLang(raw.lang) ?? 'zh'
+  // [ST0014] older saves get dice seeded from their birth, the same everywhere.
+  state.rng = Number.isInteger(raw.rng) && raw.rng >= 0 && raw.rng <= 0xffffffff ? raw.rng : seedFrom(state.bornAt)
+  state.utcOffsetMin = Number.isFinite(raw.utcOffsetMin) && Math.abs(raw.utcOffsetMin) <= 14 * 60 ? raw.utcOffsetMin : null
 
   state.health = clamp(Math.round(state.health), 0, MAX.health)
   state.satiety = clamp100(state.satiety)
@@ -841,7 +852,7 @@ function sanitizeIllness(raw) {
   return {
     chain,
     stage,
-    since: Number.isFinite(source.since) ? source.since : Date.now(),
+    since: Number.isFinite(source.since) ? source.since : 0,
     progressMs: Number.isFinite(source.progressMs) ? Math.max(0, source.progressMs) : 0,
   }
 }
@@ -884,6 +895,14 @@ function sanitizeActivity(raw) {
     startedAt: Number(source.startedAt) || 0,
     endsAt: source.endsAt,
     cost: Number(source.cost) || 0,
+    // [ST0014] a pig pen outing keeps its bonus through a save and a sync.
+    ...(asObject(source.coop) !== null && Number.isFinite(source.coop.bonus) ? {
+      coop: {
+        id: typeof source.coop.id === 'string' ? source.coop.id.slice(0, 64) : '',
+        partner: typeof source.coop.partner === 'string' ? source.coop.partner.slice(0, 32) : '',
+        bonus: Math.min(COOP.bonus, Math.max(1, source.coop.bonus)),
+      },
+    } : {}),
   }
 }
 
@@ -891,13 +910,19 @@ function sanitizeActivity(raw) {
 // Small shared helpers
 // ---------------------------------------------------------------------------
 
-function clock(nowMs) {
+/** [ST0014] HH:MM in the owner's zone when the save knows it, else the machine's. */
+function clock(state, nowMs) {
+  const offset = state?.utcOffsetMin
+  if (Number.isFinite(offset)) {
+    const d = new Date(nowMs + offset * 60_000)
+    return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
+  }
   const d = new Date(nowMs)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
 function remember(state, text, nowMs) {
-  state.memories.push(`[${clock(nowMs)}] ${text}`)
+  state.memories.push(`[${clock(state, nowMs)}] ${text}`)
   if (state.memories.length > MEMORY_LIMIT) state.memories.splice(0, state.memories.length - MEMORY_LIMIT)
 }
 
@@ -916,6 +941,69 @@ function takePending(state) {
 /** Take and clear the queued announcements. */
 export function drainPending(state) {
   return takePending(state)
+}
+
+// ---------------------------------------------------------------------------
+// [ST0014] Replayable: the same save and the same ops give the same pig on
+// any machine, so the server can settle a synced pig by replaying them.
+// ---------------------------------------------------------------------------
+
+/** A 32-bit seed from any number (a timestamp, usually). */
+export function seedFrom(value) {
+  let h = (Math.floor(Math.abs(Number(value) || 0)) % 0x100000000) ^ 0x9e3779b9
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b)
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35)
+  return (h ^ (h >>> 16)) >>> 0
+}
+
+let randomOverride = null
+
+/** Tests only: force every roll to `fn()`; null restores the pig's own dice. */
+export function setRandomForTests(fn) {
+  randomOverride = typeof fn === 'function' ? fn : null
+}
+
+/** The next roll in [0, 1) from the pig's own dice (mulberry32), advancing them. */
+export function nextRandom(state) {
+  if (randomOverride !== null) return randomOverride()
+  let t = ((state.rng >>> 0) + 0x6d2b79f5) >>> 0
+  state.rng = t
+  t = Math.imul(t ^ (t >>> 15), t | 1)
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+}
+
+/** Time is folded in at every whole minute, and exactly when an outing ends. */
+export const TICK_MS = 60_000
+/** Beyond a week of absence the first stretch is folded in one go. */
+const MAX_TICKS = 7 * 24 * 60
+
+/**
+ * Move the pig's clock to the last tick at or before `toMs`.
+ *
+ * `decay` is not quite additive (thresholds, floors and clamps are checked
+ * where it is sampled), so a pig refreshed every second and one refreshed once
+ * an hour used to drift apart. Folding time in on a fixed grid makes the save
+ * depend only on its ops, not on how often anyone looked at it.
+ */
+export function advance(state, toMs) {
+  if (state === null || !Number.isFinite(toMs)) return state
+  const start = Number.isFinite(state.lastSeenAt) ? state.lastSeenAt : toMs
+  const skipTo = Math.floor(toMs / TICK_MS) * TICK_MS - MAX_TICKS * TICK_MS
+  if (skipTo > start) {
+    const ends = state.activity?.endsAt
+    if (Number.isFinite(ends) && ends > start && ends <= skipTo) decay(state, ends)
+    decay(state, skipTo)
+  }
+  for (let guard = 0; guard <= MAX_TICKS + 2; guard += 1) {
+    const from = state.lastSeenAt
+    let next = Math.floor(from / TICK_MS) * TICK_MS + TICK_MS
+    const ends = state.activity?.endsAt
+    if (Number.isFinite(ends) && ends > from && ends < next) next = ends
+    if (next > toMs) break
+    decay(state, next)
+  }
+  return state
 }
 
 /** Inventory counts, always including zeroes so the UI can render a grid. */
@@ -1109,16 +1197,16 @@ function finishWork(state, activity, nowMs) {
   // worth it while the pig is under the weather.
   const points = state.traits?.[job.trait] ?? 0
   // [mod] a gig's pay is a roll; the trait bonus still multiplies it.
-  const base = job.random === null ? job.coins : rollPay(job.random)
+  const base = job.random === null ? job.coins : rollPay(job.random, () => nextRandom(state))
   // [mod] 土豪 (Middle East & Africa complete): +15% pay.
-  const withTrait = base * traitBonus(job.trait, points).pay * (hasPerk(state, 'tycoon') ? 1.15 : 1)
+  const withTrait = base * traitBonus(job.trait, points).pay * (hasPerk(state, 'tycoon') ? 1.15 : 1) * coopBonus(activity)
   const coins = sick ? Math.max(1, Math.round(withTrait * SICK_PAY_MULTIPLIER)) : Math.round(withTrait)
   state.coins += coins
   state.satiety = clamp100(state.satiety + job.satiety)
   state.cleanliness = clamp100(state.cleanliness + job.cleanliness)
   state.stats.jobs += 1
   state.stats.coinsEarned += coins
-  applyEffects(state, { xp: job.xp }, nowMs)
+  applyEffects(state, { xp: Math.round(job.xp * coopBonus(activity)) }, nowMs)
   const tag = sick
     ? say(state, '（带病上工，只有一半）')
     : (points > 0 ? say(state, '（{trait} {points}）', { trait: word(state, TRAITS[job.trait].label), points }) : '')
@@ -1130,8 +1218,11 @@ function finishWork(state, activity, nowMs) {
     : say(state, '{name} 打工回来了！赚到 {coins} 金币 💰', { name: state.name, coins }))
 }
 
+/** [ST0014] The pay multiplier of an outing: COOP.bonus when it was a pig pen one. */
+const coopBonus = activity => (Number.isFinite(activity?.coop?.bonus) && activity.coop.bonus > 1 ? activity.coop.bonus : 1)
+
 /** [mod] A whole number of coins in [min, max]. */
-function rollPay([min, max], random = Math.random) {
+function rollPay([min, max], random) {
   return min + Math.floor(random() * (max - min + 1))
 }
 
@@ -1146,8 +1237,18 @@ function finishStudy(state, activity, nowMs) {
   state.lessonsByStage = { ...(state.lessonsByStage ?? {}) }
   state.stageCourses = { ...(state.stageCourses ?? {}), [stage.key]: { ...(state.stageCourses?.[stage.key] ?? {}) } }
   // [mod] several subjects in one sitting: each pays out, each is tiring.
+  // [ST0014] together: more points on average, the fraction rolled.
+  const gainFor = () => {
+    const bonus = coopBonus(activity)
+    if (bonus === 1) return stage.gain
+    const extra = stage.gain * (bonus - 1)
+    return stage.gain + Math.floor(extra) + (nextRandom(state) < extra - Math.floor(extra) ? 1 : 0)
+  }
+  const gained = {}
   for (const subject of subjects) {
-    state.traits[subject.trait] = (state.traits[subject.trait] ?? 0) + stage.gain
+    const gain = gainFor()
+    gained[subject.trait] = (gained[subject.trait] ?? 0) + gain
+    state.traits[subject.trait] = (state.traits[subject.trait] ?? 0) + gain
     state.courses[subject.key] = (state.courses[subject.key] ?? 0) + 1
     state.stageCourses[stage.key][subject.key] = (state.stageCourses[stage.key][subject.key] ?? 0) + 1
     // Counted per stage, because that is what unlocks the next school.
@@ -1157,11 +1258,11 @@ function finishStudy(state, activity, nowMs) {
   }
   state.satiety = clamp100(state.satiety + stage.satiety * subjects.length)
   state.happiness = clamp100(state.happiness + stage.happiness * subjects.length)
-  applyEffects(state, { xp: stage.xp * subjects.length }, nowMs)
+  applyEffects(state, { xp: Math.round(stage.xp * subjects.length * coopBonus(activity)) }, nowMs)
   const traits = [...new Set(subjects.map(subject => subject.trait))]
     .map(trait => say(state, '{trait} +{gain}', {
       trait: word(state, TRAITS[trait].label),
-      gain: stage.gain * subjects.filter(subject => subject.trait === trait).length,
+      gain: gained[trait],
     }))
     .join(word(state, '，'))
   const params = { name: state.name, emoji: activity.emoji, lesson: lessonLabel(langOf(state), stage.key, subjects.map(s => s.key)), gains: traits }
@@ -1207,17 +1308,17 @@ export function regionProgress(state, regionKey) {
 /** Pick a souvenir from `place`, favouring one the pig does not have yet. */
 function pickSouvenir(state, place) {
   const missing = place.souvenirs.filter(s => (state.collected?.[s.key] ?? 0) === 0)
-  if (missing.length > 0 && (missing.length === place.souvenirs.length || Math.random() < FARE.newSouvenirBias)) {
-    return missing[Math.floor(Math.random() * missing.length)]
+  if (missing.length > 0 && (missing.length === place.souvenirs.length || nextRandom(state) < FARE.newSouvenirBias)) {
+    return missing[Math.floor(nextRandom(state) * missing.length)]
   }
-  return place.souvenirs[Math.floor(Math.random() * place.souvenirs.length)]
+  return place.souvenirs[Math.floor(nextRandom(state) * place.souvenirs.length)]
 }
 
 /** Ordinary shop consumables a trip can bring back, cheaper ones more often. */
 const SHOP_LOOT = SHOP.filter(item => item.kind === 'food' || item.kind === 'bath')
-function pickShopLoot() {
+function pickShopLoot(state) {
   const weights = SHOP_LOOT.map(item => 1 / Math.max(1, item.price))
-  let roll = Math.random() * weights.reduce((a, b) => a + b, 0)
+  let roll = nextRandom(state) * weights.reduce((a, b) => a + b, 0)
   for (let i = 0; i < SHOP_LOOT.length; i += 1) {
     roll -= weights[i]
     if (roll <= 0) return SHOP_LOOT[i]
@@ -1256,19 +1357,19 @@ function finishTrip(state, activity, nowMs) {
   const loot = []
   const rolls = activity.zones >= FARE.secondRollFromZones ? 2 : 1
   for (let i = 0; i < rolls; i += 1) {
-    if (Math.random() >= FARE.lootChance) continue
-    const item = Math.random() < FARE.specialtyShare ? specialtyByKey(place.specialty) : pickShopLoot()
+    if (nextRandom(state) >= FARE.lootChance) continue
+    const item = nextRandom(state) < FARE.specialtyShare ? specialtyByKey(place.specialty) : pickShopLoot(state)
     if (item === null) continue
     loot.push(item.key)
     state.inventory = { ...(state.inventory ?? {}), [item.key]: (state.inventory?.[item.key] ?? 0) + 1 }
   }
 
   // [mod] 博物馆通票 (Europe complete): half as much joy again from every trip.
-  const joy = Math.round((activity.happiness || 0) * (hasPerk(state, 'museum') ? 1.5 : 1))
+  const joy = Math.round((activity.happiness || 0) * (hasPerk(state, 'museum') ? 1.5 : 1) * coopBonus(activity))
   state.happiness = clamp100(state.happiness + joy)
   state.satiety = clamp100(state.satiety + (activity.satiety || 0))
   state.stats.trips += 1
-  applyEffects(state, { xp: activity.xp || 0 }, nowMs)
+  applyEffects(state, { xp: Math.round((activity.xp || 0) * coopBonus(activity)) }, nowMs)
 
   const lootText = loot.length === 0 ? '' : say(state, '，还带回了 {items}', {
     items: loot.map(key => { const item = itemByKey(key); return `${item.emoji}${word(state, item.label)}` }).join(word(state, '、')),
@@ -1309,7 +1410,7 @@ function advanceIllness(state, nowMs) {
   // Before it gets worse, it might just get better. An untreated cold shakes
   // itself off fairly often; the last stage never does.
   const healChance = SELF_HEAL_CHANCE[stage - 1] ?? 0
-  if (healChance > 0 && Math.random() < healChance) {
+  if (healChance > 0 && nextRandom(state) < healChance) {
     state.illness = null
     state.health = Math.min(MAX.health, state.health + 1)
     remember(state, say(state, '自己好了，扛过去了 💚'), nowMs)
@@ -1696,6 +1797,31 @@ export function startTrip(state, placeKey, nowMs, homeUtc = systemUtcOffset()) {
   return result
 }
 
+/**
+ * [ST0014] Head out together with a pig from the pen: the ordinary start
+ * (same checks, same costs — each pig must qualify on its own), then 30%
+ * faster and marked as a pen outing, which pays 30% more when it settles.
+ * Only the server issues this, for both pigs at once, when an invite is
+ * accepted. `args` are what the ordinary op takes.
+ */
+export function startTogether(state, kind, args, coop, nowMs, homeUtc = systemUtcOffset()) {
+  if (!COOP.kinds.includes(kind)) return { ok: false, reason: 'unknown' }
+  const list = Array.isArray(args) ? args : []
+  const result = kind === 'work' ? startWork(state, list[0], nowMs)
+    : kind === 'study' ? startStudy(state, list[0], list[1], nowMs)
+    : startTrip(state, list[0], nowMs, homeUtc)
+  if (!result.ok) return result
+  const activity = state.activity
+  activity.endsAt = activity.startedAt + Math.max(60_000, Math.round((activity.endsAt - activity.startedAt) / COOP.speed))
+  activity.coop = {
+    id: typeof coop?.id === 'string' ? coop.id.slice(0, 64) : '',
+    partner: typeof coop?.partner === 'string' ? coop.partner.slice(0, 32) : '',
+    bonus: COOP.bonus,
+  }
+  remember(state, say(state, '🤝 和{partner}一起出发，快 30%、收获多 30%', { partner: activity.coop.partner }), nowMs)
+  return { ok: true, activity }
+}
+
 /** Seconds left on the current activity (0 when idle). */
 export function activitySecondsLeft(state, nowMs) {
   if (state.activity === null) return 0
@@ -1726,9 +1852,9 @@ export const callOffWork = callOffActivity
 // Shop and inventory
 // ---------------------------------------------------------------------------
 
-export function buy(state, itemKey) {
+export function buy(state, itemKey, nowMs = Date.now()) {
   const wearable = wearableByKey(itemKey)
-  if (wearable !== null) return buyWearable(state, wearable)
+  if (wearable !== null) return buyWearable(state, wearable, nowMs)
   const item = itemByKey(itemKey)
   if (item === null) return { ok: false, reason: 'unknown' }
   // [mod] travel-only specialties never come from the shop.
@@ -1740,7 +1866,7 @@ export function buy(state, itemKey) {
   state.inventory = { ...(state.inventory ?? {}) }
   state.inventory[item.key] = (state.inventory[item.key] ?? 0) + 1
   state.stats.purchases += 1
-  remember(state, say(state, '买了 {emoji} {item}（-{price} 金币）', { emoji: item.emoji, item: word(state, item.label), price: item.price }), Date.now())
+  remember(state, say(state, '买了 {emoji} {item}（-{price} 金币）', { emoji: item.emoji, item: word(state, item.label), price: item.price }), nowMs)
   return { ok: true, item }
 }
 
@@ -1748,7 +1874,7 @@ export function buy(state, itemKey) {
  * [ST0012] A decoration off the 装扮 shelf: bought once, kept in the
  * wardrobe, and put straight on (taking off whatever was at that slot).
  */
-function buyWearable(state, wearable) {
+function buyWearable(state, wearable, nowMs) {
   if (wearable.unlock.kind !== 'shop') return { ok: false, reason: 'not-for-sale' }
   const refusal = wearRefusal(state)
   if (refusal !== null) return { ok: false, reason: refusal }
@@ -1759,8 +1885,8 @@ function buyWearable(state, wearable) {
   state.coins -= price
   state.wardrobeBought = [...(state.wardrobeBought ?? []), wearable.key]
   state.stats.purchases += 1
-  wear(state, wearable.key, true, Date.now())
-  remember(state, say(state, '买了 {emoji} {item}（-{price} 金币）', { emoji: wearable.emoji, item: word(state, wearable.label), price }), Date.now())
+  wear(state, wearable.key, true, nowMs)
+  remember(state, say(state, '买了 {emoji} {item}（-{price} 金币）', { emoji: wearable.emoji, item: word(state, wearable.label), price }), nowMs)
   return { ok: true, item: { key: wearable.key, label: wearable.label, emoji: wearable.emoji, price, kind: 'wear' } }
 }
 
@@ -1777,7 +1903,7 @@ export function lotteryWaitSeconds(state, nowMs) {
  * so it has to be home; one card every ten minutes.
  * @returns {{ok:boolean, reason?:string, wait?:number, price?:number, prize?:{tier:string, coins:number, mood:string}}}
  */
-export function scratchLottery(state, nowMs, random = Math.random) {
+export function scratchLottery(state, nowMs, random = () => nextRandom(state)) {
   if (state === null) return { ok: false, reason: 'absent' }
   decay(state, nowMs)
   if (state.dead) return { ok: false, reason: 'dead' }

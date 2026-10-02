@@ -1,0 +1,18 @@
+# [ST0014] Copy to server/wrangler.toml and fill in database_id after
+# `npx wrangler d1 create piggy`. Secrets are set with `wrangler secret put`,
+# never written here. Steps: server/README.md.
+
+name = "piggy-cloud"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "piggy"
+database_id = "<from wrangler d1 create>"
+
+[vars]
+PIG_MAIL_FROM = "Piggy <pig@your-domain.example>"
+PIG_FEED_EVERY_MIN = "30"
+# Optional: only these addresses may log in (comma separated).
+# PIG_ALLOWED_EMAILS = "me@example.com,friend@example.com"

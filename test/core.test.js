@@ -9,6 +9,7 @@
 import { PLACES, REGIONS, SOUVENIRS, SPECIALTIES, WORLD_BONUS, fareFor, zonesBetween } from '../world.js'
 import { ALL_ITEMS, DIPLOMAS, PARALLEL_COURSES, RENAME_CARD, WEAR_FOR_SALE, diplomaCount, schoolStageByKey as schoolStage } from '../data.js'
 import { diplomaView, outfitIsAuto, wardrobeView, wear, wearAuto, wornFor } from '../core.js'
+import { setRandomForTests } from '../core.js'
 import { hasDefaultName, perksOf, regionProgress, renamePig, tripQuote } from '../core.js'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
@@ -851,10 +852,9 @@ test('a sick pig earns half, but still earns', () => {
 })
 
 test('an untreated illness runs its stages in days, and can shake itself off', () => {
-  const real = Math.random
   try {
     // --- it gets worse, one stage a day ---------------------------------
-    Math.random = () => 0.99 // never self-heal
+    setRandomForTests(() => 0.99) // never self-heal
     const pig = hatchEgg(T0)
     pig.illness = { chain: 0, stage: 1, since: T0, progressMs: 0 }
     pig.health = 4
@@ -876,7 +876,7 @@ test('an untreated illness runs its stages in days, and can shake itself off', (
     assert.equal(day.illness.stage, 1, '23 hours is not a day')
 
     // --- an untreated cold really can just go away ----------------------
-    Math.random = () => 0.01 // always self-heal
+    setRandomForTests(() => 0.01) // always self-heal
     const lucky = hatchEgg(T0)
     lucky.illness = { chain: 0, stage: 1, since: T0, progressMs: 0 }
     lucky.health = 4
@@ -885,21 +885,20 @@ test('an untreated illness runs its stages in days, and can shake itself off', (
     assert.equal(lucky.health, 5, 'and got a little health back')
 
     // --- the last stage never heals on its own --------------------------
-    Math.random = () => 0.0001
+    setRandomForTests(() => 0.0001)
     const terminal = hatchEgg(T0)
     terminal.illness = { chain: 0, stage: 4, since: T0, progressMs: 0 }
     terminal.health = 1
     decay(terminal, T0 + illnessStageMs(4) + 1000)
     assert.equal(terminal.dead, true, 'the last stage is fatal without medicine')
   } finally {
-    Math.random = real
+    setRandomForTests(null)
   }
 })
 
 test('being out while ill runs the illness clock faster than resting', () => {
-  const real = Math.random
   try {
-    Math.random = () => 0.99 // never self-heal, so only the rate differs
+    setRandomForTests(() => 0.99) // never self-heal, so only the rate differs
     const build = () => {
       const pig = hatchEgg(T0)
       pig.illness = { chain: 0, stage: 1, since: T0, progressMs: 0 }
@@ -920,7 +919,7 @@ test('being out while ill runs the illness clock faster than resting', () => {
     decay(out, T0 + 12 * 60 * 60000)
     assert.equal(out.illness.stage, 2, 'a half day out is a whole day of illness')
   } finally {
-    Math.random = real
+    setRandomForTests(null)
   }
 })
 
@@ -1170,10 +1169,9 @@ test('travelling costs coins up front and brings back a souvenir from that place
 })
 
 test('souvenirs favour the missing one, trips bring specialties, and a full region pays out', () => {
-  const real = Math.random
   try {
     // 0 → always the first missing souvenir, always loot, always the specialty.
-    Math.random = () => 0
+    setRandomForTests(() => 0)
     const pig = hatchEgg(T0)
     pig.coins = 100_000
     let clock = T0
@@ -1194,7 +1192,7 @@ test('souvenirs favour the missing one, trips bring specialties, and a full regi
     assert.ok(pig.pending.some(e => e.kind === 'region'))
     assert.equal(pig.lastTrip.regionDone, 'china')
   } finally {
-    Math.random = real
+    setRandomForTests(null)
   }
 })
 
@@ -1209,9 +1207,8 @@ test('travel-only specialties cannot be bought, but can be eaten', () => {
 })
 
 test('every region done makes a 环球旅行家, once', () => {
-  const real = Math.random
   try {
-    Math.random = () => 0.99 // no loot, keeps it short
+    setRandomForTests(() => 0.99) // no loot, keeps it short
     const pig = hatchEgg(T0)
     for (const souvenir of SOUVENIRS) pig.collected[souvenir.key] = 1
     for (const region of REGIONS) {
@@ -1221,13 +1218,13 @@ test('every region done makes a 环球旅行家, once', () => {
     pig.coins = 100_000
     const intel = pig.traits.intel
     startTrip(pig, 'antarctica', T0, 12)
-    Math.random = () => 0 // the missing souvenir
+    setRandomForTests(() => 0) // the missing souvenir
     decay(pig, T0 + 61 * MIN)
     assert.equal(pig.worldDone, true)
     assert.equal(pig.traits.intel, intel + WORLD_BONUS.traits.intel)
     assert.equal(perksOf(pig).length, 7)
   } finally {
-    Math.random = real
+    setRandomForTests(null)
   }
 })
 
@@ -1419,9 +1416,8 @@ test('display helpers', () => {
 })
 
 test('developer mode can force any state, but only valid ones', () => {
-  const real = Math.random
   try {
-    Math.random = () => 0.99 // keep illnesses from self-healing mid-test
+    setRandomForTests(() => 0.99) // keep illnesses from self-healing mid-test
 
     const pig = hatchEgg(T0)
     // Numbers are clamped, so dev mode cannot produce a corrupt pig.
@@ -1454,7 +1450,7 @@ test('developer mode can force any state, but only valid ones', () => {
     applyDevPatch(before, { __advanceMs: 12 * 3600_000 }, T0)
     assert.ok(before.satiety < 100, 'time moved')
   } finally {
-    Math.random = real
+    setRandomForTests(null)
   }
 })
 

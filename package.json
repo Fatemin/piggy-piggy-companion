@@ -27,6 +27,7 @@
     "core.js",
     "data.js",
     "store.js",
+    "ops.js",
     "render.js",
     "art.js",
     "client.js",

@@ -497,6 +497,13 @@ export const SCHOOL_STAGES = Object.freeze([
  */
 export const PARALLEL_COURSES = Object.freeze({ primary: 1, college: 2, graduate: 3, doctor: 3 })
 
+/**
+ * [ST0014] Going out together (a pig pen invite): the outing is 30% faster
+ * (its length ÷ speed) and pays 30% more (coins, xp, mood; trait points on
+ * average — the fraction is a roll of the pig's own dice).
+ */
+export const COOP = Object.freeze({ speed: 1.3, bonus: 1.3, kinds: Object.freeze(['work', 'study', 'trip']) })
+
 /** Defending the thesis: every 博士 subject once pays this, a single time. */
 export const DOCTOR_GRADUATION = Object.freeze({ lessons: 9, traits: Object.freeze({ intel: 1, charm: 1, strong: 1 }) })
 

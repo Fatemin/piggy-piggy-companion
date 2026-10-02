@@ -35,7 +35,9 @@ function withPig(lang, fn) {
     store.state.coins = 100_000
     const run = line => dispatch(store, 'pig', line)
     const tick = minutes => { clock += minutes * MIN; store.freshen() }
-    return fn({ store, run, tick, t: (zh, params) => tr(lang, zh, params) })
+    // [ST0014] time is folded in minute by minute: wait just until the pig is back.
+    const untilBack = () => Math.ceil((store.state.activity.endsAt - clock) / MIN) + 1
+    return fn({ store, run, tick, untilBack, t: (zh, params) => tr(lang, zh, params) })
   } finally {
     store.dispose()
     rmSync(dir, { recursive: true, force: true })
@@ -63,7 +65,7 @@ for (const lang of ['zh', 'en']) {
   })
 
   test(`${lang}: /pig trip <place> takes a key or a label in any language and starts the trip`, () => {
-    withPig(lang, ({ store, run, tick, t }) => {
+    withPig(lang, ({ store, run, tick, untilBack, t }) => {
       // A label in the pig's own language…
       const coins = store.state.coins
       const quote = tripQuote(store.state, 'tokyo', systemUtcOffset())
@@ -76,7 +78,7 @@ for (const lang of ['zh', 'en']) {
       assert.ok(reply.text.includes(String(quote.cost)), reply.text)
       // Already away: a refusal, not a second trip.
       assert.match(run('trip beijing').text, new RegExp(t('{name} 已经在外面了。', { name: store.state.name })))
-      tick(24 * 60)
+      tick(untilBack())
       assert.equal(store.state.activity, null)
       assert.equal(Object.keys(store.state.collected).length, 1, 'one souvenir came home')
 
