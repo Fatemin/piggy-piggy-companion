@@ -166,9 +166,12 @@ export function apply(ctx, config = {}) {
   const commandName = typeof config.command === 'string' && /^[a-z][a-z0-9-]{0,23}$/.test(config.command)
     ? config.command
     : 'pig'
+  // [ST0014] `storeOptions` (e.g. an op listener) and `onStore` let a host
+  // that syncs the pig reach the store this plugin owns.
   const store = createStore(typeof config.statePath === 'string' && config.statePath.trim() !== ''
     ? config.statePath
-    : undefined)
+    : undefined, typeof config.storeOptions === 'object' && config.storeOptions !== null ? config.storeOptions : {})
+  if (typeof config.onStore === 'function') config.onStore(store)
 
   ctx.on('agent/inbox/claimed', contained(() => store.feed('message')))
   ctx.on('agent/turn-stopping', contained(() => store.feed('turn')))

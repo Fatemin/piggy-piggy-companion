@@ -51,7 +51,8 @@
         "test/ops.test.js",
         "test/core.test.js",
         "test/features-cli.test.js",
-        "test/contracts.test.js"
+        "test/contracts.test.js",
+        "test/cloud.test.js"
       ]
     },
     {
@@ -60,7 +61,8 @@
       ],
       "tests": [
         "test/cc.test.js",
-        "test/i18n-adapter.test.js"
+        "test/i18n-adapter.test.js",
+        "test/cloud.test.js"
       ]
     },
     {
@@ -159,7 +161,8 @@
       ],
       "tests": [
         "test/server.test.js",
-        "test/ops.test.js"
+        "test/ops.test.js",
+        "test/cloud.test.js"
       ]
     }
   ],

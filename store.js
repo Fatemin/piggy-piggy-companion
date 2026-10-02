@@ -208,6 +208,23 @@ export function createStore(filePath = defaultStatePath(), options = {}) {
       return typeof cleaned === 'string' ? cleaned : null
     },
 
+    /**
+     * [ST0014] Take the cloud's pig as this machine's, then redo on top of it
+     * the ops this machine did since it asked (they are still on their way).
+     * Announcements not shown yet stay; the cloud never sends any.
+     */
+    replaceFromCloud(next, replay = []) {
+      const waiting = Array.isArray(state?.pending) ? state.pending : []
+      let fresh = next === null || next === undefined ? null : migrate(structuredClone(next))
+      for (const op of replay) {
+        try { fresh = applyOp(fresh, op).state } catch { /* the cloud will say what became of it */ }
+      }
+      if (fresh !== null) fresh.pending = [...waiting, ...(fresh.pending ?? [])].slice(-6)
+      state = fresh
+      scheduleSave()
+      return state
+    },
+
     /** Take the queued announcements (work done, got sick, got better…). */
     drainPending() {
       if (state === null) return []
