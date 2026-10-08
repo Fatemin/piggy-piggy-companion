@@ -5,6 +5,13 @@ import WebKit
 private final class PetPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+
+    /// [Q0016] No longer always on top: other windows may cover the pig, and
+    /// a click on whatever shows of it brings it back in front.
+    override func sendEvent(_ event: NSEvent) {
+        if event.type == .leftMouseDown || event.type == .rightMouseDown { orderFrontRegardless() }
+        super.sendEvent(event)
+    }
 }
 
 /// WebView that reacts to the first click even when its window is not key.
@@ -12,12 +19,12 @@ private final class PetWebView: WKWebView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
-/// The floating pig: a transparent, always-on-top window showing the unmodified
+/// The floating pig: a transparent window (an ordinary one, not always on top) showing the unmodified
 /// upstream panel (`/desk`). Clicks fall through wherever there is no pig, and
 /// dragging the pig moves the whole window.
 @MainActor
 final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
-    /// Room for the panel above a 200 px (120 kg) pig, and for the player to
+    /// Room for the panel above a big pig (up to 400 px at 500 kg), and for the player to
     /// resize the panel bigger; everything transparent in it is click-through.
     static var size: NSSize {
         let visible = (NSScreen.main ?? NSScreen.screens.first)?.visibleFrame.height ?? 800
@@ -57,10 +64,12 @@ final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
         window.isOpaque = false
         window.backgroundColor = .clear
         window.hasShadow = false
-        window.level = .floating
+        // [Q0016] An ordinary window level: other apps can cover the pig, and
+        // it no longer sits over full-screen apps.
+        window.level = .normal
         window.hidesOnDeactivate = false
         window.isReleasedWhenClosed = false
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        window.collectionBehavior = [.canJoinAllSpaces]
         window.ignoresMouseEvents = true
         window.contentView = webView
         restoreOrigin()

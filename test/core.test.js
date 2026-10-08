@@ -57,6 +57,7 @@ import {
   kgToNextStage,
   canChooseLook,
   setLook,
+  growthPercent,
   sizeForWeight,
   lifeStageFor,
   rename,
@@ -154,14 +155,20 @@ test('the pig grows by weight, not by age or XP', () => {
   assert.equal(at(80).art, 'stage-elder')
 })
 
-test('the sprite widens with weight: 40 px at hatching, 200 px at 120 kg', () => {
+test('the sprite widens with weight: 40 px at hatching, 200 px at 120 kg, 400 px at 500 kg', () => {
   const pig = hatchEgg(T0)
   assert.equal(lifeStageFor(pig, T0).size, 40)
   assert.equal(sizeForWeight(pig.weightG), 40)
   assert.equal(sizeForWeight(80_000), 146)
   assert.equal(sizeForWeight(120_000), 200)
-  assert.equal(sizeForWeight(300_000), 200, 'capped')
+  assert.equal(sizeForWeight(310_000), 300, 'the second stretch is linear too')
+  assert.equal(sizeForWeight(500_000), 400)
+  assert.equal(sizeForWeight(900_000), 400, 'capped')
+  assert.equal(sizeForWeight(NaN), 40, 'a broken weight is a newborn, not a giant')
   assert.ok(sizeForWeight(60_000) > sizeForWeight(40_000), 'grows steadily in between')
+  assert.ok(sizeForWeight(200_000) > sizeForWeight(150_000), 'and keeps growing past 120 kg')
+  assert.equal(growthPercent(500_000), 100)
+  assert.equal(growthPercent(120_000), 24)
 })
 
 test('kgToNextStage counts down in kilograms; days no longer matter', () => {
@@ -174,7 +181,7 @@ test('kgToNextStage counts down in kilograms; days no longer matter', () => {
   assert.equal(daysToNextStage(pig, T0), null)
 })
 
-test('weight comes from food actually eaten, slower once elderly', () => {
+test('weight comes from food actually eaten, slower once elderly, slower still past 120 kg', () => {
   const pig = hatchEgg(T0)
   pig.satiety = 50
   const start = pig.weightG
@@ -190,6 +197,11 @@ test('weight comes from food actually eaten, slower once elderly', () => {
   pig.satiety = 50
   feed(pig, 'turn', T0)
   assert.equal(pig.weightG, 90_000 + 2 * 50)
+
+  pig.weightG = 200_000
+  pig.satiety = 50
+  feed(pig, 'turn', T0)
+  assert.equal(pig.weightG, 200_000 + 2 * 25)
 })
 
 // [ST0004] the old elder switch only puts the beard on or takes it off now.

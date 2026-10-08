@@ -188,18 +188,28 @@ export function ageDays(state, nowMs) {
   return Math.max(0, (nowMs - state.bornAt) / DAY_MS)
 }
 
+/** 0 at `fromG`, 1 at `toG`, linear in between and clamped. */
+const stretch = (weightG, fromG, toG) => {
+  const t = (weightG - fromG) / (toG - fromG)
+  return Math.min(1, Math.max(0, Number.isFinite(t) ? t : 0))
+}
+
 /**
  * [dsh-piggy-claude-code mod] Sprite width for a weight: 40 px at hatching,
- * 200 px at 120 kg, linear in between and capped at both ends.
+ * 200 px at 120 kg, 400 px at 500 kg, linear within each stretch and capped
+ * at both ends. [Q0016] The second stretch leaves every size below 120 kg as
+ * it was.
  */
 export function sizeForWeight(weightG) {
   const startG = BIRTH_WEIGHT_G + HATCH_WEIGHT_G
-  const t = (weightG - startG) / (GROWTH.fullKg * 1000 - startG)
-  const clamped = Math.min(1, Math.max(0, Number.isFinite(t) ? t : 0))
-  return Math.round(GROWTH.minSize + clamped * (GROWTH.maxSize - GROWTH.minSize))
+  const bigG = GROWTH.bigKg * 1000
+  const size = !(weightG >= bigG)
+    ? GROWTH.minSize + stretch(weightG, startG, bigG) * (GROWTH.bigSize - GROWTH.minSize)
+    : GROWTH.bigSize + stretch(weightG, bigG, GROWTH.fullKg * 1000) * (GROWTH.maxSize - GROWTH.bigSize)
+  return Math.round(size)
 }
 
-/** [mod] How far from hatching weight to full size (120 kg), 0-100. */
+/** [mod] How far from hatching weight to full size (500 kg), 0-100. */
 export function growthPercent(weightG) {
   const startG = BIRTH_WEIGHT_G + HATCH_WEIGHT_G
   const t = (weightG - startG) / (GROWTH.fullKg * 1000 - startG)
@@ -1464,13 +1474,16 @@ function advanceIllness(state, nowMs) {
 
 /**
  * [dsh-piggy-claude-code mod] Weight comes from food actually eaten: each point
- * of satiety gained adds a fixed number of grams (fewer once elderly). Topping
- * up a full pig adds nothing, so spamming events or snacks cannot inflate it;
+ * of satiety gained adds a fixed number of grams (fewer once elderly, fewer
+ * still past 120 kg). Topping up a full pig adds nothing, so spamming events
+ * or snacks cannot inflate it;
  * the old per-event `weightG` effects are no longer applied.
  */
 function growFromFood(state, satietyGained) {
   if (!(satietyGained > 0) || state.hatched !== true) return
-  const perPoint = state.weightG >= GROWTH.elderKg * 1000 ? GROWTH.gramsPerSatietyElder : GROWTH.gramsPerSatiety
+  const perPoint = state.weightG >= GROWTH.bigKg * 1000 ? GROWTH.gramsPerSatietyHeavy
+    : state.weightG >= GROWTH.elderKg * 1000 ? GROWTH.gramsPerSatietyElder
+      : GROWTH.gramsPerSatiety
   // [mod] 干饭王 (China complete): food sticks a little better.
   const foodie = hasPerk(state, 'foodie') ? 1.1 : 1
   state.weightG = Math.min(500_000, state.weightG + satietyGained * perPoint * foodie)
