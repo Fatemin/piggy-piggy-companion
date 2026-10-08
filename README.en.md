@@ -26,7 +26,7 @@ Four ways to see your pig:
 |---|---|---|
 | Status line | One line at the bottom of Claude Code: `🐖 Piggy · 🍚79 ❤️73 🫧90 💚5/5 · 🪙500 · 😊` | All |
 | Web panel | Upstream's six-icon panel (a full set of animated hand-drawn SVG sprites) in your browser | All |
-| Floating desktop pig | Transparent, always-on-top pet plus a menu-bar icon; clicks outside the pig pass straight through | macOS |
+| Floating desktop pig | Transparent pet in an ordinary window (not always on top; click the pig to bring it to the front) plus a menu-bar icon; clicks outside the pig pass straight through | macOS |
 | Standalone app | No Claude Code needed — install and start raising | Windows · macOS |
 
 ## Differences from upstream
@@ -38,7 +38,7 @@ Four ways to see your pig:
 | Claude Code plugin | 5 hooks turn your prompts, replies and tool calls into food; `lib/host.js` emulates the DSH host interfaces upstream needs, so the upstream plugin thinks it is still running in DSH |
 | Status line | A one-line pig summary that can be appended to your existing statusLine |
 | CLI | A `pig` command in your terminal instead of upstream's `/pig` slash command (never goes through the model, costs no tokens) |
-| Floating desktop pig | Native macOS (SwiftPM): transparent, always on top, click-through, launch at login |
+| Floating desktop pig | Native macOS (SwiftPM): transparent, not forced on top, click-through, launch at login |
 | Standalone app | Electron build with installers for Windows and macOS |
 | Localisation | 中文 / 日本語 / English, gettext-style, dictionaries in `locales/` |
 | Art | 22 redrawn, self-animating SVGs: one for every life stage, mood, outing and care reaction |
@@ -48,11 +48,11 @@ Four ways to see your pig:
 | | Upstream | This project |
 |---|---|---|
 | What makes it grow | Age: new stage on day 1 / 3 / 7 | **Weight**: young at 20 kg, middle-aged at 50 kg, **elder at 80 kg** |
-| Size | Fixed per stage (40–62 px) | **Grows continuously with weight**: 40 px at birth, **200 px at 120 kg** (cap) |
+| Size | Fixed per stage (40–62 px) | **Grows continuously with weight**: 40 px at birth, **200 px at 120 kg**, then more slowly to **400 px at 500 kg** (cap) |
 | Looks | Box → piglet → young → middle-aged → elder | One sprite per stage, plus its own pose and animation for each mood (hungry / dirty / sleepy / happy / lonely / sick), outing (work / school / trip) and care reaction (eat / bathe / play / pet / refuse / cured) — see `tools/sprites.html` |
 | Dress-up | — | **Wardrobe**: bow, flat cap, mortarboard, straw hat, round glasses, sunglasses, red scarf, white brows & beard, plus five waist pieces sold on the shop's Dress-up shelf (viral hula hoop, rubber-duck swim ring, dopamine fanny pack, emo chain belt, pager belt), **mixed freely** across four slots (head / eyes / waist / face) and worn in every pose. The waist pieces cost coins; the rest unlock by progress (growing up, lessons, diplomas, trips, the Middle East & Africa); until you open the wardrobe it matches the stage (piglet bow, grown-pig flat cap, elder beard). Poses with their own gear (the trip's straw hat, the site helmet, lab goggles…) cover that slot for a while |
 | Where weight comes from | A fixed few grams per event and per meal | **Only from fullness actually eaten**: ~98 g per point, ~50 g after 80 kg. Feeding a full pig adds nothing |
-| Time to grow up | — | With normal care: about 1 week to 80 kg, about 2 weeks to 120 kg |
+| Time to grow up | — | With normal care: about 1 week to 80 kg, about 2 weeks to 120 kg, then more slowly, about 4 more months to 500 kg |
 | Sleep | — | **Put the pig to bed** (panel button or `pig sleep`); in the standalone desktop app **it also sleeps when the computer does**. Asleep it only gets hungrier, mood and cleanliness slowly come back (about +9 / +6 an hour) and it falls ill half as easily; feeding, bathing, playing, petting or sending it out wakes it |
 | Lifespan | Dies of old age on day 14 | **Never dies of old age**; untreated illness down to 0 health still kills, and the Revival pill still works |
 | Name | Command only | First name is free; each rename after that costs a **Rename card** (shop → items, 1000 🪙) |

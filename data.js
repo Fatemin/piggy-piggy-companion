@@ -153,8 +153,11 @@ export const AWAY_MULTIPLIER = 1.8
 //
 //   - weight comes only from food actually eaten (satiety gained), so a pig
 //     that is looked after grows at the pace of its appetite: about a week to
-//     80 kg, about two weeks to 120 kg;
-//   - the sprite widens with weight, from 40 px at birth to 200 px at 120 kg;
+//     80 kg, about two weeks to 120 kg, then slowly — about four more months —
+//     on to 500 kg;
+//   - the sprite widens with weight, from 40 px at birth to 200 px at 120 kg
+//     and on to 400 px at 500 kg (two straight stretches, so a pig that was
+//     already big under the old 120 kg cap keeps its size);
 //   - at 80 kg it becomes an elder pig, and from then on the owner may switch
 //     between the elder drawing and the original one;
 //   - nothing dies of old age any more (illness can still kill, and the soul
@@ -166,19 +169,27 @@ export const AWAY_MULTIPLIER = 1.8
 
 /** Growth by weight. */
 export const GROWTH = Object.freeze({
-  /** Sprite width at hatching weight … and at `fullKg`, linear in between. */
+  /**
+   * Sprite width at hatching weight, at `bigKg` and at `fullKg`: linear from
+   * hatching to `bigKg`, linear again from there to `fullKg`, capped beyond.
+   * [Q0016] `bigKg`/`bigSize` were the old cap; the second stretch is new.
+   */
   minSize: 40,
-  maxSize: 200,
-  fullKg: 120,
+  bigSize: 200,
+  bigKg: 120,
+  maxSize: 400,
+  fullKg: 500,
   /** Where the elder pig starts, and where the look becomes switchable. */
   elderKg: 80,
   /**
    * Grams per point of satiety actually gained. Satiety drains ~115 points a
    * day, so a fed pig eats ~115 points a day: ~11 kg/day below 80 kg (≈ 7 days
-   * from hatching), ~5.8 kg/day above it (≈ 7 more days to 120 kg).
+   * from hatching), ~5.8 kg/day up to 120 kg (≈ 7 more days), and ~2.9 kg/day
+   * beyond it (≈ 130 more days to 500 kg).
    */
   gramsPerSatiety: 98,
   gramsPerSatietyElder: 50,
+  gramsPerSatietyHeavy: 25,
 })
 
 /**

@@ -23,7 +23,7 @@ import { createUpdater } from './updater.mjs'
 const APP_TITLE = 'piggy-piggy-companion'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-// Room for the panel above a 200 px (120 kg) pig, and for the player to
+// Room for the panel above a big pig (up to 400 px at 500 kg), and for the player to
 // resize the panel bigger; everything transparent in it is click-through.
 const WIDTH = 760
 const MAX_HEIGHT = 1200
@@ -184,12 +184,13 @@ function createWindow(url) {
     minimizable: false,
     fullscreenable: false,
     skipTaskbar: true,
-    alwaysOnTop: true,
+    // [Q0016] An ordinary window: other apps can cover the pig, and it no
+    // longer sits over full-screen apps. Clicking it or 显示猪猪 brings it back.
+    alwaysOnTop: false,
     show: false,
     webPreferences: { preload: join(HERE, 'preload.cjs'), contextIsolation: true },
   })
-  win.setAlwaysOnTop(true, 'floating')
-  win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+  win.setVisibleOnAllWorkspaces(true)
   // Clicks pass through until the pointer is over the pig; `forward` keeps
   // mouse moves coming so the page can tell us when that happens.
   win.setIgnoreMouseEvents(true, { forward: true })
@@ -274,13 +275,19 @@ function openPanelWindow() {
 
 // ---- tray / menu-bar icon -------------------------------------------------------
 
+/** [Q0016] Show the pig without taking focus, and in front: it is no longer always on top. */
+function showPig() {
+  win.showInactive()
+  win.moveTop()
+}
+
 function trayMenu() {
   const visible = win?.isVisible() === true
   const lang = currentLang()
   const t = zh => tr(lang, zh)
   return Menu.buildFromTemplate([
-    { label: visible ? t('隐藏猪猪') : t('显示猪猪'), click: () => { visible ? win.hide() : win.showInactive(); refreshTray(true) } },
-    { label: t('猪猪回到右下角'), click: () => { win.setPosition(...Object.values(defaultPosition())); placePigInWindow(PIG_HOME.right, PIG_HOME.bottom); savePosition(); win.showInactive() } },
+    { label: visible ? t('隐藏猪猪') : t('显示猪猪'), click: () => { visible ? win.hide() : showPig(); refreshTray(true) } },
+    { label: t('猪猪回到右下角'), click: () => { win.setPosition(...Object.values(defaultPosition())); placePigInWindow(PIG_HOME.right, PIG_HOME.bottom); savePosition(); showPig() } },
     { label: t('打开大面板'), click: openPanelWindow },
     { type: 'separator' },
     {
@@ -388,7 +395,7 @@ else {
 if (!app.requestSingleInstanceLock()) {
   app.quit()
 } else {
-  app.on('second-instance', () => win?.showInactive())
+  app.on('second-instance', () => { if (win) showPig() })
   // A plain SIGTERM would skip before-quit and lose the last unsaved moments.
   for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => app.quit())
   if (testInstance) leaveWithLauncher()

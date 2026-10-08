@@ -1223,7 +1223,7 @@ window.__ModuleLoader__.load({
       'box-shadow:var(--ac-shadow-lg);color:var(--ac-text-body)}',
 
       /* ---------- the pig: never moved, never boxed ---------- */
-      // [dsh-piggy-claude-code mod] a heavy pig (up to 200 px) needs a taller
+      // [dsh-piggy-claude-code mod] a heavy pig (up to 400 px) needs a taller
       // scene, with room above it for the hud and the speech bubble.
       '.dp-scene{position:relative;height:max(var(--scene-open),calc(var(--pig-size) + var(--pig-gap-below) + 72px));background:none;cursor:grab;',
       'overflow:visible;display:flex;align-items:flex-end;justify-content:flex-end;',
@@ -2776,14 +2776,16 @@ window.__ModuleLoader__.load({
         ])
 
         // [dsh-piggy-claude-code mod] the pig grows by weight, so these set
-        // weight; the sprite follows it (40 px at hatching → 200 px at 120 kg).
+        // weight; the sprite follows it (40 px at hatching → 200 px at 120 kg →
+        // 400 px at 500 kg).
         group('体重', [
           { key: 'box', label: '📦 纸盒', run: function () { patch({ hatched: false }) } },
           { key: 'piglet', label: '小猪', run: function () { patch({ hatched: true, weightG: 2000 }) } },
           { key: 'young', label: '青年', run: function () { patch({ weightG: 20000 }) } },
           { key: 'middle', label: '中年', run: function () { patch({ weightG: 50000 }) } },
           { key: 'elder', label: '老年', run: function () { patch({ weightG: 80000 }) } },
-          { key: 'full', label: '⚖️ 120 kg', run: function () { patch({ weightG: 120000 }) } },
+          { key: 'big', label: '⚖️ 120 kg', run: function () { patch({ weightG: 120000 }) } },
+          { key: 'full', label: '⚖️ 500 kg', run: function () { patch({ weightG: 500000 }) } },
           { key: 'heavier', label: '⚖️ +5 kg', run: function () { patch({ weightG: Math.round(parseFloat(p.weight) * 1000) + 5000 }) } },
         ])
 
