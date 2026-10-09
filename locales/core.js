@@ -46,6 +46,8 @@ export default {
     '{name} 健身回来了，已经瘦到底了 💦': '{name}がジムから帰ってきた。もうこれ以上やせられない 💦',
     '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！': '💪 ジムで合計 {kg} kg やせて、ムキムキになった！',
     '{name} 练成了肌肉猪！💪': '{name}がマッチョなブタになった！💪',
+    '🪙 手里攒到过 {coins} 金币，解锁了「{look}」！': '🪙 コインを {coins} 枚ためて「{look}」が解放された！',
+    '{name} 变成了{look}！✨': '{name}が{look}になった！✨',
     '（{trait} {points}，省了 {minutes} 分钟）': '（{trait} {points}、{minutes} 分短縮）',
     '{emoji} 出门{job}去了{saved}': '{emoji} {job}に出かけた{saved}',
     // --- study --------------------------------------------------------------
@@ -154,6 +156,8 @@ export default {
     '{name} 健身回来了，已经瘦到底了 💦': '{name} is back from the gym, as light as it can get 💦',
     '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！': '💪 {kg} kg lost at the gym in all: a body full of muscle!',
     '{name} 练成了肌肉猪！💪': '{name} is a muscle pig now! 💪',
+    '🪙 手里攒到过 {coins} 金币，解锁了「{look}」！': '🪙 Held {coins} coins at once: “{look}” unlocked!',
+    '{name} 变成了{look}！✨': '{name} turned into a {look}! ✨',
     '（{trait} {points}，省了 {minutes} 分钟）': ' ({trait} {points}, {minutes} min saved)',
     '{emoji} 出门{job}去了{saved}': '{emoji} Off to work: {job}{saved}',
     // --- study --------------------------------------------------------------

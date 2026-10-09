@@ -223,6 +223,7 @@ export const WEAR_SLOTS = Object.freeze(['body', 'face', 'waist', 'eyes', 'head'
  *   shop <price>      [ST0012] bought once on the shop's 装扮 shelf; the one
  *                     kind that is saved (`wardrobeBought`)
  *   gym <kg>          [Q0016] it has worked off that many kilograms in all
+ *   coins <n>         [Q0016] it has held that many coins at once, ever
  */
 const WEARABLE = fields => Object.freeze({ ...fields, unlock: Object.freeze(fields.unlock) })
 export const WEARABLES = Object.freeze([
@@ -242,6 +243,8 @@ export const WEARABLES = Object.freeze([
   WEARABLE({ key: 'pager', slot: 'waist', label: 'BP机皮带', emoji: '📟', unlock: { kind: 'shop', price: 288 } }),
   // [Q0016] Worked off this many kilograms at the gym (GYM.muscleKg reads it).
   WEARABLE({ key: 'muscle', slot: 'body', label: '肌肉', emoji: '💪', unlock: { kind: 'gym', kg: 100 } }),
+  // [Q0016] Held this many coins at once, at any point (stats.peakCoins).
+  WEARABLE({ key: 'gold', slot: 'body', label: '黄金猪', emoji: '🪙', unlock: { kind: 'coins', coins: 10000 } }),
 ])
 
 export const wearableByKey = key => WEARABLES.find(item => item.key === key) ?? null

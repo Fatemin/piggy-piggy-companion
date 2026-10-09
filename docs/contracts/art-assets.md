@@ -39,7 +39,7 @@
 
 <!-- contract:wear-keys -->
 ```json
-{"bow": "head", "flatcap": "head", "mortarboard": "head", "strawhat": "head", "glasses": "eyes", "sunglasses": "eyes", "scarf": "waist", "whiskers": "face", "hulahoop": "waist", "swimring": "waist", "fannypack": "waist", "chainbelt": "waist", "pager": "waist", "muscle": "body"}
+{"bow": "head", "flatcap": "head", "mortarboard": "head", "strawhat": "head", "glasses": "eyes", "sunglasses": "eyes", "scarf": "waist", "whiskers": "face", "hulahoop": "waist", "swimring": "waist", "fannypack": "waist", "chainbelt": "waist", "pager": "waist", "muscle": "body", "gold": "body"}
 ```
 
 解锁条件（`WEARABLES[].unlock`）：除 `shop` 外全部从存档已有进度推导、不存档；`shop` 是商店「装扮」货架上买的，买过的键记在存档 `wardrobeBought`（ST0012，见 [STORE.SAVE.V6](save-format.md)）：
@@ -60,6 +60,7 @@
 | `chainbelt` | ⛓️ 杀马特腰链 | `shop 188`：商店购买 |
 | `pager` | 📟 BP机皮带 | `shop 288`：商店购买 |
 | `muscle` | 💪 肌肉 | `gym 100`：在健身房一共瘦掉 100 kg（`stats.gymLostG >= 100000`，Q0016）；解锁那一刻自动穿上 |
+| `gold` | 🪙 黄金猪 | `coins 10000`：手里同时有过 10000 金币（`max(coins, stats.peakCoins)`，Q0016）；解锁那一刻若「身上」没穿东西就自动穿上 |
 
 商店购买（`core.js` `buy` 对装饰键的分支）：每件只能买一次（已拥有拒绝 `owned`）、未孵化 / 死亡拒绝；扣 `unlock.price` 金币、记入 `wardrobeBought`、计一次 `stats.purchases`，并立刻穿上（同部位的换下）。装饰不进 `SHOP`、`inventory` 与背包，不能“使用”。
 
@@ -160,7 +161,7 @@
 2. **行为资产恰好一个穿戴槽**，`undressable-poses` 里的除外（零个）；槽里的 `data-occupies` 与 `pose-occupies` 一致。
 3. **行为资产不含 `data-wear=`**：它自带的装备是行为的一部分，只靠 `data-occupies` 让出部位，不冒充装饰。
 4. **装饰资产恰好一个片段**，`data-wear` 与文件名一致，`data-slot` 与 `wear-keys` 一致；`wear-keys` 与 `WEARABLES` 一一对应。
-5. **装饰不改玩法**：`WEARABLES` 条目只有 `key`/`slot`/`label`/`emoji`/`unlock`（数字只有 `shop` 的售价 `unlock.price`，只在购买时扣金币；以及 `gym` 的解锁门槛 `unlock.kg`，只用于判断解锁）；穿脱只改 `outfit` 与 `lastActiveAt`。
+5. **装饰不改玩法**：`WEARABLES` 条目只有 `key`/`slot`/`label`/`emoji`/`unlock`（数字只有 `shop` 的售价 `unlock.price`，只在购买时扣金币；以及 `gym` / `coins` 的解锁门槛 `unlock.kg` / `unlock.coins`，只用于判断解锁）；穿脱只改 `outfit` 与 `lastActiveAt`。
 6. **同一坐标系**：装饰画在猪本体（Noto 🐖，`VIEWBOX 24 -36 336 336`）坐标上；姿势只能移动整只猪（动画作用在分组上），不得重画本体，否则装饰会错位。
 7. **新美术先归类**：设计交接文档（`docs/design/*design-handoff*.md`）必须写明每项新美术属于哪一类；行为资产写明占用部位，装饰资产写明部位与解锁条件。
 

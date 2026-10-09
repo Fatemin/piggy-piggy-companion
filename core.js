@@ -282,6 +282,7 @@ export function wearUnlocked(state, item) {
     case 'region': return collected.some(key => souvenirByKey(key)?.region === unlock.region)
     case 'shop': return (state.wardrobeBought ?? []).includes(item.key)
     case 'gym': return (state.stats?.gymLostG ?? 0) >= unlock.kg * 1000
+    case 'coins': return Math.max(state.coins, state.stats?.peakCoins ?? 0) >= unlock.coins
     default: return false
   }
 }
@@ -653,8 +654,9 @@ export function layEgg(nowMs, lang = defaultLang()) {
       jobs: 0, coinsEarned: 0, purchases: 0, illnesses: 0, cures: 0, deaths: 0, revives: 0,
       courses: 0, lessons: 0, trips: 0, lotteries: 0, lotteryWon: 0,
       blackjacks: 0, blackjackWon: 0,
-      // [Q0016] gym sessions, and the grams they took off in all.
-      gyms: 0, gymLostG: 0,
+      // [Q0016] gym sessions, and the grams they took off in all; the most
+      // coins ever held at once (the gold look).
+      gyms: 0, gymLostG: 0, peakCoins: 0,
     },
   }
 }
@@ -718,8 +720,9 @@ export function migrate(raw) {
   for (const key of ['xp', 'weightG', 'peakWeightG', 'satiety', 'happiness', 'cleanliness', 'health', 'coins', 'riskMinutes', 'bornAt', 'lastFedAt', 'lastLotteryAt', 'lastActiveAt', 'lastSeenAt']) {
     if (typeof state[key] !== 'number' || !Number.isFinite(state[key])) state[key] = egg[key]
   }
-  // [Q0016] The gym's running totals open the muscle look: keep them counts.
-  for (const key of ['gyms', 'gymLostG']) {
+  // [Q0016] The gym's running totals open the muscle look, the most coins ever
+  // held the gold one: keep them counts.
+  for (const key of ['gyms', 'gymLostG', 'peakCoins']) {
     if (!Number.isFinite(state.stats[key]) || state.stats[key] < 0) state.stats[key] = 0
   }
   state.peakWeightG = clamp(state.peakWeightG, 0, 500_000)
@@ -768,6 +771,9 @@ export function migrate(raw) {
   state.outfit = sanitizeOutfit(raw.outfit)
   if ((typeof raw.version !== 'number' || raw.version < 6) && raw.outfit === undefined && raw.look === 'original') state.outfit = []
   delete state.look
+  // [Q0016] A save from before the gold look knows today's coins, after every
+  // refund above.
+  state.stats.peakCoins = Math.max(state.stats.peakCoins, state.coins)
   return state
 }
 
@@ -1069,7 +1075,30 @@ export function advance(state, toMs) {
     if (next > toMs) break
     decay(state, next)
   }
+  noteCoins(state, toMs)
   return state
+}
+
+/**
+ * [Q0016] Remember the most coins the pig has ever held (`stats.peakCoins`).
+ * Crossing a `coins` look's line unlocks it for good: announced once, and put
+ * on if nothing is worn on its slot yet. Called after time is folded in and
+ * after every op, so a windfall spent in the very next op still counts.
+ */
+export function noteCoins(state, nowMs) {
+  if (state === null || state.stats === null || typeof state.stats !== 'object') return
+  const before = Number.isFinite(state.stats.peakCoins) ? state.stats.peakCoins : 0
+  if (!(state.coins > before)) return
+  state.stats.peakCoins = state.coins
+  if (state.hatched !== true || state.dead === true) return
+  for (const item of WEARABLES) {
+    if (item.unlock.kind !== 'coins' || before >= item.unlock.coins || state.coins < item.unlock.coins) continue
+    const slotTaken = wornFor(state).some(key => wearableByKey(key).slot === item.slot)
+    if (!slotTaken) wear(state, item.key, true, nowMs)
+    const params = { name: state.name, coins: item.unlock.coins, look: word(state, item.label) }
+    remember(state, say(state, '🪙 手里攒到过 {coins} 金币，解锁了「{look}」！', params), nowMs)
+    announce(state, 'gold', say(state, '{name} 变成了{look}！✨', params))
+  }
 }
 
 /** Inventory counts, always including zeroes so the UI can render a grid. */
