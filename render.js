@@ -172,6 +172,7 @@ function statusLine(lang, state, nowMs) {
     }
     if (state.activity.kind === 'study') return tr(lang, '{emoji} 上课  {label}中 · 还有 {left} 秒', params)
     if (state.activity.kind === 'trip') return tr(lang, '{emoji} 旅行  {label}中 · 还有 {left} 秒', params)
+    if (state.activity.kind === 'gym') return tr(lang, '{emoji} 健身  {label}中 · 还有 {left} 秒', params)
     return tr(lang, '{emoji} 打工  {label}中 · 还有 {left} 秒', params)
   }
   const ill = state.illness === null ? null : illnessAt(state.illness.chain, state.illness.stage)
@@ -629,7 +630,7 @@ export function renderAbout(commandName, state = null) {
 }
 
 /** [ST0004] Where a decoration sits, in words. */
-export const WEAR_SLOT_LABEL = Object.freeze({ face: '脸上', waist: '腰上', eyes: '眼睛', head: '头上' })
+export const WEAR_SLOT_LABEL = Object.freeze({ body: '身上', face: '脸上', waist: '腰上', eyes: '眼睛', head: '头上' })
 
 /** [ST0004] How a decoration is earned, from its `unlock` rule. */
 export function wearHint(lang, unlock) {
@@ -643,6 +644,7 @@ export function wearHint(lang, unlock) {
     case 'trip': return tr(lang, '旅行回来后解锁')
     case 'region': return tr(lang, '从{region}带回纪念品后解锁', { region: tr(lang, REGIONS.find(region => region.key === unlock.region)?.label ?? unlock.region) })
     case 'shop': return tr(lang, '在商店「装扮」货架买，{price} 金币', { price: unlock.price })
+    case 'gym': return tr(lang, '在健身房一共瘦掉 {kg} kg 后解锁', { kg: unlock.kg })
     default: return ''
   }
 }

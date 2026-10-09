@@ -34,6 +34,7 @@ import {
   standBlackjack,
   startStudy,
   startTogether,
+  startGym,
   startTrip,
   startWork,
   useItem,
@@ -53,6 +54,8 @@ const TABLE = {
   work: (s, [jobKey], at) => ({ state: s, result: startWork(s, jobKey, at) }),
   study: (s, [subjects, stageKey], at) => ({ state: s, result: startStudy(s, subjects, stageKey, at) }),
   trip: (s, [placeKey], at, tz) => ({ state: s, result: startTrip(s, placeKey, at, tz / 60) }),
+  // [Q0016] one class at the gym.
+  gym: (s, [classKey], at) => ({ state: s, result: startGym(s, classKey, at) }),
   sleep: (s, [auto], at) => ({ state: s, result: goToSleep(s, at, { auto: auto === true }) }),
   wake: (s, [auto], at) => ({ state: s, result: wakeUp(s, at, { auto: auto === true }) }),
   calloff: (s, _args, at) => ({ state: s, result: callOffActivity(s, at) }),

@@ -7,7 +7,7 @@
  */
 
 import { PLACES, REGIONS, SOUVENIRS, SPECIALTIES, WORLD_BONUS, fareFor, zonesBetween } from '../world.js'
-import { ALL_ITEMS, DIPLOMAS, PARALLEL_COURSES, RENAME_CARD, WEAR_FOR_SALE, diplomaCount, schoolStageByKey as schoolStage } from '../data.js'
+import { ALL_ITEMS, DIPLOMAS, GYM, PARALLEL_COURSES, RENAME_CARD, WEAR_FOR_SALE, diplomaCount, schoolStageByKey as schoolStage } from '../data.js'
 import { diplomaView, outfitIsAuto, wardrobeView, wear, wearAuto, wornFor } from '../core.js'
 import { setRandomForTests } from '../core.js'
 import { hasDefaultName, perksOf, regionProgress, renamePig, tripQuote } from '../core.js'
@@ -61,6 +61,7 @@ import {
   sizeForWeight,
   lifeStageFor,
   rename,
+  startGym,
   startStudy,
   studyView,
   startTrip,
@@ -1855,4 +1856,121 @@ test('migrate keeps a night in bed and drops a bad or impossible one', () => {
   assert.equal(migrate({ hatched: true, dead: true, sleep: { since: T0 } }).sleep, null)
   const out = { hatched: true, activity: { kind: 'work', key: JOBS[0].key, endsAt: T0 + MIN }, sleep: { since: T0 } }
   assert.equal(migrate(out).sleep, null, 'it cannot be in bed and at work')
+})
+
+// ---------------------------------------------------------------------------
+// [Q0016] The gym: pay, go, come back lighter; never below the floor, never a
+// younger stage; 100 kg off in all unlocks the muscle look.
+// ---------------------------------------------------------------------------
+
+/** A fed, well-off pig of `kg`, ready to go out. */
+function gymPig(kg) {
+  const pig = hatchEgg(T0)
+  pig.weightG = kg * 1000
+  pig.coins = 5000
+  pig.satiety = 90
+  pig.stage = lifeStageFor(pig, T0).key
+  return pig
+}
+
+test('the gym turns away what it cannot take', () => {
+  assert.equal(startGym(gymPig(60), 'yoga', T0).reason, 'unknown')
+  assert.equal(startGym(layEgg(T0), 'treadmill', T0).reason, 'unhatched')
+  assert.equal(startGym(gymPig(GYM.floorKg), 'treadmill', T0).reason, 'too-light')
+  const broke = gymPig(60)
+  broke.coins = 10
+  assert.deepEqual(startGym(broke, 'trainer', T0), { ok: false, reason: 'poor', price: 400 })
+  const hungry = gymPig(60)
+  hungry.satiety = 5
+  assert.equal(startGym(hungry, 'treadmill', T0).reason, 'hungry')
+  const busy = gymPig(60)
+  assert.equal(startGym(busy, 'treadmill', T0).ok, true)
+  assert.equal(startGym(busy, 'treadmill', T0).reason, 'away')
+})
+
+test('a class is paid up front, takes its time, and takes weight off on the way home', () => {
+  const pig = gymPig(104)
+  const result = startGym(pig, 'weights', T0)
+  assert.equal(result.ok, true)
+  assert.equal(pig.coins, 5000 - 150)
+  assert.equal(pig.activity.kind, 'gym')
+  assert.equal(mood(pig, T0 + MIN).key, 'exercising')
+  decay(pig, T0 + 59 * MIN)
+  assert.equal(pig.weightG, 104_000, 'nothing comes off before the class ends')
+  decay(pig, T0 + 60 * MIN)
+  assert.equal(pig.activity, null)
+  assert.equal(pig.weightG, 99_000)
+  assert.equal(pig.stats.gyms, 1)
+  assert.equal(pig.stats.gymLostG, 5000)
+  assert.ok(pig.satiety < 90 && pig.cleanliness < 90, 'sweaty and hungry')
+  assert.ok(pig.pending.some(event => event.kind === 'gym'))
+})
+
+test('slimming down shrinks the pig but never makes it younger', () => {
+  const pig = gymPig(85)
+  assert.equal(lifeStageFor(pig, T0).key, 'elder')
+  for (let i = 0; i < 6; i += 1) {
+    pig.satiety = 90
+    assert.equal(startGym(pig, 'trainer', T0 + i * 200 * MIN).ok, true)
+    decay(pig, T0 + i * 200 * MIN + 121 * MIN)
+  }
+  assert.equal(pig.weightG, GYM.floorKg * 1000, 'stopped at the floor')
+  assert.equal(pig.stats.gymLostG, 65_000, 'only what really came off counts')
+  assert.equal(lifeStageFor(pig, T0).key, 'elder', 'still an elder at 20 kg')
+  assert.equal(lifeStageFor(pig, T0).size, sizeForWeight(GYM.floorKg * 1000), 'but drawn at 20 kg')
+  assert.ok(lifeStageFor(pig, T0).size < sizeForWeight(85_000))
+  assert.ok(wornFor(pig).includes('whiskers'), 'the elder look stays unlocked')
+  assert.equal(kgToNextStage(pig, T0), null, 'nothing left to grow into')
+  assert.equal(startGym(pig, 'treadmill', T0 + 2000 * MIN).reason, 'too-light')
+})
+
+test('calling a class off hands the money back and takes nothing off', () => {
+  const pig = gymPig(60)
+  startGym(pig, 'trainer', T0)
+  assert.deepEqual(callOffActivity(pig, T0 + 10 * MIN), { ok: true, refunded: 400 })
+  assert.equal(pig.coins, 5000)
+  assert.equal(pig.weightG, 60_000)
+  assert.equal(pig.stats.gymLostG, 0)
+})
+
+test('100 kg off in all unlocks the muscle look and puts it on', () => {
+  const pig = gymPig(200)
+  pig.stats.gymLostG = 95_000
+  const muscle = () => wardrobeView(pig).find(item => item.key === 'muscle')
+  assert.equal(muscle().unlocked, false)
+  assert.equal(muscle().slot, 'body')
+  startGym(pig, 'trainer', T0)
+  decay(pig, T0 + 121 * MIN)
+  assert.equal(pig.stats.gymLostG, 107_000)
+  assert.equal(muscle().unlocked, true)
+  assert.ok(wornFor(pig).includes('muscle'), 'worn straight away')
+  assert.ok(wornFor(pig).includes('whiskers'), 'over the stage look, not instead of it')
+  assert.ok(pig.pending.some(event => event.kind === 'muscle'))
+  // Only once: the next class does not announce it again.
+  pig.pending = []
+  pig.satiety = 90
+  startGym(pig, 'treadmill', T0 + 200 * MIN)
+  decay(pig, T0 + 231 * MIN)
+  assert.equal(pig.pending.some(event => event.kind === 'muscle'), false)
+})
+
+test('migrate keeps a gym class and the heaviest weight, and repairs bad totals', () => {
+  const away = migrate({ hatched: true, weightG: 90_000, activity: { kind: 'gym', key: 'treadmill', endsAt: T0 + MIN, cost: 50 } })
+  assert.equal(away.activity.kind, 'gym')
+  assert.equal(away.activity.cost, 50)
+  assert.equal(migrate({ hatched: true, activity: { kind: 'gym', key: 'pilates', endsAt: T0 + MIN } }).activity, null)
+  const old = migrate({ hatched: true, weightG: 60_000 })
+  assert.equal(old.stats.gymLostG, 0)
+  assert.equal(lifeStageFor(old, T0).key, 'middle', 'a save from before the gym goes by its weight')
+  const slim = migrate({ hatched: true, weightG: 30_000, peakWeightG: 90_000, stats: { gymLostG: 'lots', gyms: -3 } })
+  assert.equal(lifeStageFor(slim, T0).key, 'elder')
+  assert.equal(slim.stats.gymLostG, 0)
+  assert.equal(slim.stats.gyms, 0)
+})
+
+test('a debug weight moves the stage both ways, past the heaviest weight', () => {
+  const pig = gymPig(90)
+  pig.peakWeightG = 90_000
+  applyDevPatch(pig, { weightG: 2000 }, T0)
+  assert.equal(lifeStageFor(pig, T0).key, 'piglet')
 })

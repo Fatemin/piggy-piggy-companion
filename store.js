@@ -149,6 +149,9 @@ export function createStore(filePath = defaultStatePath(), options = {}) {
     /** Send the pig travelling. */
     startTrip: tripKey => run('trip', [tripKey]),
 
+    /** [Q0016] Send the pig to a class at the gym. */
+    startGym: classKey => run('gym', [classKey]),
+
     /** [mod] Put the pig to bed; `auto` when the computer is going to sleep. */
     sleep: auto => run('sleep', [auto === true]),
 

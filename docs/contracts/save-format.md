@@ -25,17 +25,18 @@
 
 <!-- contract:state-keys -->
 ```json
-["activity", "blackjack", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
+["activity", "blackjack", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "peakWeightG", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
 ```
 
 | 组 | 键 | 说明 |
 |---|---|---|
 | 身份与生命 | `name`, `stage`, `hatched`, `dead`, `diedAt`, `bornAt`, `lang` | `hatched` 与“存档存在”是两回事 |
 | 四维与成长 | `satiety`, `happiness`, `cleanliness`, `health`, `weightG`, `xp` | 迁移时夹到合法范围 |
+| 最高体重 | `peakWeightG` | 到过的最高体重（克，Q0016）：生命阶段和 `stage` 类装饰解锁按 `max(weightG, peakWeightG)` 算，健身减重不会让猪变小一个阶段；只在健身结算减重前更新，所以平时可能低于 `weightG`。默认出生体重，迁移时夹到 0–500000。`stats` 新增 `gyms`、`gymLostG`（健身次数、累计减掉的克数，后者解锁 `muscle`），迁移时补 0。新增可默认的键，不升版本 |
 | 资产 | `coins`, `inventory` | `coins` 为非负整数 |
 | 养成 | `traits`, `courses`, `lessonsByStage`, `stageCourses`, `doctorDone` | `stageCourses` 是各学段每门课的次数（小学/大学上限按它算）；缺失时按 `lessonsByStage` 平均摊到九门课 |
 | 旅行 | `souvenirs`, `collected`, `regionsDone`, `worldDone`, `lastTrip` | |
-| 外观 | `outfit` | `null`（跟着阶段穿）或装饰键数组（玩家搭配，每部位至多一件，按部位顺序）；含义与解锁见 [ART.ASSETS.V1](art-assets.md) §2.3。迁移时只留已登记键 |
+| 外观 | `outfit` | `null`（跟着阶段穿）或装饰键数组（玩家搭配，每部位至多一件，按部位顺序）；含义与解锁见 [ART.ASSETS.V2](art-assets.md) §2.3。迁移时只留已登记键 |
 | 衣柜购买 | `wardrobeBought` | 商店「装扮」货架买过的装饰键数组（ST0012，按 `WEAR_FOR_SALE` 顺序）；默认 `[]`，迁移时只留在售装饰键。新增可默认的键，不升版本 |
 | 进行中 | `activity`, `illness`, `sleep`, `cooldowns`, `riskMinutes` | `activity.key` 引用 [GAME.RULES.V1](game-rules.md) 的表键；`sleep` 为 `{since, auto}` 或 `null`（外出、死亡时迁移成 `null`；`auto` 表示电脑休眠触发） |
 | 记录 | `memories`（最多 8 条）, `pending`（加载时清空）, `stats` | |

@@ -48,6 +48,7 @@
 | `jobs` / `subjects` / `stages` / `trips` / `world` | task | DERIVED | 打工、学习、旅行标签页 |
 | `shop` / `inventory` / `bag` / `care` / `lottery` | task | DERIVED | 商店、背包、照料选择、刮刮卡；`care` 只在有猪时出现。`shop` 每项带 `owned`；`kind: 'wear'` 的是「装扮」货架上的装饰（ST0012），买过的 `owned: true`，不进 `inventory` / `bag` |
 | `blackjack` | task | TABLE+STATE | 21 点（ST0015）：`bets`（可选下注）、`standAt`（停牌最低点数）、`payouts[{total,multiplier}]`、`hand`（没打完的一手 `{bet,cards[{rank,suit}],total,soft}`，没有时 `null`） |
+| `gym` | task | TABLE+STATE | 健身房（Q0016）：`floorKg`（体重下限）、`muscleKg`（累计瘦掉多少解锁肌肉）、`lostKg`（已累计瘦掉）、`muscle`（已解锁）、`atFloor`（已到下限，不能再去）、`classes[{key,label,emoji,minutes,price,lossKg,affordable}]` |
 | `activity` | core | STATE+LIVE | 外出中为对象（`kind`、`key`、`secondsLeft`、`progress` …；上课另带学段 `stage`，旅行另带地区 `region`，面板据此选外出形象），否则 `null` |
 | `canGoOut` / `awayBlocked` | core | DERIVED | 不能外出的原因键，面板据此置灰 |
 | `pending` | core | STATE | 待展示的事件，取快照时被消费（`drain`） |
@@ -57,14 +58,14 @@
 
 <!-- contract:snapshot-keys-empty -->
 ```json
-["actions", "activity", "awayBlocked", "bag", "blackjack", "boxStage", "canGoOut", "dead", "hatched", "inventory", "jobs", "lang", "langs", "lottery", "maxHealth", "ok", "pending", "pig", "reviveItem", "shop", "stages", "subjects", "trips", "world"]
+["actions", "activity", "awayBlocked", "bag", "blackjack", "boxStage", "canGoOut", "dead", "gym", "hatched", "inventory", "jobs", "lang", "langs", "lottery", "maxHealth", "ok", "pending", "pig", "reviveItem", "shop", "stages", "subjects", "trips", "world"]
 ```
 
 有猪时的顶层键：
 
 <!-- contract:snapshot-keys -->
 ```json
-["actions", "activity", "awayBlocked", "bag", "blackjack", "boxStage", "canGoOut", "care", "dead", "hatched", "inventory", "jobs", "lang", "langs", "lottery", "maxHealth", "ok", "pending", "pig", "reviveItem", "shop", "stages", "subjects", "trips", "world"]
+["actions", "activity", "awayBlocked", "bag", "blackjack", "boxStage", "canGoOut", "care", "dead", "gym", "hatched", "inventory", "jobs", "lang", "langs", "lottery", "maxHealth", "ok", "pending", "pig", "reviveItem", "shop", "stages", "subjects", "trips", "world"]
 ```
 
 ### 2.3 `pig` 字段
@@ -77,7 +78,7 @@
 | 组 | 字段 | 深度 | freshness |
 |---|---|---|---|
 | 身份 | `name`, `stage{key,label,emoji,size,line,art,faded}` | core | STATE+TABLE |
-| 穿戴 | `outfit{auto,worn[]}`：`worn` 是当前穿戴的装饰键（按部位绘制顺序，面板原样拼到精灵 URL 的 `?wear=`），`auto` 为跟着阶段穿 | core | DERIVED（ST0004，见 [ART.ASSETS.V1](art-assets.md)） |
+| 穿戴 | `outfit{auto,worn[]}`：`worn` 是当前穿戴的装饰键（按部位绘制顺序，面板原样拼到精灵 URL 的 `?wear=`），`auto` 为跟着阶段穿 | core | DERIVED（ST0004，见 [ART.ASSETS.V2](art-assets.md)） |
 | 衣柜 | `wardrobe[{key,slot,label,emoji,unlocked,worn,hint}]`：全部装饰，`hint` 是已翻译的解锁条件 | task | DERIVED |
 | 旧外观开关 | `look`（`'elder'` = 戴着 `whiskers`，否则 `'original'`）、`canChooseLook`（`whiskers` 已解锁）：ST0004 起由衣柜推导，只为旧面板保留 | core | DERIVED |
 | 年龄与成长 | `ageDays`, `ageLabel`, `daysToNextStage`, `kgToNextStage`, `growthPercent`, `weight` | core | LIVE |
@@ -95,16 +96,18 @@
 |---|---|---|
 | `/dsh-pig/state` | GET | 返回快照，`cache-control: no-store`；其他方法 405 + `allow` |
 | `/dsh-pig/act` | POST | JSON 体 `{action, ...}`；未知 `action` → 400 + `allowed` 列表；体过大或非 JSON → 413 |
-| `/dsh-pig/art/<name>.svg` | GET | 只服务 `assets/` 下匹配 `^[a-z][a-z0-9-]{0,31}\.svg$` 的文件，其他一律 404；可带 `?wear=<k1>,<k2>` 给姿势穿上装饰，只认 `WEARABLES` 键，其余丢弃（合成规则见 [ART.ASSETS.V1](art-assets.md) §2.6） |
+| `/dsh-pig/art/<name>.svg` | GET | 只服务 `assets/` 下匹配 `^[a-z][a-z0-9-]{0,31}\.svg$` 的文件，其他一律 404；可带 `?wear=<k1>,<k2>` 给姿势穿上装饰，只认 `WEARABLES` 键，其余丢弃（合成规则见 [ART.ASSETS.V2](art-assets.md) §2.6） |
 
 `OPERATIONS` 表（路由与斜杠命令共用，同一张表防止两者漂移）：
 
 <!-- contract:act-operations -->
 ```json
-["adopt", "bathe", "buy", "calloff", "dev", "feed", "blackjack", "hatch", "lang", "look", "lottery", "pet", "play", "rename", "reset", "sleep", "study", "trip", "use", "wake", "wear", "work"]
+["adopt", "bathe", "buy", "calloff", "dev", "feed", "blackjack", "gym", "hatch", "lang", "look", "lottery", "pet", "play", "rename", "reset", "sleep", "study", "trip", "use", "wake", "wear", "work"]
 ```
 
 `wear`：`{item, on}` 穿上（同部位的换下）或脱下一件，`{auto: true}` 回到跟着阶段穿；拒绝原因 `unhatched` / `dead` / `bad-wear` / `wear-locked`。`buy` 给装饰键时买下并穿上，另有拒绝原因 `owned`（已经买过）与 `not-for-sale`（不是商店装饰）。`look` 自 ST0004 起只是戴上 / 摘下 `whiskers` 的旧入口。
+
+`gym`（Q0016）：`{gym: <课程键>}` 付钱去健身，像上课一样外出计时（`activity.kind === 'gym'`，心情 `exercising`），回来按课程减重、不低于 `floorKg`；提前叫回全额退款、不减重。拒绝原因 `unknown` / `unhatched` / `dead` / `away` / `weak` / `too-light`（已到下限）/ `poor`（带 `price`）/ `hungry`。
 
 `blackjack`（ST0015）：`{move: 'deal', bet}` 下注发两张，`{move: 'hit'}` 要一张，`{move: 'stand'}` 停牌结算；回执 `round` 是这一手（同快照 `hand`，另带 `done`；结束时带 `outcome`（`jackpot` 正好 21 / `win` / `bust`）、`multiplier`、`coins`）。拒绝原因 `in-hand`（已有一手）/ `bad-bet` / `poor` / `away`（发牌要在家）/ `no-hand` / `too-low`（不到 `standAt`）/ `bad-move`。
 

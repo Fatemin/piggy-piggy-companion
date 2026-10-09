@@ -28,6 +28,8 @@ window.__ModuleLoader__.load({
       sick: 'mood-sick', hungry: 'mood-hungry', dirty: 'mood-dirty', sleepy: 'mood-sleepy', asleep: 'mood-asleep',
       happy: 'mood-happy', lonely: 'mood-lonely',
       working: 'away-work', studying: 'away-study', traveling: 'away-trip',
+      // [Q0016] at the gym
+      exercising: 'away-gym',
     }
     var LEVELED_MOODS = { sick: true, hungry: true, dirty: true, lonely: true }
     // Being away at a particular school stage or in a particular region has its own pose.
@@ -47,7 +49,7 @@ window.__ModuleLoader__.load({
       sydney: 'away-trip-sydney', auckland: 'away-trip-auckland', antarctica: 'away-trip-antarctica',
     }
     // [ST0004] What the pig wears goes on every pose's URL (`?wear=bow,glasses`);
-    // the art route pours those decorations into the pose (ART.ASSETS.V1).
+    // the art route pours those decorations into the pose (ART.ASSETS.V2).
     // One-shot poses for the care buttons and verdicts.
     var REACT_ART = {
       feed: 'react-eat', bathe: 'react-bathe', play: 'react-play', pet: 'react-pet',
@@ -280,6 +282,14 @@ window.__ModuleLoader__.load({
         '一等奖': '1等', '二等奖': '2等', '三等奖': '3等', '安慰奖': '残念賞', '谢谢参与': 'はずれ',
         // [ST0015] blackjack
         '赌场': 'カジノ', '返回商店': 'ショップにもどる',
+        // [Q0016] the gym
+        '健身房': 'ジム', '返回打工': 'バイトにもどる', '在健身': 'ジムで運動中',
+        '体重 {weight} · 最低 {kg} kg': '体重 {weight} · 下限 {kg} kg',
+        '已经练成肌肉猪': 'マッチョなブタになった',
+        '一共瘦掉 {lost}/{need} kg 练成肌肉猪': '合計 {lost}/{need} kg やせるとマッチョなブタに',
+        '已经瘦到 {kg} kg，不能再减了': 'もう {kg} kg、これ以上はやせられない',
+        '瘦 {kg} kg': '-{kg} kg',
+        '身上': 'からだ',
         '21 点': 'ブラックジャック', '下注 {min} 起 · {n} 点以上才能停': '{min} 🪙 から · {n} 以上でスタンド',
         '{total} 点': '{total}', '{total} 点（A 算 11）': '{total}（A=11）', '爆了': 'バースト',
         '下注 {bet} 🪙': 'ベット {bet} 🪙', '下注 {bet}': '{bet} 賭ける', '上一手': '前回',
@@ -514,6 +524,14 @@ window.__ModuleLoader__.load({
         '一等奖': '1st prize', '二等奖': '2nd prize', '三等奖': '3rd prize', '安慰奖': 'Consolation prize', '谢谢参与': 'No luck',
         // [ST0015] blackjack
         '赌场': 'Casino', '返回商店': 'Back to the shop',
+        // [Q0016] the gym
+        '健身房': 'Gym', '返回打工': 'Back to work', '在健身': 'At the gym',
+        '体重 {weight} · 最低 {kg} kg': 'Weight {weight} · floor {kg} kg',
+        '已经练成肌肉猪': 'Already a muscle pig',
+        '一共瘦掉 {lost}/{need} kg 练成肌肉猪': 'Lose {lost}/{need} kg in all to become a muscle pig',
+        '已经瘦到 {kg} kg，不能再减了': 'Down to {kg} kg already, it can’t lose any more',
+        '瘦 {kg} kg': '-{kg} kg',
+        '身上': 'Body',
         '21 点': 'Blackjack', '下注 {min} 起 · {n} 点以上才能停': 'bets from {min} 🪙 · stand on {n}+',
         '{total} 点': '{total}', '{total} 点（A 算 11）': '{total} (A=11)', '爆了': 'bust',
         '下注 {bet} 🪙': 'Bet {bet} 🪙', '下注 {bet}': 'Bet {bet}', '上一手': 'Last hand',
@@ -646,8 +664,8 @@ window.__ModuleLoader__.load({
     var KIND_TITLE = { food: ['🍎', '食物'], bath: ['🧼', '洗浴'], toy: ['🪀', '玩具'], medicine: ['💊', '药品'], revive: ['✨', '复活'], card: ['🪪', '道具'], wear: ['👗', '装扮'] }
     var KIND_ORDER = ['food', 'bath', 'toy', 'medicine', 'revive', 'card', 'wear']
     // [ST0012] wardrobe sections, head to toe.
-    var WEAR_SLOT_TITLE = { head: ['🎩', '头上'], eyes: ['👓', '眼睛'], waist: ['🎗️', '腰上'], face: ['🧔', '脸上'] }
-    var WEAR_SLOT_ORDER = ['head', 'eyes', 'waist', 'face']
+    var WEAR_SLOT_TITLE = { head: ['🎩', '头上'], eyes: ['👓', '眼睛'], waist: ['🎗️', '腰上'], face: ['🧔', '脸上'], body: ['💪', '身上'] }
+    var WEAR_SLOT_ORDER = ['head', 'eyes', 'waist', 'face', 'body']
     // [dsh-piggy-claude-code mod] study and work are sorted by the trait they build or use.
     var TRAIT_TITLE = { intel: ['🧠', '智力'], charm: ['✨', '魅力'], strong: ['💪', '武力'] }
     var TRAIT_KEYS = ['intel', 'charm', 'strong']
@@ -954,6 +972,23 @@ window.__ModuleLoader__.load({
             emoji: str(obj(prize).emoji, '🎟️'),
             coins: num(obj(prize).coins, 0),
           })).filter(prize => prize.tier !== ''),
+        } : null,
+        // [Q0016] the gym; null from an older host.
+        gym: isObj(d.gym) ? {
+          floorKg: num(d.gym.floorKg, 20),
+          muscleKg: num(d.gym.muscleKg, 100),
+          lostKg: Math.max(0, num(d.gym.lostKg, 0)),
+          muscle: d.gym.muscle === true,
+          atFloor: d.gym.atFloor === true,
+          classes: arr(d.gym.classes).map(entry => ({
+            key: str(obj(entry).key, ''),
+            label: str(obj(entry).label, ''),
+            emoji: str(obj(entry).emoji, '🏋️'),
+            minutes: num(obj(entry).minutes, 0),
+            price: num(obj(entry).price, 0),
+            lossKg: num(obj(entry).lossKg, 0),
+            affordable: obj(entry).affordable === true,
+          })).filter(entry => entry.key !== ''),
         } : null,
         // [ST0015] the blackjack table; null from an older host.
         blackjack: isObj(d.blackjack) ? {
@@ -2526,6 +2561,8 @@ window.__ModuleLoader__.load({
       var blackjackLast = null
       // [ST0015] which page of the shop tab is open: the shelves, or the casino.
       var shopPage = 'shop'
+      // [Q0016] which page of the work tab is open: the jobs, or the gym.
+      var workPage = 'work'
       // [ST0007] the updater's last state (null: none, or not known yet), whether
       // the host has one at all, and the versions the pig already announced.
       var update = null
@@ -2711,6 +2748,7 @@ window.__ModuleLoader__.load({
         tab = next
         picker = null
         shopPage = 'shop'
+        workPage = 'work'
         renderContent()
         for (var k in icons) icons[k].setAttribute('data-active', k === tab ? 'true' : 'false')
         if (split) {
@@ -3911,7 +3949,70 @@ window.__ModuleLoader__.load({
         return head
       }
 
+      /** [Q0016] The gym door at the top of the work page; the casino door's look. */
+      function gymEntry() {
+        var door = button('dp-casino-door', { 'data-gym': 'open' }, function () {
+          workPage = 'gym'
+          renderContent()
+        })
+        door.appendChild(el('span', 'dp-casino-icon', '🏋️'))
+        var grow = el('div', 'dp-grow')
+        grow.appendChild(el('b', null, T('健身房')))
+        grow.appendChild(el('div', 'dp-note', view.gym.classes.map(entry => entry.emoji + ' ' + entry.label).join(' · ')))
+        door.appendChild(grow)
+        door.appendChild(el('span', 'dp-casino-go', '›'))
+        return door
+      }
+
+      /**
+       * [Q0016] The gym page: today's weight and the floor, how far the pig is
+       * from the muscle look, and one row per class.
+       */
+      function gymPage() {
+        var gym = view.gym
+        var head = el('div', 'dp-title')
+        var back = button('dp-casino-back', { 'data-gym': 'back' }, function () {
+          workPage = 'work'
+          renderContent()
+        })
+        back.textContent = '‹ ' + T('返回打工')
+        head.appendChild(back)
+        head.appendChild(el('span', null, '🪙 ' + view.pig.coins))
+        content.appendChild(head)
+        content.appendChild(el('div', 'dp-casino-title', '🏋️ ' + T('健身房')))
+        content.appendChild(el('div', 'dp-note', '⚖️ ' + T('体重 {weight} · 最低 {kg} kg', { weight: view.pig.weight, kg: gym.floorKg })))
+        content.appendChild(el('div', 'dp-note', gym.muscle
+          ? '💪 ' + T('已经练成肌肉猪')
+          : '💪 ' + T('一共瘦掉 {lost}/{need} kg 练成肌肉猪', { lost: gym.lostKg, need: gym.muscleKg })))
+        if (gym.atFloor) content.appendChild(el('div', 'dp-dim', T('已经瘦到 {kg} kg，不能再减了', { kg: gym.floorKg })))
+        var list = el('div', 'dp-list')
+        list.style.marginTop = '8px'
+        for (var i = 0; i < gym.classes.length; i += 1) {
+          (function (entry) {
+            var row = el('div', 'dp-item')
+            row.appendChild(el('span', null, entry.emoji))
+            var grow = el('div', 'dp-grow')
+            grow.appendChild(el('div', null, entry.label))
+            grow.appendChild(el('div', 'dp-dim', formatDuration(entry.minutes) + ' · ' + entry.price + ' 🪙 · '
+              + T('瘦 {kg} kg', { kg: entry.lossKg })))
+            row.appendChild(grow)
+            var go = button('dp-mini', { 'data-gym-class': entry.key }, function () { send('gym', { gym: entry.key }) })
+            go.textContent = T('出发')
+            go.disabled = !view.canGoOut || gym.atFloor
+            row.appendChild(go)
+            list.appendChild(row)
+          })(gym.classes[i])
+        }
+        content.appendChild(list)
+      }
+
       function workTab() {
+        if (workPage === 'gym' && view.gym !== null && view.pig !== null) {
+          gymPage()
+          return
+        }
+        workPage = 'work'
+        if (view.gym !== null && view.pig !== null) content.appendChild(gymEntry())
         if (view.jobs.length === 0) {
           content.appendChild(el('div', 'dp-empty', T('宿主还没提供工作列表。')))
           return
@@ -4669,6 +4770,7 @@ window.__ModuleLoader__.load({
         work: '在忙',
         study: '在念书',
         trip: '在路上',
+        gym: '在健身',
       }
 
       function render(next) {
@@ -4775,6 +4877,9 @@ window.__ModuleLoader__.load({
           else if (event.kind === 'diploma') { react('graduate', 2600); burst(['📜', '🎓', '✨'], 3) }
           else if (event.kind === 'trip') { react('away', 900); burst(['🧳', '🎁'], 3) }
           else if (event.kind === 'doctor') { react('graduate', 2600); burst(['🎓', '🎉'], 3) }
+          // [Q0016]
+          else if (event.kind === 'gym') { react('away', 900); burst(['💦', '💪'], 3) }
+          else if (event.kind === 'muscle') { react('levelup', 950); burst(['💪', '✨', '🎉'], 3) }
         }
 
         relabelChrome()
@@ -5032,6 +5137,11 @@ window.__ModuleLoader__.load({
             if (next.reason === 'too-low') {
               var line18 = view.blackjack === null ? 18 : view.blackjack.standAt
               showBubble(T('不到 {n} 点不能停，再要一张吧', { n: line18 }), 2600)
+              return
+            }
+            // [Q0016] the gym turns away a pig already down at the floor.
+            if (next.reason === 'too-light' && view.gym !== null) {
+              showBubble(T('已经瘦到 {kg} kg，不能再减了', { kg: view.gym.floorKg }), 2600)
               return
             }
             if (next.reason === 'need-card') {

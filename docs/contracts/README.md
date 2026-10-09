@@ -14,7 +14,7 @@
 | `STORE.SAVE.V6` | 存档 `state.json` 的形状、`STATE_VERSION`、`migrate()` 与写盘方式 | [save-format.md](save-format.md) | `CURRENT` |
 | `STORE.SAVE.V5` | 存档 v5（ST0004 前）；被 V6 取代 | [save-format-v5.md](save-format-v5.md) | `RETIRED` |
 | `I18N.TERMS.V1` | 中文源串为键的三语文案、占位符、术语表与三语 README | [i18n.md](i18n.md) | `CURRENT` |
-| `ART.ASSETS.V1` | 美术资产两分：行为资产（姿势，游戏选）与装饰资产（装扮，玩家选）的文件接口、部位、解锁与合成路由 | [art-assets.md](art-assets.md) | `CURRENT` |
+| `ART.ASSETS.V2` | 美术资产两分：行为资产（姿势，游戏选）与装饰资产（装扮，玩家选）的文件接口、部位、解锁与合成路由 | [art-assets.md](art-assets.md) | `CURRENT` |
 
 ## 状态标签
 

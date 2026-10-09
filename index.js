@@ -62,7 +62,7 @@ import {
   lotteryWaitSeconds,
   blackjackHand,
 } from './core.js'
-import { ALL_ITEMS, BLACKJACK, ILLNESS_CHAINS, KIND_LABEL, KIND_ORDER, LOTTERY, PARALLEL_COURSES, RENAME_CARD, WEARABLES, WEAR_FOR_SALE, jobByKey, wearableByKey, jobMissing, traitBonus } from './data.js'
+import { ALL_ITEMS, BLACKJACK, GYM, GYM_CLASSES, ILLNESS_CHAINS, KIND_LABEL, KIND_ORDER, LOTTERY, PARALLEL_COURSES, RENAME_CARD, WEARABLES, WEAR_FOR_SALE, jobByKey, wearableByKey, jobMissing, traitBonus } from './data.js'
 import { FARE, PLACES, REGIONS, WORLD_BONUS, souvenirByKey, placeByKey, systemTimeZone, systemUtcOffset } from './world.js'
 import {
   renderAbout,
@@ -146,6 +146,8 @@ const OPERATIONS = {
   // [mod] `subjects` (a list, for several at once) or the old single `subject`.
   study: (store, body) => store.startStudy(Array.isArray(body.subjects) ? body.subjects.map(str) : str(body.subject), str(body.stage)),
   trip: (store, body) => store.startTrip(str(body.trip)),
+  // [Q0016] `{gym}` names the class.
+  gym: (store, body) => store.startGym(str(body.gym)),
   rename: (store, body) => store.renamePig(str(body.name)),
   calloff: store => store.callOffActivity(),
   // [dsh-piggy-claude-code mod] switch an elder pig's drawing. [ST0004] Kept
@@ -366,6 +368,7 @@ export function snapshot(store, options = {}) {
       bag: [],
       lottery: lotteryFor(null, nowMs),
       blackjack: blackjackFor(null),
+      gym: gymFor(null),
       activity: null, canGoOut: false, awayBlocked: 'absent',
       // The box has a size of its own; the client must not hard-code it.
       boxStage: boxStageView(lang),
@@ -457,6 +460,7 @@ export function snapshot(store, options = {}) {
     bag: bagFor(state),
     lottery: lotteryFor(state, nowMs),
     blackjack: blackjackFor(state),
+    gym: gymFor(state),
     care: Object.fromEntries(Object.entries(careView(state))
       .map(([action, items]) => [action, items.map(item => ({ ...item, label: tr(lang, item.label) }))])),
     activity: activity === null ? null : {
@@ -685,6 +689,27 @@ function blackjackFor(state) {
     standAt: BLACKJACK.standAt,
     payouts: BLACKJACK.payouts.map(row => ({ total: row.total, multiplier: row.multiplier })),
     hand: hand === null ? null : blackjackHand(hand),
+  }
+}
+
+/**
+ * [Q0016] The gym: its classes, the weight floor, and how far the pig is from
+ * the muscle look (kilograms worked off in all).
+ */
+function gymFor(state) {
+  const lang = langOf(state)
+  const lostG = state?.stats?.gymLostG ?? 0
+  return {
+    floorKg: GYM.floorKg,
+    muscleKg: GYM.muscleKg,
+    lostKg: Math.floor(lostG / 100) / 10,
+    muscle: lostG >= GYM.muscleKg * 1000,
+    atFloor: state !== null && state.weightG <= GYM.floorKg * 1000,
+    classes: GYM_CLASSES.map(entry => ({
+      key: entry.key, label: tr(lang, entry.label), emoji: entry.emoji,
+      minutes: entry.minutes, price: entry.price, lossKg: entry.lossG / 1000,
+      affordable: state !== null && state.coins >= entry.price,
+    })),
   }
 }
 

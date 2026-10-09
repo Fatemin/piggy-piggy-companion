@@ -202,24 +202,27 @@ export const LOOKS = Object.freeze(['elder', 'original'])
 // ---------------------------------------------------------------------------
 // [ST0004] Wardrobe. A decoration (装饰资产) is something the pig wears and its
 // owner picks; a pose (行为资产) is what the pig is doing and the game picks.
-// The contract between the two: docs/contracts/art-assets.md (ART.ASSETS.V1).
+// The contract between the two: docs/contracts/art-assets.md (ART.ASSETS.V2).
 // ---------------------------------------------------------------------------
 
 /** Where a decoration sits on the pig, in drawing order (later is on top). */
-export const WEAR_SLOTS = Object.freeze(['face', 'waist', 'eyes', 'head'])
+/** [Q0016] `body` (drawn on the body itself, under everything) is new in ART.ASSETS.V2. */
+export const WEAR_SLOTS = Object.freeze(['body', 'face', 'waist', 'eyes', 'head'])
 
 /**
  * Every decoration, one slot each; its drawing is assets/wear-<key>.svg.
  * `unlock` is mostly worked out from progress the save already keeps, so a pig
  * that grew up before the wardrobe has its things:
  *   always            from the moment it hatches
- *   stage <key>       it has grown to that life stage (weight only goes up)
+ *   stage <key>       it has grown to that life stage ([Q0016] by its heaviest
+ *                     weight, so the gym never takes it away)
  *   lessons <stage>   it has sat a lesson at that school (`null`: any school)
  *   diploma           it holds any diploma
  *   trip              it has come home from a trip
  *   region <key>      it brought a souvenir home from that region
  *   shop <price>      [ST0012] bought once on the shop's 装扮 shelf; the one
  *                     kind that is saved (`wardrobeBought`)
+ *   gym <kg>          [Q0016] it has worked off that many kilograms in all
  */
 const WEARABLE = fields => Object.freeze({ ...fields, unlock: Object.freeze(fields.unlock) })
 export const WEARABLES = Object.freeze([
@@ -237,6 +240,8 @@ export const WEARABLES = Object.freeze([
   WEARABLE({ key: 'fannypack', slot: 'waist', label: '多巴胺腰包', emoji: '👝', unlock: { kind: 'shop', price: 168 } }),
   WEARABLE({ key: 'chainbelt', slot: 'waist', label: '杀马特腰链', emoji: '⛓️', unlock: { kind: 'shop', price: 188 } }),
   WEARABLE({ key: 'pager', slot: 'waist', label: 'BP机皮带', emoji: '📟', unlock: { kind: 'shop', price: 288 } }),
+  // [Q0016] Worked off this many kilograms at the gym (GYM.muscleKg reads it).
+  WEARABLE({ key: 'muscle', slot: 'body', label: '肌肉', emoji: '💪', unlock: { kind: 'gym', kg: 100 } }),
 ])
 
 export const wearableByKey = key => WEARABLES.find(item => item.key === key) ?? null
@@ -394,6 +399,33 @@ export function jobMissing(job, traits) {
     .filter(([trait, need]) => (traits?.[trait] ?? 0) < need)
     .map(([trait, need]) => ({ trait, need, have: traits?.[trait] ?? 0 }))
 }
+
+// ---------------------------------------------------------------------------
+// [Q0016] The gym (健身房), behind a door on the work page. A session is an
+// outing like a lesson: pay, go, come back lighter — and hungrier and sweatier.
+//
+//   - weight never drops below `floorKg`; a pig at the floor is turned away;
+//   - the life stage, and the looks it unlocks, follow the heaviest the pig
+//     has been (`peakWeightG`), so slimming down never makes it younger;
+//   - every gram taken off counts towards `muscleKg` in total, which unlocks
+//     the muscle look (`muscle`, the body slot) for good.
+//
+// Losses are sized against what food puts back: a fed pig eats ~115 satiety a
+// day, worth ~11 kg below 80 kg and ~2.9 kg past 120 kg (GROWTH).
+// ---------------------------------------------------------------------------
+
+/** `muscleKg` is the muscle look's own unlock, so the two cannot drift apart. */
+export const GYM = Object.freeze({ floorKg: 20, muscleKg: wearableByKey('muscle').unlock.kg })
+
+/** One class: `lossG` comes off on the way home, the bars move like a job's. */
+const GYM_CLASS = fields => Object.freeze(fields)
+export const GYM_CLASSES = Object.freeze([
+  GYM_CLASS({ key: 'treadmill', label: '跑步机', emoji: '🏃', minutes: MINUTES.half, price: 50, lossG: 2000, satiety: -10, cleanliness: -10, happiness: 2 }),
+  GYM_CLASS({ key: 'weights', label: '撸铁', emoji: '🏋️', minutes: MINUTES.hour, price: 150, lossG: 5000, satiety: -16, cleanliness: -16, happiness: 0 }),
+  GYM_CLASS({ key: 'trainer', label: '私教课', emoji: '💪', minutes: MINUTES.twoHours, price: 400, lossG: 12000, satiety: -24, cleanliness: -22, happiness: -2 }),
+])
+
+export const gymClassByKey = key => GYM_CLASSES.find(entry => entry.key === key) ?? null
 
 // ---------------------------------------------------------------------------
 // [dsh-piggy-claude-code mod] Scratch cards, sold at the shop counter.

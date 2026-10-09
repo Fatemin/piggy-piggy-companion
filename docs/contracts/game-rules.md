@@ -49,6 +49,11 @@
 [["感冒", "发烧", "重感冒", "肺炎"], ["咳嗽", "支气管炎", "哮喘", "肺结核"], ["肚子胀", "胃炎", "胃溃疡", "胃癌"]]
 ```
 
+<!-- contract:gym-class-keys -->
+```json
+["treadmill", "weights", "trainer"]
+```
+
 <!-- contract:region-keys -->
 ```json
 ["china", "eastasia", "southasia", "europe", "americas", "mideast", "oceania"]
@@ -90,19 +95,20 @@
 1. **键只增不删**：存档里的 `activity.key`、背包物品键、纪念品键都引用这些表。删除或改名一个键必须同时在 `migrate()` 给出处理路径（先例：退役的四个旧旅行地点由 `LEGACY_TRIPS` 退款并清除）。
 2. 每个打工的 `trait` ∈ `TRAIT_ORDER`；`pro` 职业有 `requires` 且只引用存在的属性；`random` 区间下界小于上界。
 3. 每条疾病链恰好 4 期；`ILLNESS_STAGE_HOURS`、`STAGE_HEALTH`、`SELF_HEAL_CHANCE` 长度均为 4；每一期都有对症药 `medicineForStage(1..4)`。
-4. 商店物品的 `kind` ∈ `KIND_ORDER`；全部物品（商店 + 特产）键唯一，且不与装饰键重名。`wear` 货架（ST0012）不在 `SHOP` 里：它列出 `WEAR_FOR_SALE`（`unlock.kind === 'shop'` 的装饰），规则见 [ART.ASSETS.V1](art-assets.md) §2.2。
+4. 商店物品的 `kind` ∈ `KIND_ORDER`；全部物品（商店 + 特产）键唯一，且不与装饰键重名。`wear` 货架（ST0012）不在 `SHOP` 里：它列出 `WEAR_FOR_SALE`（`unlock.kind === 'shop'` 的装饰），规则见 [ART.ASSETS.V2](art-assets.md) §2.2。
 5. 每个目的地的 `region` 是已登记地区。
 6. 面向玩家的 `label` 都是中文源串，并在 `locales/data.js` 有 ja 与 en 译文。
 7. 规则只在 `core.js`：快照、面板、终端渲染都不得重算报酬、冷却或价格（见 [HOST.SNAPSHOT.V1](host-snapshot.md) §1）。
 8. 睡觉与外出互斥：睡着时饱食照常下降，心情、清洁按 `SLEEP_RECOVERY_PER_MIN` 回升，疏于照顾累积的生病风险乘 `SLEEP_SICK_RISK_MULTIPLIER`；照顾动作和出门会先叫醒它；电脑唤醒（`auto`）只结束电脑休眠引起的睡眠。
-9. **装扮不进玩法**：`data.js` 的 `WEAR_SLOTS` / `WEARABLES` / `STAGE_OUTFIT` 与 `core.js` 的解锁、穿脱只决定外观，由 [ART.ASSETS.V1](art-assets.md) 约束；除 `shop` 装饰的售价（`unlock.price`，只在购买时扣金币）外不得带数值字段，也不得被任何结算读取。
+9. **装扮不进玩法**：`data.js` 的 `WEAR_SLOTS` / `WEARABLES` / `STAGE_OUTFIT` 与 `core.js` 的解锁、穿脱只决定外观，由 [ART.ASSETS.V2](art-assets.md) 约束；除 `shop` 装饰的售价（`unlock.price`，只在购买时扣金币）与 `gym` 装饰的解锁门槛（`unlock.kg`，Q0016）外不得带数值字段，也不得被任何结算读取。
+10. **健身房**（Q0016，`GYM` / `GYM_CLASSES`）：一节课是一次外出（`activity.kind === 'gym'`），先付 `price`、提前叫回全额退款；回来减 `lossG`，体重不低于 `GYM.floorKg`，体重已在下限时拒绝 `too-light`。生命阶段与 `stage` 类装饰解锁按 `max(weightG, peakWeightG)` 算，减重前把当前体重记进 `peakWeightG`，所以健身不会让猪退回更小的阶段；`sizeForWeight` 仍按当前体重，猪会真的变小。累计减掉的克数记 `stats.gymLostG`，到 `GYM.muscleKg`（就是 `muscle` 装饰的 `unlock.kg`）解锁肌肉造型并自动穿上。
 
 ## 4. 变更规则 Change rules
 
 - **调数值**（不加删键）：改 `data.js` / `world.js` 并在 CHANGELOG 写明前后对比与理由；本文无需改动，合入时用 `--contract-exempt "数值调整，键与字段不变"` 记录。
 - **加键**（新职业、课程、商品、目的地）：同分支更新 §2 机器块、补三语译文、补图（走设计门）、必要时补 `test/core.test.js` 规则测试。
 - **删 / 改名键**：先在 `migrate()` 写兼容路径，存档版本是否要升按 [STORE.SAVE.V6](save-format.md) §4 判断；本契约升 `V2` 当且仅当字段含义改变。
-- **新系统**（例如 TODO 里的联机）：先在本注册表登记新的 `contract_id`（`TARGET_PENDING`），再设计、再实现。装扮已按此登记为 [ART.ASSETS.V1](art-assets.md)。
+- **新系统**（例如 TODO 里的联机）：先在本注册表登记新的 `contract_id`（`TARGET_PENDING`），再设计、再实现。装扮已按此登记为 [ART.ASSETS.V2](art-assets.md)。
 
 ## 5. 验证 Verification
 
