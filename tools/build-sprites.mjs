@@ -277,31 +277,35 @@ const WEAR = {
   // [Q0016] Held 10000 coins at once. The whole pig is cast in gold: the body,
   // the ears and the far leg, drawn over the pig's own; the eyes and the snout
   // are left as holes so every pose's expression (and the talking snout) shows
-  // through. The near ear is redrawn in gold and flicks like the real one; a
-  // glint runs across and two sparkles twinkle. The tail is left alone: a copy
-  // could not keep time with the poses that wag it faster or not at all.
+  // through. The near ear is redrawn in gold and flicks like the real one. The
+  // shine is kept small: a thin highlight along the back, a dot on the rump,
+  // and a narrow glint that sweeps the body now and then — invisible at rest,
+  // so with motion reduced it never hangs across the pig. Two small sparkles
+  // twinkle. The tail is left alone: a copy could not keep time with the poses
+  // that wag it faster or not at all.
   gold: {
     slot: 'body', title: '黄金猪', note: '手里攒到过 10000 金币的黄金猪：浑身金灿灿，眼睛和粉鼻子不变，一道反光扫过身体，两颗星星一闪一闪。',
     css: `.w-gold-ear2{animation:w-gold-flick 5.2s ease-in-out infinite;transform-origin:205px 108px}
-    .w-gold-glint{animation:w-gold-glint 3.2s ease-in-out infinite}
-    .w-gold-star{animation:w-gold-twinkle 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%}
-    .w-gold-star2{animation:w-gold-twinkle 1.8s ease-in-out -.9s infinite;transform-box:fill-box;transform-origin:50% 50%}
+    .w-gold-glint{animation:w-gold-glint 4s ease-in-out infinite}
+    .w-gold-star{animation:w-gold-twinkle 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%}
+    .w-gold-star2{animation:w-gold-twinkle 2.4s ease-in-out -1.2s infinite;transform-box:fill-box;transform-origin:50% 50%}
     @keyframes w-gold-flick{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-12deg)}90%{transform:rotate(4deg)}}
-    @keyframes w-gold-glint{0%,55%{transform:translateX(-120px);opacity:0}65%{opacity:.75}100%{transform:translateX(220px);opacity:0}}
+    @keyframes w-gold-glint{0%,72%{transform:translateX(-90px);opacity:0}76%{opacity:.85}96%{opacity:.85}100%{transform:translateX(260px);opacity:0}}
     @keyframes w-gold-twinkle{0%,100%{opacity:.15;transform:scale(.5)}50%{opacity:1;transform:scale(1)}}`,
     svg: `<mask id="w-gold-face" maskUnits="userSpaceOnUse" x="0" y="-60" width="400" height="400"><rect x="0" y="-60" width="400" height="400" fill="#fff"/>
     <path d="${P.eye1}" fill="#000"/><path d="${P.eye2}" fill="#000"/><path d="${P.snout}" fill="#000"/></mask>
     ${bodyClip('w-gold-body')}
     <path fill="#D99A1E" d="${P.farLeg}"/>
     <g mask="url(#w-gold-face)"><path fill="#F5C542" d="${P.body}"/><path fill="#F5C542" d="${P.earBase}"/>
-    <g clip-path="url(#w-gold-body)"><path d="M92 92C140 62 200 52 252 58C220 66 160 80 112 108Z" fill="#FFE27A"/>
+    <g clip-path="url(#w-gold-body)"><path d="M116 86Q170 58 238 54" fill="none" stroke="#FFE27A" stroke-width="9" stroke-linecap="round"/>
+    <ellipse cx="302" cy="104" rx="11" ry="5" fill="#FFE27A" transform="rotate(38 302 104)"/>
     <path d="M300 92C322 120 326 160 312 200" fill="none" stroke="#E0A82E" stroke-width="16" stroke-linecap="round"/>
     <path d="M100 250C150 262 220 250 262 228" fill="none" stroke="#E0A82E" stroke-width="12" stroke-linecap="round"/>
-    <g class="w-gold-glint"><path d="M150 40L184 40L120 300L86 300Z" fill="#FFF6C8" opacity=".7"/></g></g>
+    <g class="w-gold-glint" opacity="0"><path d="M112 40L124 40L84 300L72 300Z" fill="#FFF6C8"/></g></g>
     ${cheeks(12, 7, '#F08A3C', '.45')}</g>
     <path d="${P.ear1}" fill="none" stroke="#C98A1C" stroke-width="10" stroke-linecap="round"/>
     <path class="w-gold-ear2" d="${P.ear2}" fill="none" stroke="#C98A1C" stroke-width="11" stroke-linecap="round"/>
-    ${sparkle(258, 70, 13, '#FFF6C8', 'w-gold-star')}${sparkle(120, 96, 9, '#FFF6C8', 'w-gold-star2')}`,
+    ${sparkle(262, 74, 9, '#FFF6C8', 'w-gold-star')}${sparkle(136, 98, 6, '#FFF6C8', 'w-gold-star2')}`,
   },
   whiskers: {
     slot: 'face', title: '白眉白胡子', note: '老年猪的灰眉毛和白胡子。',
