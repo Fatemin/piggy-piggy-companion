@@ -38,6 +38,7 @@ import {
   startTrip,
   startWork,
   useItem,
+  noteCoins,
   wakeUp,
   wear,
   wearAuto,
@@ -152,6 +153,10 @@ export function applyOp(state, op) {
     advance(state, at)
   }
   const out = run(state, args, at, tz)
-  if (out.state !== null && out.state !== undefined) out.state.utcOffsetMin = tz
+  if (out.state !== null && out.state !== undefined) {
+    out.state.utcOffsetMin = tz
+    // [Q0016] a windfall (a scratch card, a hand of blackjack) counts at once.
+    noteCoins(out.state, at)
+  }
   return { state: out.state ?? null, result: out.result, ok: succeeded(out.result), at }
 }

@@ -10,6 +10,7 @@ import { PLACES, REGIONS, SOUVENIRS, SPECIALTIES, WORLD_BONUS, fareFor, zonesBet
 import { ALL_ITEMS, DIPLOMAS, GYM, PARALLEL_COURSES, RENAME_CARD, WEAR_FOR_SALE, diplomaCount, schoolStageByKey as schoolStage } from '../data.js'
 import { diplomaView, outfitIsAuto, wardrobeView, wear, wearAuto, wornFor } from '../core.js'
 import { setRandomForTests } from '../core.js'
+import { applyOp } from '../ops.js'
 import { hasDefaultName, perksOf, regionProgress, renamePig, tripQuote } from '../core.js'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
@@ -62,6 +63,7 @@ import {
   lifeStageFor,
   rename,
   startGym,
+  noteCoins,
   startStudy,
   studyView,
   startTrip,
@@ -1973,4 +1975,56 @@ test('a debug weight moves the stage both ways, past the heaviest weight', () =>
   pig.peakWeightG = 90_000
   applyDevPatch(pig, { weightG: 2000 }, T0)
   assert.equal(lifeStageFor(pig, T0).key, 'piglet')
+})
+
+// ---------------------------------------------------------------------------
+// [Q0016] The golden pig: held 10000 coins at once, ever.
+// ---------------------------------------------------------------------------
+
+test('holding 10000 coins once unlocks the golden pig for good and puts it on', () => {
+  const pig = hatchEgg(T0)
+  const gold = () => wardrobeView(pig).find(item => item.key === 'gold')
+  assert.equal(gold().slot, 'body')
+  pig.coins = 9999
+  noteCoins(pig, T0)
+  assert.equal(gold().unlocked, false)
+  pig.coins = 10_000
+  noteCoins(pig, T0)
+  assert.equal(pig.stats.peakCoins, 10_000)
+  assert.equal(gold().unlocked, true)
+  assert.ok(wornFor(pig).includes('gold'), 'nothing was on the body slot: worn at once')
+  assert.equal(pig.pending.filter(event => event.kind === 'gold').length, 1)
+  pig.coins = 3
+  noteCoins(pig, T0)
+  assert.equal(gold().unlocked, true, 'spending it all does not lock it again')
+  pig.coins = 20_000
+  noteCoins(pig, T0)
+  assert.equal(pig.pending.filter(event => event.kind === 'gold').length, 1, 'announced once')
+})
+
+test('the golden pig does not push the muscles off, and time folding in notices a payday', () => {
+  const pig = hatchEgg(T0)
+  pig.stats.gymLostG = 100_000
+  wear(pig, 'muscle', true, T0)
+  pig.coins = 9_900
+  pig.satiety = 90
+  assert.equal(startWork(pig, 'tutor', T0).ok, true)
+  advance(pig, T0 + 61 * MIN)
+  assert.ok(pig.coins >= 10_000, `paid ${pig.coins}`)
+  assert.ok(wardrobeView(pig).find(item => item.key === 'gold').unlocked)
+  assert.ok(wornFor(pig).includes('muscle') && !wornFor(pig).includes('gold'), 'the body slot keeps what the owner chose')
+})
+
+test('an op that hands out a windfall counts it at once, even if the next op spends it', () => {
+  let { state } = applyOp(hatchEgg(T0), { op: 'dev', args: [{ coins: 12_000 }], at: T0 })
+  state = applyOp(state, { op: 'dev', args: [{ coins: 0 }], at: T0 + 1 }).state
+  assert.equal(state.stats.peakCoins, 12_000)
+  assert.ok(wardrobeView(state).find(item => item.key === 'gold').unlocked)
+})
+
+test('migrate starts the coin record from today and repairs a bad one', () => {
+  const save = fields => ({ version: STATE_VERSION, hatched: true, ...fields })
+  assert.equal(migrate(save({ coins: 4321 })).stats.peakCoins, 4321)
+  assert.equal(migrate(save({ coins: 10, stats: { peakCoins: 'lots' } })).stats.peakCoins, 10)
+  assert.equal(migrate(save({ coins: 10, stats: { peakCoins: 15_000 } })).stats.peakCoins, 15_000)
 })

@@ -4880,6 +4880,7 @@ window.__ModuleLoader__.load({
           // [Q0016]
           else if (event.kind === 'gym') { react('away', 900); burst(['💦', '💪'], 3) }
           else if (event.kind === 'muscle') { react('levelup', 950); burst(['💪', '✨', '🎉'], 3) }
+          else if (event.kind === 'gold') { react('levelup', 950); burst(['🪙', '✨', '🎉'], 3) }
         }
 
         relabelChrome()

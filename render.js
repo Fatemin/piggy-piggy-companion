@@ -645,6 +645,7 @@ export function wearHint(lang, unlock) {
     case 'region': return tr(lang, '从{region}带回纪念品后解锁', { region: tr(lang, REGIONS.find(region => region.key === unlock.region)?.label ?? unlock.region) })
     case 'shop': return tr(lang, '在商店「装扮」货架买，{price} 金币', { price: unlock.price })
     case 'gym': return tr(lang, '在健身房一共瘦掉 {kg} kg 后解锁', { kg: unlock.kg })
+    case 'coins': return tr(lang, '手里攒到过 {coins} 金币后解锁', { coins: unlock.coins })
     default: return ''
   }
 }

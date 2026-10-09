@@ -163,6 +163,13 @@ function playThrough(lang) {
     assert.ok(fit.pending.some(event => event.kind === 'gym'))
     assert.ok(fit.pending.some(event => event.kind === 'muscle'))
     assert.ok(fit.pig.outfit.worn.includes('muscle'))
+    // [Q0016] the golden pig: crossing 10000 coins is announced in this language.
+    store.state.stats.peakCoins = 0
+    store.state.coins = 20_000
+    store.freshen()
+    const rich = shot()
+    assert.ok(rich.pending.some(event => event.kind === 'gold'))
+    assert.ok(rich.pig.wardrobe.find(item => item.key === 'gold').unlocked)
     reply(dispatch(store, 'pig', 'wear').text)
     store.state.satiety = 100
 

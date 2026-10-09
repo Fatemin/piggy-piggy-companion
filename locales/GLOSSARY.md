@@ -28,7 +28,7 @@ The pig is referred to as "it" in English and by name or 「この子」 in Japa
 | 原版 (the original look) | オリジナル | Original |
 | 衣柜 · 装饰 · 穿戴 · 跟着阶段 | クローゼット · アイテム · おしゃれ · 成長に合わせる | Wardrobe · item · wearing · match the stage |
 | 墓碑 · 灵魂 | おはか · たましい | Grave · Soul |
-| 健身房 · 健身 · 肌肉猪 (Q0016) | ジム · ジムで運動 · マッチョなブタ | Gym · at the gym · muscle pig |
+| 健身房 · 健身 · 肌肉猪 · 黄金猪 (Q0016) | ジム · ジムで運動 · マッチョなブタ · きんのブタ | Gym · at the gym · muscle pig · golden pig |
 | 还魂丹 | よみがえりの薬 | Revival pill |
 | 领养 | 新しい子をむかえる | Adopt |
 | 生病 · 药 · 对症下药 | びょうき · くすり · 病気に合ったくすり | sick · medicine · the right medicine |
