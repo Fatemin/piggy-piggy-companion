@@ -25,6 +25,8 @@ import {
   DEFAULT_TOY,
   GRAVE,
   GROWTH,
+  GYM,
+  gymClassByKey,
   LIFE_STAGES,
   LOOKS,
   LIFESPAN_DAYS,
@@ -228,6 +230,16 @@ function stageForWeight(weightG) {
 }
 
 /**
+ * [Q0016] The weight the life stage goes by: the heaviest the pig has been.
+ * `peakWeightG` is only brought up to date when weight is about to come off
+ * (the gym), so the current weight counts too.
+ */
+const stageWeightG = state => Math.max(state.weightG, Number.isFinite(state.peakWeightG) ? state.peakWeightG : 0)
+
+/** The stage this pig has grown to; working out never takes it back. */
+const stageOf = state => stageForWeight(stageWeightG(state))
+
+/**
  * Can the owner pick between the elder look and the original one yet?
  * [ST0004] The old `look` switch: it only puts the beard on or takes it off.
  */
@@ -243,7 +255,8 @@ export function lifeStageFor(state, nowMs) {
   if (state === null) return LIFE_STAGES[0]
   if (state.dead === true) return GRAVE
   if (state.hatched !== true) return LIFE_STAGES[0]
-  const stage = stageForWeight(state.weightG)
+  // [Q0016] The stage keeps the heaviest weight; the size shows today's.
+  const stage = stageOf(state)
   return { ...stage, size: sizeForWeight(state.weightG) }
 }
 
@@ -262,12 +275,13 @@ export function wearUnlocked(state, item) {
   const collected = Object.keys(state.collected ?? {})
   switch (unlock.kind) {
     case 'always': return true
-    case 'stage': return stageRank(stageForWeight(state.weightG).key) >= stageRank(unlock.stage)
+    case 'stage': return stageRank(stageOf(state).key) >= stageRank(unlock.stage)
     case 'lessons': return unlock.stage === null ? Object.values(lessons).some(n => n > 0) : (lessons[unlock.stage] ?? 0) > 0
     case 'diploma': return diplomaView(state).some(diploma => diploma.count > 0)
     case 'trip': return (state.stats?.trips ?? 0) > 0 || collected.length > 0
     case 'region': return collected.some(key => souvenirByKey(key)?.region === unlock.region)
     case 'shop': return (state.wardrobeBought ?? []).includes(item.key)
+    case 'gym': return (state.stats?.gymLostG ?? 0) >= unlock.kg * 1000
     default: return false
   }
 }
@@ -289,7 +303,7 @@ export const outfitIsAuto = state => !Array.isArray(state?.outfit)
  */
 export function wornFor(state) {
   if (state === null || state.hatched !== true || state.dead === true) return []
-  const keys = outfitIsAuto(state) ? STAGE_OUTFIT[stageForWeight(state.weightG).key] ?? [] : state.outfit
+  const keys = outfitIsAuto(state) ? STAGE_OUTFIT[stageOf(state).key] ?? [] : state.outfit
   return (sanitizeOutfit(keys) ?? []).filter(key => wearUnlocked(state, wearableByKey(key)))
 }
 
@@ -337,7 +351,7 @@ export function wearAuto(state, nowMs) {
 /** The next rung, or null once the pig is as grown as it gets. */
 export function nextLifeStage(state, nowMs) {
   if (state === null || state.dead === true || state.hatched !== true) return null
-  const kg = state.weightG / 1000
+  const kg = stageWeightG(state) / 1000
   return LIFE_STAGES.find(stage => stage.box !== true && stage.fromKg > kg) ?? null
 }
 
@@ -374,6 +388,7 @@ function activitySourceLabel(activity) {
   if (activity === null || activity === undefined) return ''
   if (activity.kind === 'work') return jobByKey(activity.key)?.label ?? activity.label ?? ''
   if (activity.kind === 'trip') return placeByKey(activity.key)?.label ?? tripByKey(activity.key)?.label ?? activity.label ?? ''
+  if (activity.kind === 'gym') return gymClassByKey(activity.key)?.label ?? activity.label ?? ''
   return typeof activity.label === 'string' ? activity.label : ''
 }
 
@@ -493,6 +508,9 @@ export function applyDevPatch(state, patch, nowMs) {
       state[key] = clamp(Math.round(value), lo, hi)
     }
   }
+  // [Q0016] Setting a weight sets the stage too: the debug weights jump stages
+  // both ways, which the heaviest-weight rule would otherwise forbid.
+  if (typeof patch.weightG === 'number' && Number.isFinite(patch.weightG)) state.peakWeightG = state.weightG
 
   if (patch.traits !== null && typeof patch.traits === 'object') {
     state.traits = sanitizeTraits({ ...state.traits, ...patch.traits })
@@ -578,6 +596,9 @@ export function layEgg(nowMs, lang = defaultLang()) {
     stage: 'box',
     xp: 0,
     weightG: BIRTH_WEIGHT_G,
+    // [Q0016] the heaviest it has been, kept for the life stage once the gym
+    // takes weight off (see stageWeightG).
+    peakWeightG: BIRTH_WEIGHT_G,
     satiety: 70,
     happiness: 70,
     cleanliness: 90,
@@ -632,6 +653,8 @@ export function layEgg(nowMs, lang = defaultLang()) {
       jobs: 0, coinsEarned: 0, purchases: 0, illnesses: 0, cures: 0, deaths: 0, revives: 0,
       courses: 0, lessons: 0, trips: 0, lotteries: 0, lotteryWon: 0,
       blackjacks: 0, blackjackWon: 0,
+      // [Q0016] gym sessions, and the grams they took off in all.
+      gyms: 0, gymLostG: 0,
     },
   }
 }
@@ -692,9 +715,14 @@ export function migrate(raw) {
     ? raw.memories.filter(m => typeof m === 'string').slice(-MEMORY_LIMIT)
     : []
 
-  for (const key of ['xp', 'weightG', 'satiety', 'happiness', 'cleanliness', 'health', 'coins', 'riskMinutes', 'bornAt', 'lastFedAt', 'lastLotteryAt', 'lastActiveAt', 'lastSeenAt']) {
+  for (const key of ['xp', 'weightG', 'peakWeightG', 'satiety', 'happiness', 'cleanliness', 'health', 'coins', 'riskMinutes', 'bornAt', 'lastFedAt', 'lastLotteryAt', 'lastActiveAt', 'lastSeenAt']) {
     if (typeof state[key] !== 'number' || !Number.isFinite(state[key])) state[key] = egg[key]
   }
+  // [Q0016] The gym's running totals open the muscle look: keep them counts.
+  for (const key of ['gyms', 'gymLostG']) {
+    if (!Number.isFinite(state.stats[key]) || state.stats[key] < 0) state.stats[key] = 0
+  }
+  state.peakWeightG = clamp(state.peakWeightG, 0, 500_000)
   if (typeof raw.cleanliness !== 'number') state.cleanliness = egg.cleanliness
   if (typeof raw.health !== 'number') state.health = raw.dead === true ? 0 : MAX.health
   if (typeof raw.coins !== 'number') state.coins = egg.coins
@@ -906,12 +934,14 @@ function sanitizeActivity(raw) {
   if (source === null) return null
   if (!Number.isFinite(source.endsAt)) return null
   const kind = source.kind ?? 'work'
-  if (!['work', 'study', 'trip'].includes(kind)) return null
+  if (!['work', 'study', 'trip', 'gym'].includes(kind)) return null
   const known = kind === 'work'
     ? jobByKey(source.key ?? source.job) !== null
     : kind === 'study'
       ? subjectByKey(source.key) !== null
-      : placeByKey(source.key) !== null
+      : kind === 'gym'
+        ? gymClassByKey(source.key) !== null
+        : placeByKey(source.key) !== null
   if (!known) return null
   const keys = kind === 'study' && Array.isArray(source.keys)
     ? source.keys.filter(key => subjectByKey(key) !== null)
@@ -1220,6 +1250,38 @@ function finishActivity(state, nowMs) {
   if (activity.kind === 'work') finishWork(state, activity, nowMs)
   else if (activity.kind === 'study') finishStudy(state, activity, nowMs)
   else if (activity.kind === 'trip') finishTrip(state, activity, nowMs)
+  else if (activity.kind === 'gym') finishGym(state, activity, nowMs)
+}
+
+/**
+ * [Q0016] Home from the gym: lighter, never below the floor. The stage keeps
+ * the heaviest weight (peakWeightG), so it is noted before anything comes off.
+ * Crossing GYM.muscleKg lost in all unlocks the muscle look and puts it on.
+ */
+function finishGym(state, activity, nowMs) {
+  const entry = gymClassByKey(activity.key)
+  if (entry === null) return
+  state.peakWeightG = stageWeightG(state)
+  const lost = Math.max(0, Math.min(entry.lossG, state.weightG - GYM.floorKg * 1000))
+  const muscle = wearableByKey('muscle')
+  const hadMuscle = wearUnlocked(state, muscle)
+  state.weightG -= lost
+  state.satiety = clamp100(state.satiety + entry.satiety)
+  state.cleanliness = clamp100(state.cleanliness + entry.cleanliness)
+  state.happiness = clamp100(state.happiness + entry.happiness)
+  state.stats.gyms += 1
+  state.stats.gymLostG += lost
+  const kg = (lost / 1000).toFixed(1)
+  const weight = formatWeight(state.weightG)
+  remember(state, say(state, '{emoji} {gym}回来，瘦了 {kg} kg，现在 {weight}', { emoji: entry.emoji, gym: word(state, entry.label), kg, weight }), nowMs)
+  announce(state, 'gym', lost > 0
+    ? say(state, '{name} 健身回来了！瘦了 {kg} kg 💦', { name: state.name, kg })
+    : say(state, '{name} 健身回来了，已经瘦到底了 💦', { name: state.name }))
+  if (!hadMuscle && wearUnlocked(state, muscle)) {
+    wear(state, muscle.key, true, nowMs)
+    remember(state, say(state, '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！', { kg: GYM.muscleKg }), nowMs)
+    announce(state, 'muscle', say(state, '{name} 练成了肌肉猪！💪', { name: state.name }))
+  }
 }
 
 function finishWork(state, activity, nowMs) {
@@ -1800,6 +1862,34 @@ export function startStudy(state, subjectKeys, stageKey, nowMs) {
 }
 
 /**
+ * [Q0016] Go to the gym for one class. Paid up front like tuition, and handed
+ * back if the pig turns out to be busy or is called home early. A pig already
+ * down at GYM.floorKg is turned away (`too-light`).
+ */
+export function startGym(state, classKey, nowMs) {
+  const entry = gymClassByKey(classKey)
+  if (entry === null) return { ok: false, reason: 'unknown' }
+  if (state.hatched !== true) return { ok: false, reason: 'unhatched' }
+  if (state.dead) return { ok: false, reason: 'dead' }
+  if (state.activity !== null) return { ok: false, reason: 'away' }
+  if (state.health <= TOO_WEAK_HEALTH) return { ok: false, reason: 'weak' }
+  if (state.weightG <= GYM.floorKg * 1000) return { ok: false, reason: 'too-light' }
+  if (state.coins < entry.price) return { ok: false, reason: 'poor', price: entry.price }
+  if (state.satiety < 15) return { ok: false, reason: 'hungry' }
+
+  state.coins -= entry.price
+  const result = begin(state, {
+    kind: 'gym', key: entry.key, label: entry.label, emoji: entry.emoji, minutes: entry.minutes, cost: entry.price,
+  }, nowMs)
+  if (!result.ok) {
+    state.coins += entry.price
+    return result
+  }
+  remember(state, say(state, '{emoji} 去健身房{gym}（{price} 金币）', { emoji: entry.emoji, gym: word(state, entry.label), price: entry.price }), nowMs)
+  return result
+}
+
+/**
  * [mod] What a trip to `placeKey` costs from `homeUtc` for this pig, perks
  * included: 100 coins + 200 per time zone, 1 h + 1 h per time zone.
  */
@@ -2149,6 +2239,7 @@ const AWAY_MOODS = Object.freeze({
   work: { key: 'working', emoji: '💼', label: '在打工' },
   study: { key: 'studying', emoji: '📚', label: '在上课' },
   trip: { key: 'traveling', emoji: '🧳', label: '在旅行' },
+  gym: { key: 'exercising', emoji: '🏋️', label: '在健身' },
 })
 
 export function mood(state, nowMs) {

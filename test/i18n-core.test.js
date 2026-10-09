@@ -151,6 +151,21 @@ function playThrough(lang) {
     assert.equal(store.startTrip('seoul').ok, true)
     assert.equal(store.callOffActivity().ok, true)
 
+    // [Q0016] the gym: a class, the muscle look it unlocks, the wardrobe hint.
+    store.state.weightG = 150_000
+    store.state.stats.gymLostG = 95_000
+    assert.equal(store.startGym('trainer').ok, true)
+    shot()
+    reply(dispatch(store, 'pig', 'status').text)
+    tick(untilBack())
+    store.freshen()
+    const fit = shot()
+    assert.ok(fit.pending.some(event => event.kind === 'gym'))
+    assert.ok(fit.pending.some(event => event.kind === 'muscle'))
+    assert.ok(fit.pig.outfit.worn.includes('muscle'))
+    reply(dispatch(store, 'pig', 'wear').text)
+    store.state.satiety = 100
+
     // [mod] renaming: the pig already has a name, so it takes a rename card.
     reply(dispatch(store, 'pig', 'name Ann').text)
     assert.equal(store.state.name, 'Bo')

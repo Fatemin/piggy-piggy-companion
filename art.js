@@ -1,6 +1,6 @@
 /**
  * [ST0004] Dressing a pose. The contract is docs/contracts/art-assets.md
- * (ART.ASSETS.V1); tools/build-sprites.mjs writes both halves of it:
+ * (ART.ASSETS.V2); tools/build-sprites.mjs writes both halves of it:
  *
  *   pose (行为资产)        assets/<pose>.svg carries one empty wear slot,
  *                          `<g class="wear" data-occupies="head eyes"></g>`,

@@ -39,6 +39,13 @@ export default {
     '{emoji} {job}回来，赚了 {coins} 金币{tag}': '{emoji} {job}から帰ってきた。{coins} コインかせいだ{tag}',
     '{name} 带病打工回来了，只赚到 {coins} 金币 🤒': '{name}はびょうきのままバイトから帰ってきた。{coins} コインしかかせげなかった 🤒',
     '{name} 打工回来了！赚到 {coins} 金币 💰': '{name}がバイトから帰ってきた！{coins} コインかせいだ 💰',
+    // [Q0016] the gym
+    '{emoji} 去健身房{gym}（{price} 金币）': '{emoji} ジムで{gym}（{price} コイン）',
+    '{emoji} {gym}回来，瘦了 {kg} kg，现在 {weight}': '{emoji} {gym}から帰ってきた。{kg} kg やせて、いま {weight}',
+    '{name} 健身回来了！瘦了 {kg} kg 💦': '{name}がジムから帰ってきた！{kg} kg やせた 💦',
+    '{name} 健身回来了，已经瘦到底了 💦': '{name}がジムから帰ってきた。もうこれ以上やせられない 💦',
+    '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！': '💪 ジムで合計 {kg} kg やせて、ムキムキになった！',
+    '{name} 练成了肌肉猪！💪': '{name}がマッチョなブタになった！💪',
     '（{trait} {points}，省了 {minutes} 分钟）': '（{trait} {points}、{minutes} 分短縮）',
     '{emoji} 出门{job}去了{saved}': '{emoji} {job}に出かけた{saved}',
     // --- study --------------------------------------------------------------
@@ -85,6 +92,7 @@ export default {
     '在打工': 'バイト中',
     '在上课': 'じゅぎょう中',
     '在旅行': '旅行中',
+    '在健身': 'ジムで運動中',
     '已经走了': '天国へいった',
     '生病了': 'びょうき',
     '得了{ill}': '{ill}にかかった',
@@ -139,6 +147,13 @@ export default {
     '{emoji} {job}回来，赚了 {coins} 金币{tag}': '{emoji} {job} done, earned {coins} coins{tag}',
     '{name} 带病打工回来了，只赚到 {coins} 金币 🤒': '{name} worked while sick and only earned {coins} coins 🤒',
     '{name} 打工回来了！赚到 {coins} 金币 💰': '{name} is back from work! Earned {coins} coins 💰',
+    // [Q0016] the gym
+    '{emoji} 去健身房{gym}（{price} 金币）': '{emoji} Off to the gym: {gym} ({price} coins)',
+    '{emoji} {gym}回来，瘦了 {kg} kg，现在 {weight}': '{emoji} Back from {gym}: {kg} kg lighter, now {weight}',
+    '{name} 健身回来了！瘦了 {kg} kg 💦': '{name} is back from the gym! {kg} kg lighter 💦',
+    '{name} 健身回来了，已经瘦到底了 💦': '{name} is back from the gym, as light as it can get 💦',
+    '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！': '💪 {kg} kg lost at the gym in all: a body full of muscle!',
+    '{name} 练成了肌肉猪！💪': '{name} is a muscle pig now! 💪',
     '（{trait} {points}，省了 {minutes} 分钟）': ' ({trait} {points}, {minutes} min saved)',
     '{emoji} 出门{job}去了{saved}': '{emoji} Off to work: {job}{saved}',
     // --- study --------------------------------------------------------------
@@ -185,6 +200,7 @@ export default {
     '在打工': 'At work',
     '在上课': 'In class',
     '在旅行': 'Traveling',
+    '在健身': 'At the gym',
     '已经走了': 'Gone',
     '生病了': 'Sick',
     '得了{ill}': 'Sick: {ill}',

@@ -256,6 +256,24 @@ const WEAR = {
     ${onWaist(.82, `<rect x="-17" y="-13" width="34" height="26" rx="6" fill="#2E2E3A"/><rect class="w-pager-lcd" x="-12" y="-8" width="24" height="10" rx="2" fill="#A8C686"/>
     <circle cx="-8" cy="7" r="2.5" fill="#8A8F9E"/><circle cy="7" r="2.5" fill="#8A8F9E"/><circle cx="8" cy="7" r="2.5" fill="#8A8F9E"/>`)}`,
   },
+  // [Q0016] 100 kg worked off at the gym. The body slot is drawn first, right on
+  // the body: muscle lines in a deeper skin tone (round-capped strokes, like the
+  // elder's brows), clipped to the outline so nothing spills; the shoulder flexes.
+  muscle: {
+    slot: 'body', title: '肌肉', note: '在健身房一共瘦掉 100 kg 练出来的一身肌肉：鼓起的肩膀、结实的后腿、六块腹肌，肩膀一鼓一鼓。',
+    css: `.w-muscle-flex{animation:w-muscle-flex 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 100%}
+    @keyframes w-muscle-flex{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}`,
+    svg: `${bodyClip('w-muscle-body')}<g clip-path="url(#w-muscle-body)" stroke-linecap="round">
+    <g transform="rotate(-10 254 184)" fill="#F4BC94"><rect x="232" y="152" width="20" height="17" rx="7"/><rect x="256" y="152" width="20" height="17" rx="7"/>
+    <rect x="232" y="173" width="20" height="17" rx="7"/><rect x="256" y="173" width="20" height="17" rx="7"/>
+    <rect x="233" y="194" width="18" height="15" rx="7"/><rect x="257" y="194" width="18" height="15" rx="7"/></g>
+    <g class="w-muscle-flex"><path d="M190 240Q194 196 226 196" fill="none" stroke="#E9A47C" stroke-width="7"/>
+    <ellipse cx="208" cy="212" rx="9" ry="14" fill="#FFE6D2" opacity=".8" transform="rotate(20 208 212)"/></g>
+    <path d="M160 256Q173 265 186 256" fill="none" stroke="#E9A47C" stroke-width="6"/>
+    <path d="M262 172Q302 164 316 204" fill="none" stroke="#E9A47C" stroke-width="7"/>
+    <ellipse cx="292" cy="192" rx="13" ry="7" fill="#FFE6D2" opacity=".8" transform="rotate(20 292 192)"/>
+    <path d="M276 232Q290 238 304 230" fill="none" stroke="#E9A47C" stroke-width="5"/></g>`,
+  },
   whiskers: {
     slot: 'face', title: '白眉白胡子', note: '老年猪的灰眉毛和白胡子。',
     svg: `<path d="M77 122Q89 111 104 121M151 137Q164 127 179 138" fill="none" stroke="#ADADA5" stroke-width="8"/>
@@ -664,6 +682,29 @@ const SPRITES = {
     <path class="steam" d="M156 214q-5-7 0-14t0-14M170 214q-5-7 0-14" fill="none" stroke="#D8CFC2" stroke-width="4" stroke-linecap="round"/>
     <path d="M148 222H178V246C178 250 175 252 171 252H155C151 252 148 250 148 246Z" fill="#FFFFFF"/>
     <path d="M178 228C190 228 190 244 178 244" fill="none" stroke="#FFFFFF" stroke-width="5"/>`,
+  },
+  // [Q0016] the gym (action 'gym'): one pose for every class.
+  'away-gym': {
+    title: '健身', note: '在跑步机上一颠一颠地跑，传送带往后滑，汗珠往外甩；扶手上的小屏幕一闪一闪地数步数。',
+    css: `.jog{animation:jog .4s ease-in-out infinite;transform-origin:190px 298px}
+    .belt{animation:belt .8s linear infinite}
+    .tail{animation-duration:.4s}
+    .s1{animation:fling 1.2s ease-out infinite}.s2{animation:fling 1.2s ease-out -.6s infinite}
+    .lcd{animation:lcd 1.2s steps(1) infinite}
+    @keyframes jog{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(-1.5deg)}}
+    @keyframes belt{to{transform:translateX(60px)}}
+    @keyframes fling{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(26px,-30px)}}
+    @keyframes lcd{50%{fill:#C8F5D2}}`,
+    wrap: 'jog',
+    pig: { face: `${drop(220, 70, 1.3, '#9FD8F0', 's1')}${drop(60, 100, 1.1, '#9FD8F0', 's2')}` },
+    // The belt's dashes repeat every 60px, so one loop slides exactly 60px.
+    under: `<path d="M56 296L46 168" fill="none" stroke="#8A8F9E" stroke-width="10" stroke-linecap="round"/>
+    <path d="M48 204L96 212" fill="none" stroke="#8A8F9E" stroke-width="8" stroke-linecap="round"/>
+    <rect x="28" y="136" width="44" height="32" rx="7" fill="#3A3E52" transform="rotate(-6 50 152)"/>
+    <rect class="lcd" x="33" y="143" width="34" height="13" rx="3" fill="#7FD18F" transform="rotate(-6 50 152)"/>
+    <rect x="36" y="288" width="316" height="14" rx="7" fill="#3A3E52"/>
+    <clipPath id="gym-belt"><rect x="44" y="288" width="300" height="7" rx="3"/></clipPath>
+    <g clip-path="url(#gym-belt)"><g class="belt"><path d="M-36 291H-6M24 291H54M84 291H114M144 291H174M204 291H234M264 291H294M324 291H354" fill="none" stroke="#6B7083" stroke-width="5"/></g></g>`,
   },
   'away-study': {
     title: '上课', note: '戴上圆眼镜，看着前面摊开的书，慢慢歪头想；想通了亮一盏灯泡。',
@@ -1687,7 +1728,8 @@ const SPRITES = {
   }),
 }
 
-const SLOT_ORDER = ['face', 'waist', 'eyes', 'head']
+// [Q0016] ART.ASSETS.V2: `body` is drawn first, on the body itself.
+const SLOT_ORDER = ['body', 'face', 'waist', 'eyes', 'head']
 
 function render(s) {
   // The empty wear slot: the art route fills it with the decorations worn,

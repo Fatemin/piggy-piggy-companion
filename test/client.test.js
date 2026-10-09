@@ -1014,6 +1014,8 @@ test('away poses follow the job, the school stage and the destination; the outfi
     '/dsh-pig/art/away-trip.svg', 'prototype names are not destinations or regions')
   assert.equal(await srcFor({ activity: away('trip', 'mars', { region: 'mars' }), pig: { ...PIG, stage: young, mood: 'traveling' } }),
     '/dsh-pig/art/away-trip.svg', 'an unknown region falls back to the plain road')
+  assert.equal(await srcFor({ activity: away('gym', 'treadmill'), pig: { ...PIG, stage: young, mood: 'exercising', outfit: { auto: false, worn: ['muscle'] } } }),
+    '/dsh-pig/art/away-gym.svg?wear=muscle', '[Q0016] the gym has its treadmill, muscles and all')
 
   const wearing = (...worn) => ({ auto: false, worn })
   assert.equal(await srcFor({ pig: { ...PIG, stage: piglet, mood: 'hungry', moodLevel: 1, outfit: wearing('bow') } }),
@@ -2226,6 +2228,64 @@ test('the shop opens on a casino door; the games live behind it, with a way back
   pickTab(dom, 'status')
   pickTab(dom, 'shop')
   assert.equal(lastShown(), 'dp-list', 'another tab and back lands on the shelves')
+})
+
+// [Q0016] The gym, behind a door on the work page.
+const GYM = {
+  floorKg: 20, muscleKg: 100, lostKg: 12.5, muscle: false, atFloor: false,
+  classes: [
+    { key: 'treadmill', label: '跑步机', emoji: '🏃', minutes: 30, price: 50, lossKg: 2, affordable: true },
+    { key: 'trainer', label: '私教课', emoji: '💪', minutes: 120, price: 400, lossKg: 12, affordable: true },
+  ],
+}
+
+test('the work page opens on a gym door; the classes live behind it, with a way back', async () => {
+  const status = { ...SNAPSHOT, gym: GYM, pig: { ...PIG, weight: '104.0 kg' } }
+  const { dom, net } = await loadWithPoll({ status })
+  openPanel(dom)
+  pickTab(dom, 'work')
+  const door = findByAttr(contentOf(dom), 'data-gym', 'open')
+  assert.ok(door, 'a gym door')
+  assert.ok(door.allText().includes('健身房') && door.allText().includes('跑步机'), door.allText())
+  assert.ok(contentOf(dom).allText().includes('打零工'), 'the jobs are still below it')
+
+  door.fire('click')
+  const text = contentOf(dom).allText()
+  assert.ok(text.includes('104.0 kg') && text.includes('最低 20 kg'), text)
+  assert.ok(text.includes('12.5/100'), text)
+  assert.ok(text.includes('瘦 12 kg'), text)
+  // The fake DOM keeps cleared children, so look at what the latest render ended with.
+  const classes = contentOf(dom).children.at(-1)
+  assert.ok(findByAttr(classes, 'data-gym-class', 'trainer'), 'the page ends with the classes')
+  assert.equal(findByAttr(classes, 'data-job', 'odd'), undefined, 'no jobs on the gym page')
+
+  findByAttr(classes, 'data-gym-class', 'treadmill').fire('click')
+  await settle()
+  await settle()
+  assert.deepEqual(postsOf(net).at(-1), { action: 'gym', gym: 'treadmill' })
+
+  findAllByAttr(contentOf(dom), 'data-gym', 'back').at(-1).fire('click')
+  assert.ok(findAllByAttr(contentOf(dom), 'data-job', 'odd').length > 0, 'back on the jobs')
+  findAllByAttr(contentOf(dom), 'data-gym', 'open').at(-1).fire('click')
+  pickTab(dom, 'status')
+  pickTab(dom, 'work')
+  assert.equal(contentOf(dom).children.at(-1).className, 'dp-list', 'another tab and back lands on the jobs')
+})
+
+test('the gym: at the floor every class is greyed out; a muscle pig is told so; an older host has no door', async () => {
+  const atFloor = await loadWithPoll({ status: { ...SNAPSHOT, gym: { ...GYM, atFloor: true, muscle: true, lostKg: 104 } } })
+  openPanel(atFloor.dom)
+  pickTab(atFloor.dom, 'work')
+  findByAttr(contentOf(atFloor.dom), 'data-gym', 'open').fire('click')
+  const text = contentOf(atFloor.dom).allText()
+  assert.ok(text.includes('不能再减了'), text)
+  assert.ok(text.includes('已经练成肌肉猪'), text)
+  assert.equal(findAllByAttr(contentOf(atFloor.dom), 'data-gym-class', 'treadmill').at(-1).disabled, true)
+
+  const old = await loadWithPoll({ status: SNAPSHOT })
+  openPanel(old.dom)
+  pickTab(old.dom, 'work')
+  assert.equal(findByAttr(contentOf(old.dom), 'data-gym', 'open'), undefined)
 })
 
 test('blackjack: an older host without the table shows no blackjack', async () => {

@@ -1,8 +1,8 @@
-# ART.ASSETS.V1 · 美术资产：行为资产与装饰资产
+# ART.ASSETS.V2 · 美术资产：行为资产与装饰资产
 
-> contract_id: `ART.ASSETS.V1` · status: `CURRENT`
+> contract_id: `ART.ASSETS.V2` · status: `CURRENT`
 
-> 实施事实基线：ST0004（2026-10-02，装扮功能）；ST0012（发布前修订）把部位 `neck` 改为 `waist`：猪没有脖子，领巾类饰品绑在腰上。V1 尚未发布，故原地修订、不升版本。以后**每一项新美术**在设计阶段就要先归类为行为资产或装饰资产（写进 design handoff），再按本文的接口实现；`test/contracts.test.js` 逐个文件比对 `assets/`。
+> 实施事实基线：ST0004（2026-10-02，装扮功能）；ST0012（发布前修订）把部位 `neck` 改为 `waist`：猪没有脖子，领巾类饰品绑在腰上。V1 尚未发布，故原地修订、不升版本。**V2（Q0016，健身房）**新增部位 `body`（画在身体上、最先画）和第一件 `body` 装饰 `muscle`，按 §4「新部位」升版本；`stage` 解锁改按「到过的最高体重」算（健身会减重）。以后**每一项新美术**在设计阶段就要先归类为行为资产或装饰资产（写进 design handoff），再按本文的接口实现；`test/contracts.test.js` 逐个文件比对 `assets/`。
 
 ## 1. 归属 Ownership
 
@@ -26,18 +26,20 @@
 
 ### 2.1 部位（绘制顺序，后画的在上）
 
+`body`（V2）是身体本身：画在身体轮廓内（裁到 `P.body`），在所有部位之前画，所以腰饰、胡子、眼镜、帽子都盖在它上面；只画身体表面的东西（肌肉线条、腹肌），不画穿戴物。
+
 `waist` 是腰部：猪没有脖子，红领巾、围巾这类饰品像绑在身上一样顺着身体绕一圈——沿 `build-sprites.mjs` 的 `WAIST` 腰线斜着画（上端靠头、下端靠屁股、向后鼓出一道弧），裁到身体轮廓内，不碰近耳；圈类同样倾斜，远半圈藏在身后。
 
 <!-- contract:wear-slots -->
 ```json
-["face", "waist", "eyes", "head"]
+["body", "face", "waist", "eyes", "head"]
 ```
 
 ### 2.2 装饰键 → 部位
 
 <!-- contract:wear-keys -->
 ```json
-{"bow": "head", "flatcap": "head", "mortarboard": "head", "strawhat": "head", "glasses": "eyes", "sunglasses": "eyes", "scarf": "waist", "whiskers": "face", "hulahoop": "waist", "swimring": "waist", "fannypack": "waist", "chainbelt": "waist", "pager": "waist"}
+{"bow": "head", "flatcap": "head", "mortarboard": "head", "strawhat": "head", "glasses": "eyes", "sunglasses": "eyes", "scarf": "waist", "whiskers": "face", "hulahoop": "waist", "swimring": "waist", "fannypack": "waist", "chainbelt": "waist", "pager": "waist", "muscle": "body"}
 ```
 
 解锁条件（`WEARABLES[].unlock`）：除 `shop` 外全部从存档已有进度推导、不存档；`shop` 是商店「装扮」货架上买的，买过的键记在存档 `wardrobeBought`（ST0012，见 [STORE.SAVE.V6](save-format.md)）：
@@ -45,7 +47,7 @@
 | 键 | 名称 | 解锁 |
 |---|---|---|
 | `bow` | 🎀 蝴蝶结 | `always`：拆开纸盒就有 |
-| `flatcap` | 🧢 鸭舌帽 | `stage middle`：长成中年猪（体重只增不减） |
+| `flatcap` | 🧢 鸭舌帽 | `stage middle`：长成中年猪（按到过的最高体重 `max(weightG, peakWeightG)` 算，健身减重不会退回去） |
 | `mortarboard` | 🎓 学士帽 | `diploma`：持有任意一张毕业证 |
 | `strawhat` | 👒 草帽 | `trip`：旅行回来过（`stats.trips > 0` 或已有纪念品） |
 | `glasses` | 👓 圆眼镜 | `lessons null`：上过任意一节课 |
@@ -57,6 +59,7 @@
 | `fannypack` | 👝 多巴胺腰包 | `shop 168`：商店购买 |
 | `chainbelt` | ⛓️ 杀马特腰链 | `shop 188`：商店购买 |
 | `pager` | 📟 BP机皮带 | `shop 288`：商店购买 |
+| `muscle` | 💪 肌肉 | `gym 100`：在健身房一共瘦掉 100 kg（`stats.gymLostG >= 100000`，Q0016）；解锁那一刻自动穿上 |
 
 商店购买（`core.js` `buy` 对装饰键的分支）：每件只能买一次（已拥有拒绝 `owned`）、未孵化 / 死亡拒绝；扣 `unlock.price` 金币、记入 `wardrobeBought`、计一次 `stats.purchases`，并立刻穿上（同部位的换下）。装饰不进 `SHOP`、`inventory` 与背包，不能“使用”。
 
@@ -157,7 +160,7 @@
 2. **行为资产恰好一个穿戴槽**，`undressable-poses` 里的除外（零个）；槽里的 `data-occupies` 与 `pose-occupies` 一致。
 3. **行为资产不含 `data-wear=`**：它自带的装备是行为的一部分，只靠 `data-occupies` 让出部位，不冒充装饰。
 4. **装饰资产恰好一个片段**，`data-wear` 与文件名一致，`data-slot` 与 `wear-keys` 一致；`wear-keys` 与 `WEARABLES` 一一对应。
-5. **装饰不改玩法**：`WEARABLES` 条目只有 `key`/`slot`/`label`/`emoji`/`unlock`（唯一的数字是 `shop` 的售价 `unlock.price`，只在购买时扣金币）；穿脱只改 `outfit` 与 `lastActiveAt`。
+5. **装饰不改玩法**：`WEARABLES` 条目只有 `key`/`slot`/`label`/`emoji`/`unlock`（数字只有 `shop` 的售价 `unlock.price`，只在购买时扣金币；以及 `gym` 的解锁门槛 `unlock.kg`，只用于判断解锁）；穿脱只改 `outfit` 与 `lastActiveAt`。
 6. **同一坐标系**：装饰画在猪本体（Noto 🐖，`VIEWBOX 24 -36 336 336`）坐标上；姿势只能移动整只猪（动画作用在分组上），不得重画本体，否则装饰会错位。
 7. **新美术先归类**：设计交接文档（`docs/design/*design-handoff*.md`）必须写明每项新美术属于哪一类；行为资产写明占用部位，装饰资产写明部位与解锁条件。
 
