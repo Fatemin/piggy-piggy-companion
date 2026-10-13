@@ -2563,6 +2563,9 @@ window.__ModuleLoader__.load({
       var shopPage = 'shop'
       // [Q0016] which page of the work tab is open: the jobs, or the gym.
       var workPage = 'work'
+      // [ST0018] the page the content was last drawn for: a rebuild of the same
+      // page keeps its scroll, a different tab or sub-page starts at the top.
+      var scrollPage = null
       // [ST0007] the updater's last state (null: none, or not known yet), whether
       // the host has one at all, and the versions the pig already announced.
       var update = null
@@ -3038,6 +3041,10 @@ window.__ModuleLoader__.load({
        */
       function renderSide() {
         if (!split || side === null) return
+        keepScroll([left, sheet], renderSideNow)
+      }
+
+      function renderSideNow() {
         side.textContent = ''
         var game = skin === 'game'
         var e = function (emoji) { return game ? emoji + ' ' : '' }
@@ -4655,8 +4662,30 @@ window.__ModuleLoader__.load({
       function renderContent() {
         var typing = renameHasFocus()
         var range = typing ? [num(renameInput.selectionStart, 0), num(renameInput.selectionEnd, 0)] : null
-        renderContentNow()
+        var page = [tab, shopPage, workPage, bagView].join('/')
+        if (page === scrollPage) keepScroll(split ? [content, sheet, left] : [content], renderContentNow)
+        else renderContentNow()
+        scrollPage = page
         if (typing && renameInput !== null) focusRename(range)
+      }
+
+      /**
+       * [ST0018] Run a rebuild without losing the player's place. Emptying a
+       * box clamps its scroll to the top, and a button press (or a state push)
+       * rebuilds everything — so without this every click in the shop jumped
+       * back to the first shelf. The boxes that can scroll differ by layout
+       * (the card's content, the big panel's left column, the whole stacked
+       * page on a narrow window or in the spreadsheet skin), so all are kept.
+       */
+      function keepScroll(boxes, rebuild) {
+        var kept = []
+        for (var i = 0; i < boxes.length; i += 1) {
+          if (boxes[i]) kept.push([boxes[i], boxes[i].scrollTop])
+        }
+        rebuild()
+        for (var j = 0; j < kept.length; j += 1) {
+          if (kept[j][0].scrollTop !== kept[j][1]) kept[j][0].scrollTop = kept[j][1]
+        }
       }
 
       function renderContentNow() {
