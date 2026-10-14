@@ -24,15 +24,19 @@ import { PLACES, SOUVENIRS, placeByKey, systemUtcOffset } from '../world.js'
 
 const MIN = 60_000
 
-/** A hatched pig on a real store with a fake clock, in `lang`, with money to spend. */
-function withPig(lang, fn) {
+/**
+ * A hatched pig on a real store with a fake clock, in `lang`, with money to spend.
+ * `coins: null` keeps the purse it hatched with: [Q0016] holding 10000 turns a
+ * pig golden, which a wardrobe test of a fresh pig must not see.
+ */
+function withPig(lang, fn, { coins = 100_000 } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'dsh-pig-cli-'))
   let clock = Date.now()
   const store = createStore(join(dir, 'state.json'), { now: () => clock, setTimer: () => null, clearTimer: () => {} })
   try {
     assert.equal(store.hatch(), true)
     assert.equal(store.setLang(lang).ok, true)
-    store.state.coins = 100_000
+    if (coins !== null) store.state.coins = coins
     const run = line => dispatch(store, 'pig', line)
     const tick = minutes => { clock += minutes * MIN; store.freshen() }
     // [ST0014] time is folded in minute by minute: wait just until the pig is back.
@@ -217,7 +221,7 @@ for (const lang of ['zh', 'en']) {
       assert.deepEqual(store.state.outfit, [])
       assert.equal(run('wear auto').text, t('👗 跟着阶段穿了'))
       assert.equal(store.state.outfit, null)
-    })
+    }, { coins: null })
   })
 
   test(`${lang}: [ST0012] /pig shop has a 装扮 shelf; /pig buy puts the gear on, once`, () => {
@@ -233,6 +237,6 @@ for (const lang of ['zh', 'en']) {
       assert.ok(run('shop').text.includes(`📟 ${t('BP机皮带')}  ${t('已拥有')}`), 'the shelf says it is owned')
       assert.equal(run('buy pager').text, t('👗 {emoji} {item} 已经在衣柜里了，不用再买。', { emoji: '📟', item: t('BP机皮带') }))
       assert.ok(run('wear').text.includes(t('在商店「装扮」货架买，{price} 猪币', { price: 66 })), 'the hint says where to buy it')
-    })
+    }, { coins: null })
   })
 }
