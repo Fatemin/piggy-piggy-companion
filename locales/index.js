@@ -42,11 +42,11 @@ export default {
     '用法：/{cmd} study <科目>[,科目…] <{stages}>\n科目：{subjects}\n一次最多：{limits}\n每门课上限：{caps}（其余不限）': '使い方：/{cmd} study <科目>[,科目…] <{stages}>\n科目：{subjects}\nいちどに受けられる数：{limits}\n1科目の上限：{caps}（ほかは無制限）',
     '没有「{key}」这个目的地。/{cmd} trip 看有哪些。': '「{key}」という行き先はないよ。/{cmd} trip で確認してね。',
     '{name} 没在外面。': '{name}はおでかけしていないよ。',
-    '{name} 提前回来了，退回 {coins} 金币。': '{name}が早めに帰ってきた。{coins} コインもどってきた。',
+    '{name} 提前回来了，退回 {coins} 猪币。': '{name}が早めに帰ってきた。{coins} ブーコインもどってきた。',
     '{name} 提前回来了，这趟白跑。': '{name}が早めに帰ってきた。むだ足だった。',
     // --- shop and bag -------------------------------------------------------
-    '{price} 金币': '{price} コイン',
-    '🛒 商店（你有 {coins} 金币）\n{lines}\n\n买：/{cmd} buy <物品>': '🛒 おみせ（{coins} コイン持っています）\n{lines}\n\n買う：/{cmd} buy <アイテム>',
+    '{price} 猪币': '{price} ブーコイン',
+    '🛒 商店（你有 {coins} 猪币）\n{lines}\n\n买：/{cmd} buy <物品>': '🛒 おみせ（{coins} ブーコイン持っています）\n{lines}\n\n買う：/{cmd} buy <アイテム>',
     '没有「{name}」这样东西。/{cmd} shop 看货架。': '「{name}」というものはないよ。/{cmd} shop で売り場を見てね。',
     '没有「{name}」这样东西。': '「{name}」というものはないよ。',
     // --- look and name ------------------------------------------------------
@@ -63,7 +63,7 @@ export default {
     '{name} 已经在外面了。': '{name}はもうおでかけ中。',
     '{name} 病着，不能出门 —— 先治好它。': '{name}はびょうきで出かけられない。先に治してあげてね。',
     '{name} 太饿了，先喂点东西。': '{name}はおなかぺこぺこ。先にごはんをあげてね。',
-    '钱不够，需要 {price} 金币，你只有 {coins}。': 'コインが足りない。{price} コイン必要だけど、{coins} しかない。',
+    '钱不够，需要 {price} 猪币，你只有 {coins}。': 'ブーコインが足りない。{price} ブーコイン必要だけど、{coins} しかない。',
     '没有这个选项。': 'そのメニューはないよ。',
     '这份工作要求：{list}。': 'このしごとには {list} が必要だよ。',
     '{trait} {need}（现在 {have}）': '{trait} {need}（いま {have}）',
@@ -81,9 +81,9 @@ export default {
     '    买了就穿上，衣柜里随时换：/{cmd} wear': '    買ったらすぐ身につける。クローゼットでいつでも着がえ：/{cmd} wear',
     '已拥有': '持ってる',
     // --- naming -------------------------------------------------------------
-    '第一次起名免费；以后再改名要用一张{card}（商店 {price} 金币）。': 'さいしょの名づけは無料。次から名前を変えるには{card}が1枚いるよ（おみせで {price} コイン）。',
+    '第一次起名免费；以后再改名要用一张{card}（商店 {price} 猪币）。': 'さいしょの名づけは無料。次から名前を変えるには{card}が1枚いるよ（おみせで {price} ブーコイン）。',
     '🪪 用掉了一张{card}，还剩 {left} 张。': '🪪 {card}を1枚使った。のこり {left} 枚。',
-    '🪪 {name} 已经有名字了，再改名要用一张{card}（{price} 金币，商店「{shelf}」货架上有）。\n买：/{cmd} buy {key}，然后再 /{cmd} name <新名字>': '🪪 {name}にはもう名前があるよ。変えるには{card}が1枚いるよ（{price} コイン、おみせの「{shelf}」の棚にあるよ）。\n買う：/{cmd} buy {key}、それから /{cmd} name <新しい名前>',
+    '🪪 {name} 已经有名字了，再改名要用一张{card}（{price} 猪币，商店「{shelf}」货架上有）。\n买：/{cmd} buy {key}，然后再 /{cmd} name <新名字>': '🪪 {name}にはもう名前があるよ。変えるには{card}が1枚いるよ（{price} ブーコイン、おみせの「{shelf}」の棚にあるよ）。\n買う：/{cmd} buy {key}、それから /{cmd} name <新しい名前>',
     '它本来就叫「{name}」呀，没改。': 'もともと「{name}」だよ。変わってないよ。',
   },
   en: {
@@ -123,11 +123,11 @@ export default {
     '用法：/{cmd} study <科目>[,科目…] <{stages}>\n科目：{subjects}\n一次最多：{limits}\n每门课上限：{caps}（其余不限）': 'Usage: /{cmd} study <subject>[,subject…] <{stages}>\nSubjects: {subjects}\nMost at once: {limits}\nLessons per subject: {caps} (no limit elsewhere)',
     '没有「{key}」这个目的地。/{cmd} trip 看有哪些。': 'No place called "{key}". See /{cmd} trip.',
     '{name} 没在外面。': "{name} isn't out.",
-    '{name} 提前回来了，退回 {coins} 金币。': '{name} came back early; {coins} coins refunded.',
+    '{name} 提前回来了，退回 {coins} 猪币。': '{name} came back early; {coins} oinks refunded.',
     '{name} 提前回来了，这趟白跑。': '{name} came back early, all for nothing.',
     // --- shop and bag -------------------------------------------------------
-    '{price} 金币': '{price} coins',
-    '🛒 商店（你有 {coins} 金币）\n{lines}\n\n买：/{cmd} buy <物品>': '🛒 Shop (you have {coins} coins)\n{lines}\n\nBuy: /{cmd} buy <item>',
+    '{price} 猪币': '{price} oinks',
+    '🛒 商店（你有 {coins} 猪币）\n{lines}\n\n买：/{cmd} buy <物品>': '🛒 Shop (you have {coins} oinks)\n{lines}\n\nBuy: /{cmd} buy <item>',
     '没有「{name}」这样东西。/{cmd} shop 看货架。': 'No such thing as "{name}". See /{cmd} shop.',
     '没有「{name}」这样东西。': 'No such thing as "{name}".',
     // --- look and name ------------------------------------------------------
@@ -144,7 +144,7 @@ export default {
     '{name} 已经在外面了。': '{name} is already out.',
     '{name} 病着，不能出门 —— 先治好它。': "{name} is sick and can't go out — cure it first.",
     '{name} 太饿了，先喂点东西。': '{name} is too hungry. Feed it first.',
-    '钱不够，需要 {price} 金币，你只有 {coins}。': 'Not enough coins: it costs {price}, you have {coins}.',
+    '钱不够，需要 {price} 猪币，你只有 {coins}。': 'Not enough oinks: it costs {price}, you have {coins}.',
     '没有这个选项。': 'No such option.',
     '这份工作要求：{list}。': 'This job needs {list}.',
     '{trait} {need}（现在 {have}）': '{trait} {need} (now {have})',
@@ -162,9 +162,9 @@ export default {
     '    买了就穿上，衣柜里随时换：/{cmd} wear': '    Worn as soon as it is bought; change in the wardrobe: /{cmd} wear',
     '已拥有': 'owned',
     // --- naming -------------------------------------------------------------
-    '第一次起名免费；以后再改名要用一张{card}（商店 {price} 金币）。': 'The first name is free; after that each rename takes a {card} ({price} coins in the shop).',
+    '第一次起名免费；以后再改名要用一张{card}（商店 {price} 猪币）。': 'The first name is free; after that each rename takes a {card} ({price} oinks in the shop).',
     '🪪 用掉了一张{card}，还剩 {left} 张。': '🪪 Used one {card}; {left} left.',
-    '🪪 {name} 已经有名字了，再改名要用一张{card}（{price} 金币，商店「{shelf}」货架上有）。\n买：/{cmd} buy {key}，然后再 /{cmd} name <新名字>': '🪪 {name} already has a name. Renaming takes a {card} ({price} coins, on the "{shelf}" shelf in the shop).\nBuy: /{cmd} buy {key}, then /{cmd} name <new name>',
+    '🪪 {name} 已经有名字了，再改名要用一张{card}（{price} 猪币，商店「{shelf}」货架上有）。\n买：/{cmd} buy {key}，然后再 /{cmd} name <新名字>': '🪪 {name} already has a name. Renaming takes a {card} ({price} oinks, on the "{shelf}" shelf in the shop).\nBuy: /{cmd} buy {key}, then /{cmd} name <new name>',
     '它本来就叫「{name}」呀，没改。': "It's already called \"{name}\" — nothing changed.",
   },
 }

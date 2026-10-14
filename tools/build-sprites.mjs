@@ -284,7 +284,7 @@ const WEAR = {
   // twinkle. The tail is left alone: a copy could not keep time with the poses
   // that wag it faster or not at all.
   gold: {
-    slot: 'body', title: '黄金猪', note: '手里攒到过 10000 金币的黄金猪：浑身金灿灿，眼睛和粉鼻子不变，一道反光扫过身体，两颗星星一闪一闪。',
+    slot: 'body', title: '黄金猪', note: '手里攒到过 10000 猪币的黄金猪：浑身金灿灿，眼睛和粉鼻子不变，一道反光扫过身体，两颗星星一闪一闪。',
     css: `.w-gold-ear2{animation:w-gold-flick 5.2s ease-in-out infinite;transform-origin:205px 108px}
     .w-gold-glint{animation:w-gold-glint 4s ease-in-out infinite}
     .w-gold-star{animation:w-gold-twinkle 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%}
@@ -964,7 +964,7 @@ const SPRITES = {
     <g class="bits" fill="#AEB4BE"><circle cx="70" cy="256" r="3"/><circle cx="96" cy="262" r="2.5"/><circle cx="82" cy="270" r="3"/></g>`,
   },
   'lottery-jackpot': {
-    title: '一等奖', note: '一等奖！高兴得原地转圈，金币哗啦啦往下掉。',
+    title: '一等奖', note: '一等奖！高兴得原地转圈，猪币哗啦啦往下掉。',
     css: `.spin{animation:spin 1s ease-in-out infinite;transform-origin:190px 170px}
     .tail{animation-duration:.25s}
     .c{animation:fall 1.2s linear infinite;transform-box:fill-box;transform-origin:50% 50%}

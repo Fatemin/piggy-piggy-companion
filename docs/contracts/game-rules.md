@@ -100,7 +100,7 @@
 6. 面向玩家的 `label` 都是中文源串，并在 `locales/data.js` 有 ja 与 en 译文。
 7. 规则只在 `core.js`：快照、面板、终端渲染都不得重算报酬、冷却或价格（见 [HOST.SNAPSHOT.V1](host-snapshot.md) §1）。
 8. 睡觉与外出互斥：睡着时饱食照常下降，心情、清洁按 `SLEEP_RECOVERY_PER_MIN` 回升，疏于照顾累积的生病风险乘 `SLEEP_SICK_RISK_MULTIPLIER`；照顾动作和出门会先叫醒它；电脑唤醒（`auto`）只结束电脑休眠引起的睡眠。
-9. **装扮不进玩法**：`data.js` 的 `WEAR_SLOTS` / `WEARABLES` / `STAGE_OUTFIT` 与 `core.js` 的解锁、穿脱只决定外观，由 [ART.ASSETS.V2](art-assets.md) 约束；除 `shop` 装饰的售价（`unlock.price`，只在购买时扣金币）与 `gym` / `coins` 装饰的解锁门槛（`unlock.kg` / `unlock.coins`，Q0016）外不得带数值字段，也不得被任何结算读取。
+9. **装扮不进玩法**：`data.js` 的 `WEAR_SLOTS` / `WEARABLES` / `STAGE_OUTFIT` 与 `core.js` 的解锁、穿脱只决定外观，由 [ART.ASSETS.V2](art-assets.md) 约束；除 `shop` 装饰的售价（`unlock.price`，只在购买时扣猪币）与 `gym` / `coins` 装饰的解锁门槛（`unlock.kg` / `unlock.coins`，Q0016）外不得带数值字段，也不得被任何结算读取。
 10. **健身房**（Q0016，`GYM` / `GYM_CLASSES`）：一节课是一次外出（`activity.kind === 'gym'`），先付 `price`、提前叫回全额退款；回来减 `lossG`，体重不低于 `GYM.floorKg`，体重已在下限时拒绝 `too-light`。生命阶段与 `stage` 类装饰解锁按 `max(weightG, peakWeightG)` 算，减重前把当前体重记进 `peakWeightG`，所以健身不会让猪退回更小的阶段；`sizeForWeight` 仍按当前体重，猪会真的变小。累计减掉的克数记 `stats.gymLostG`，到 `GYM.muscleKg`（就是 `muscle` 装饰的 `unlock.kg`）解锁肌肉造型并自动穿上。
 
 ## 4. 变更规则 Change rules

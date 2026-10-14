@@ -875,7 +875,7 @@ export function dispatch(store, commandName, rawInput) {
       return {
         kind: 'success',
         text: result.refunded > 0
-          ? tr(lang, '{name} 提前回来了，退回 {coins} 金币。', { name: state.name, coins: result.refunded })
+          ? tr(lang, '{name} 提前回来了，退回 {coins} 猪币。', { name: state.name, coins: result.refunded })
           : tr(lang, '{name} 提前回来了，这趟白跑。', { name: state.name }),
       }
     }
@@ -886,12 +886,12 @@ export function dispatch(store, commandName, rawInput) {
         const items = kind === 'wear' ? WEAR_FOR_SALE : SHOP.filter(item => item.kind === kind)
         if (items.length === 0) return ''
         const owned = item => kind === 'wear' && wearUnlocked(state, wearableByKey(item.key))
-        const lines = items.map(item => `  ${item.emoji} ${tr(lang, item.label)}  ${owned(item) ? tr(lang, '已拥有') : tr(lang, '{price} 金币', { price: item.price })}`)
+        const lines = items.map(item => `  ${item.emoji} ${tr(lang, item.label)}  ${owned(item) ? tr(lang, '已拥有') : tr(lang, '{price} 猪币', { price: item.price })}`)
         if (kind === 'card') lines.push(tr(lang, '    改名用：/{cmd} name <名字>（第一次起名免费）', { cmd }))
         if (kind === 'wear') lines.push(tr(lang, '    买了就穿上，衣柜里随时换：/{cmd} wear', { cmd }))
         return [tr(lang, '【{shelf}】', { shelf: tr(lang, KIND_LABEL[kind]) }), ...lines].join('\n')
       }).filter(block => block !== '')
-      return { kind: 'success', text: tr(lang, '🛒 商店（你有 {coins} 金币）\n{lines}\n\n买：/{cmd} buy <物品>', { coins: state?.coins ?? 0, lines: shelves.join('\n'), cmd }) }
+      return { kind: 'success', text: tr(lang, '🛒 商店（你有 {coins} 猪币）\n{lines}\n\n买：/{cmd} buy <物品>', { coins: state?.coins ?? 0, lines: shelves.join('\n'), cmd }) }
     }
     case 'buy': {
       if (state === null) return { kind: 'error', text: renderNoPig(commandName) }
@@ -996,7 +996,7 @@ function renameReply(store, state, argument, cmd) {
     if (result.usedCard) {
       lines.push(tr(lang, '🪪 用掉了一张{card}，还剩 {left} 张。', { card, left: store.state?.inventory?.[RENAME_CARD.key] ?? 0 }))
     } else {
-      lines.push(tr(lang, '第一次起名免费；以后再改名要用一张{card}（商店 {price} 金币）。', { card, price: RENAME_CARD.price }))
+      lines.push(tr(lang, '第一次起名免费；以后再改名要用一张{card}（商店 {price} 猪币）。', { card, price: RENAME_CARD.price }))
     }
     return { kind: 'success', text: lines.join('\n') }
   }
@@ -1004,7 +1004,7 @@ function renameReply(store, state, argument, cmd) {
     case 'need-card':
       return {
         kind: 'success',
-        text: tr(lang, '🪪 {name} 已经有名字了，再改名要用一张{card}（{price} 金币，商店「{shelf}」货架上有）。\n买：/{cmd} buy {key}，然后再 /{cmd} name <新名字>', {
+        text: tr(lang, '🪪 {name} 已经有名字了，再改名要用一张{card}（{price} 猪币，商店「{shelf}」货架上有）。\n买：/{cmd} buy {key}，然后再 /{cmd} name <新名字>', {
           name: state.name, card, price: result.price ?? RENAME_CARD.price, shelf: tr(lang, KIND_LABEL.card), key: RENAME_CARD.key, cmd,
         }),
       }
@@ -1036,7 +1036,7 @@ function refusalText(result, state, context = {}) {
     case 'sick': return tr(lang, '{name} 病着，不能出门 —— 先治好它。', { name })
     case 'weak': return tr(lang, '{name} 身体太虚了，先把病治好、养养身体。', { name })
     case 'hungry': return tr(lang, '{name} 太饿了，先喂点东西。', { name })
-    case 'poor': return tr(lang, '钱不够，需要 {price} 金币，你只有 {coins}。', { price: result.price, coins: state.coins })
+    case 'poor': return tr(lang, '钱不够，需要 {price} 猪币，你只有 {coins}。', { price: result.price, coins: state.coins })
     case 'too-many': return tr(lang, '{stage}一次最多上 {max} 门课。', { stage: tr(lang, context.stage?.label ?? ''), max: result.max })
     case 'capped': return tr(lang, '{stage}每门课最多上 {max} 次，{subjects}已经上满了。', {
       stage: tr(lang, context.stage?.label ?? ''), max: result.max,

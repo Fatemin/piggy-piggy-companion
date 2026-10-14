@@ -195,13 +195,13 @@ window.__ModuleLoader__.load({
         '{n} 天': '{n}日', '{n} 小时': '{n}時間', '{n} 分钟': '{n}分',
         // banners
         '宿主是旧版本': 'ホストが古いバージョンです',
-        '金币、健康、打工、商店这些是新增的，重启 dsh（不是刷新页面）之后才会出现。':
-          'コイン・健康・バイト・おみせは新しい機能です。dsh を再起動すると出てきます（ページの再読み込みではなく）。',
+        '猪币、健康、打工、商店这些是新增的，重启 dsh（不是刷新页面）之后才会出现。':
+          'ブーコイン・健康・バイト・おみせは新しい機能です。dsh を再起動すると出てきます（ページの再読み込みではなく）。',
         '{name} 走了': '{name} はいってしまった',
         '{name} 走了，灵魂还留在墓碑上 👻': '{name} はいってしまった。たましいがまだおはかにいるよ 👻',
         '用还魂丹可以把它叫回来，或者领养一只新的小猪': 'よみがえりの薬で呼びもどせるよ。新しい子をむかえることもできるよ',
-        '在「背包」里用还魂丹就能救回来（金币、收藏、上过的课都保留）':
-          '「バッグ」でよみがえりの薬を使えば助かるよ（コイン・コレクション・じゅぎょうはそのまま）',
+        '在「背包」里用还魂丹就能救回来（猪币、收藏、上过的课都保留）':
+          '「バッグ」でよみがえりの薬を使えば助かるよ（ブーコイン・コレクション・じゅぎょうはそのまま）',
         '领养新猪': '新しい子をむかえる',
         '{name}（第 {stage}/4 期）': '{name}（{stage}/4 期）',
         '需要「{cure}」—— 去商店买对应的药': '「{cure}」が必要 —— おみせで病気に合ったくすりを買おう',
@@ -260,7 +260,7 @@ window.__ModuleLoader__.load({
         '环球旅行家': '世界一周トラベラー', '地区': 'エリア',
         // [dsh-piggy-claude-code mod] the resizable panel and the big panel
         '打开大面板': '大きいパネルを開く', '拖动调整大小 · 双击还原': 'ドラッグでサイズ変更 · ダブルクリックで元にもどす',
-        '金币': 'コイン', '伪装成表格': '表計算に変装',
+        '猪币': 'ブーコイン', '伪装成表格': '表計算に変装',
         '老板键：连按两次 Esc 或 Ctrl+Shift+E': 'ボスキー：Esc を2回 または Ctrl+Shift+E',
         // the spreadsheet disguise, in Excel's own Japanese wording
         '季度预算.xlsx - Excel': '四半期予算.xlsx - Excel',
@@ -437,25 +437,25 @@ window.__ModuleLoader__.load({
         '{n} 天': '{n} days', '{n} 小时': '{n} h', '{n} 分钟': '{n} min',
         // banners
         '宿主是旧版本': 'The host is out of date',
-        '金币、健康、打工、商店这些是新增的，重启 dsh（不是刷新页面）之后才会出现。':
-          'Coins, health, work and the shop are new. They appear after restarting dsh (not just reloading the page).',
+        '猪币、健康、打工、商店这些是新增的，重启 dsh（不是刷新页面）之后才会出现。':
+          'Oinks, health, work and the shop are new. They appear after restarting dsh (not just reloading the page).',
         '{name} 走了': '{name} has passed away',
         '{name} 走了，灵魂还留在墓碑上 👻': '{name} has passed away; its soul still lingers at the grave 👻',
         '用还魂丹可以把它叫回来，或者领养一只新的小猪': 'A revival pill can call it back, or you can adopt a new piglet',
-        '在「背包」里用还魂丹就能救回来（金币、收藏、上过的课都保留）':
-          'Use a revival pill from the Bag to bring it back (coins, collection and lessons are kept)',
+        '在「背包」里用还魂丹就能救回来（猪币、收藏、上过的课都保留）':
+          'Use a revival pill from the Bag to bring it back (oinks, collection and lessons are kept)',
         '领养新猪': 'Adopt a new pig',
         '{name}（第 {stage}/4 期）': '{name} (stage {stage}/4)',
         '需要「{cure}」—— 去商店买对应的药': 'Needs "{cure}" — buy the right medicine in the Shop',
         '带病也能出门，但报酬只有一半；在外面病情会走得更快，躺着养最省':
           'It can still go out while sick, but for half pay, and the illness gets worse faster outside. Resting is best.',
         '钱不够也没关系 —— 先去打工，赚够 {price} 🪙 买「{item}」':
-          'Short of coins? Go to work first and earn {price} 🪙 for "{item}"',
+          'Short of oinks? Go to work first and earn {price} 🪙 for "{item}"',
         '在外面：{label}': 'Out: {label}', '还有 {n} 秒': '{n}s left', '叫它回来': 'Call back',
         // messages
         '猪有新消息': 'News from your pig', '连接不上宿主': "Can't reach the host",
         '背包里没有能用的东西': 'Nothing usable in the bag',
-        '还要等 {n} 秒': 'Wait {n}s more', '钱不够': 'Not enough coins', '它在外面': "It's out",
+        '还要等 {n} 秒': 'Wait {n}s more', '钱不够': 'Not enough oinks', '它在外面': "It's out",
         '太虚弱了，先养好再出门': 'Too weak. Rest up before going out', '太饿了': 'Too hungry',
         '药不对症': 'Wrong medicine', '背包里没有': 'Not in the bag', '它没生病': "It isn't sick",
         '它已经走了…': "It's gone…", '它没在外面': "It isn't out",
@@ -502,7 +502,7 @@ window.__ModuleLoader__.load({
         '环球旅行家': 'Globetrotter', '地区': 'Region',
         // [dsh-piggy-claude-code mod] the resizable panel and the big panel
         '打开大面板': 'Open the big panel', '拖动调整大小 · 双击还原': 'Drag to resize · double-click to reset',
-        '金币': 'Coins', '伪装成表格': 'Disguise as a spreadsheet',
+        '猪币': 'Oinks', '伪装成表格': 'Disguise as a spreadsheet',
         '老板键：连按两次 Esc 或 Ctrl+Shift+E': 'Boss key: Esc twice or Ctrl+Shift+E',
         // the spreadsheet disguise, in Excel's own English wording
         '季度预算.xlsx - Excel': 'Quarterly Budget.xlsx - Excel',
@@ -3074,7 +3074,7 @@ window.__ModuleLoader__.load({
         kvs.appendChild(kv(e('✨') + T('魅力'), p.traits.charm))
         kvs.appendChild(kv(e('💪') + T('武力'), p.traits.strong))
         kvs.appendChild(kv(e('⚖️') + T('体重'), p.weight))
-        kvs.appendChild(kv(e('🪙') + T('金币'), p.coins))
+        kvs.appendChild(kv(e('🪙') + T('猪币'), p.coins))
         side.appendChild(kvs)
 
         var a = view.activity
@@ -4702,7 +4702,7 @@ window.__ModuleLoader__.load({
         if (view.legacy) {
           var legacy = el('div', 'dp-alert dp-legacy')
           legacy.appendChild(el('b', null, '⚠️ ' + T('宿主是旧版本')))
-          legacy.appendChild(el('div', null, T('金币、健康、打工、商店这些是新增的，重启 dsh（不是刷新页面）之后才会出现。')))
+          legacy.appendChild(el('div', null, T('猪币、健康、打工、商店这些是新增的，重启 dsh（不是刷新页面）之后才会出现。')))
           content.appendChild(legacy)
         }
         var updating = updateAlert()
@@ -4713,7 +4713,7 @@ window.__ModuleLoader__.load({
             { name: view.pig.name })))
           dead.appendChild(el('div', null, T(view.pig.soul
             ? '用还魂丹可以把它叫回来，或者领养一只新的小猪'
-            : '在「背包」里用还魂丹就能救回来（金币、收藏、上过的课都保留）')))
+            : '在「背包」里用还魂丹就能救回来（猪币、收藏、上过的课都保留）')))
           content.appendChild(dead)
           // Adopting is available the moment the pig dies — not only once the
           // soul turns up a day later. Waiting a day to start over was a

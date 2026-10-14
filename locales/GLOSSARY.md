@@ -15,7 +15,7 @@ The pig is referred to as "it" in English and by name or 「この子」 in Japa
 | 清洁 | きれいさ | Cleanliness |
 | 健康 | 健康 | Health |
 | 智力 · 魅力 · 武力 | かしこさ · みりょく · ちから | Smarts · Charm · Strength |
-| 金币 | コイン | coins |
+| 猪币 | ブーコイン | oinks (one oink) |
 | 体重 | 体重 | Weight |
 | 年龄 | 年齢 | Age |
 | 经验 | けいけんち | XP |

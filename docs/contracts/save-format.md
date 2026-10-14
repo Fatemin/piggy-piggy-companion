@@ -32,7 +32,7 @@
 |---|---|---|
 | 身份与生命 | `name`, `stage`, `hatched`, `dead`, `diedAt`, `bornAt`, `lang` | `hatched` 与“存档存在”是两回事 |
 | 四维与成长 | `satiety`, `happiness`, `cleanliness`, `health`, `weightG`, `xp` | 迁移时夹到合法范围 |
-| 最高体重 | `peakWeightG` | 到过的最高体重（克，Q0016）：生命阶段和 `stage` 类装饰解锁按 `max(weightG, peakWeightG)` 算，健身减重不会让猪变小一个阶段；只在健身结算减重前更新，所以平时可能低于 `weightG`。默认出生体重，迁移时夹到 0–500000。`stats` 新增 `gyms`、`gymLostG`（健身次数、累计减掉的克数，后者解锁 `muscle`）与 `peakCoins`（同时持有过的最多金币，解锁 `gold`；时间推进后和每个操作后更新，迁移时取它与当前金币的较大值），迁移时补 0。新增可默认的键，不升版本 |
+| 最高体重 | `peakWeightG` | 到过的最高体重（克，Q0016）：生命阶段和 `stage` 类装饰解锁按 `max(weightG, peakWeightG)` 算，健身减重不会让猪变小一个阶段；只在健身结算减重前更新，所以平时可能低于 `weightG`。默认出生体重，迁移时夹到 0–500000。`stats` 新增 `gyms`、`gymLostG`（健身次数、累计减掉的克数，后者解锁 `muscle`）与 `peakCoins`（同时持有过的最多猪币，解锁 `gold`；时间推进后和每个操作后更新，迁移时取它与当前猪币的较大值），迁移时补 0。新增可默认的键，不升版本 |
 | 资产 | `coins`, `inventory` | `coins` 为非负整数 |
 | 养成 | `traits`, `courses`, `lessonsByStage`, `stageCourses`, `doctorDone` | `stageCourses` 是各学段每门课的次数（小学/大学上限按它算）；缺失时按 `lessonsByStage` 平均摊到九门课 |
 | 旅行 | `souvenirs`, `collected`, `regionsDone`, `worldDone`, `lastTrip` | |
@@ -48,8 +48,8 @@
 
 1. **迁移是全函数**：任何对象都迁移成合法状态；`null`、数组、非对象返回 `null`（视为没有存档）。
 2. **迁移幂等**：`migrate(migrate(x))` 与 `migrate(x)` 相同。
-3. **不丢进度**：金币、经验、背包、属性、课程、纪念品在迁移中保留；退役内容必须给出补偿（先例：旧旅行退款、v5 起始金币补足到 500）。
-4. **一次性修正以磁盘上的旧版本号为键**：例如“`version < 5` 时补金币”，保证只执行一次。
+3. **不丢进度**：猪币、经验、背包、属性、课程、纪念品在迁移中保留；退役内容必须给出补偿（先例：旧旅行退款、v5 起始猪币补足到 500）。
+4. **一次性修正以磁盘上的旧版本号为键**：例如“`version < 5` 时补猪币”，保证只执行一次。
    v6（ST0004）：旧键 `look` 删除；`version < 6` 且 `look === 'original'`、没有 `outfit` 的存档迁成 `outfit: []`（主人摘掉过胡子，就保持不戴），其余为 `null`（跟着阶段，与之前的样子一致）。
 5. **可复现（ST0014）**：时间只在整分钟与 `activity.endsAt` 处结算（`core.advance`），随机数只来自 `rng`；同一存档加同一串操作（`ops.js`），在任何机器上得到逐字节相同的存档（`pending` 除外，它是本机的待播公告）。
 6. **原子写盘**：写临时文件 → `fsync` → `rename`，不会出现半个文件。

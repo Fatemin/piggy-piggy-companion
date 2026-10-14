@@ -1096,7 +1096,7 @@ export function noteCoins(state, nowMs) {
     const slotTaken = wornFor(state).some(key => wearableByKey(key).slot === item.slot)
     if (!slotTaken) wear(state, item.key, true, nowMs)
     const params = { name: state.name, coins: item.unlock.coins, look: word(state, item.label) }
-    remember(state, say(state, '🪙 手里攒到过 {coins} 金币，解锁了「{look}」！', params), nowMs)
+    remember(state, say(state, '🪙 手里攒到过 {coins} 猪币，解锁了「{look}」！', params), nowMs)
     announce(state, 'gold', say(state, '{name} 变成了{look}！✨', params))
   }
 }
@@ -1337,12 +1337,12 @@ function finishWork(state, activity, nowMs) {
   const tag = sick
     ? say(state, '（带病上工，只有一半）')
     : (points > 0 ? say(state, '（{trait} {points}）', { trait: word(state, TRAITS[job.trait].label), points }) : '')
-  remember(state, say(state, '{emoji} {job}回来，赚了 {coins} 金币{tag}', {
+  remember(state, say(state, '{emoji} {job}回来，赚了 {coins} 猪币{tag}', {
     emoji: job.emoji, job: word(state, job.label), coins, tag,
   }), nowMs)
   announce(state, 'work', sick
-    ? say(state, '{name} 带病打工回来了，只赚到 {coins} 金币 🤒', { name: state.name, coins })
-    : say(state, '{name} 打工回来了！赚到 {coins} 金币 💰', { name: state.name, coins }))
+    ? say(state, '{name} 带病打工回来了，只赚到 {coins} 猪币 🤒', { name: state.name, coins })
+    : say(state, '{name} 打工回来了！赚到 {coins} 猪币 💰', { name: state.name, coins }))
 }
 
 /** [ST0014] The pay multiplier of an outing: COOP.bonus when it was a pig pen one. */
@@ -1914,7 +1914,7 @@ export function startGym(state, classKey, nowMs) {
     state.coins += entry.price
     return result
   }
-  remember(state, say(state, '{emoji} 去健身房{gym}（{price} 金币）', { emoji: entry.emoji, gym: word(state, entry.label), price: entry.price }), nowMs)
+  remember(state, say(state, '{emoji} 去健身房{gym}（{price} 猪币）', { emoji: entry.emoji, gym: word(state, entry.label), price: entry.price }), nowMs)
   return result
 }
 
@@ -1951,7 +1951,7 @@ export function startTrip(state, placeKey, nowMs, homeUtc = systemUtcOffset()) {
     state.coins += quote.cost
     return result
   }
-  remember(state, say(state, '{emoji} 出发去{trip}（花了 {cost} 金币）', { emoji: place.emoji, trip: word(state, place.label), cost: quote.cost }), nowMs)
+  remember(state, say(state, '{emoji} 出发去{trip}（花了 {cost} 猪币）', { emoji: place.emoji, trip: word(state, place.label), cost: quote.cost }), nowMs)
   return result
 }
 
@@ -2024,7 +2024,7 @@ export function buy(state, itemKey, nowMs = Date.now()) {
   state.inventory = { ...(state.inventory ?? {}) }
   state.inventory[item.key] = (state.inventory[item.key] ?? 0) + 1
   state.stats.purchases += 1
-  remember(state, say(state, '买了 {emoji} {item}（-{price} 金币）', { emoji: item.emoji, item: word(state, item.label), price: item.price }), nowMs)
+  remember(state, say(state, '买了 {emoji} {item}（-{price} 猪币）', { emoji: item.emoji, item: word(state, item.label), price: item.price }), nowMs)
   return { ok: true, item }
 }
 
@@ -2044,7 +2044,7 @@ function buyWearable(state, wearable, nowMs) {
   state.wardrobeBought = [...(state.wardrobeBought ?? []), wearable.key]
   state.stats.purchases += 1
   wear(state, wearable.key, true, nowMs)
-  remember(state, say(state, '买了 {emoji} {item}（-{price} 金币）', { emoji: wearable.emoji, item: word(state, wearable.label), price }), nowMs)
+  remember(state, say(state, '买了 {emoji} {item}（-{price} 猪币）', { emoji: wearable.emoji, item: word(state, wearable.label), price }), nowMs)
   return { ok: true, item: { key: wearable.key, label: wearable.label, emoji: wearable.emoji, price, kind: 'wear' } }
 }
 
@@ -2079,7 +2079,7 @@ export function scratchLottery(state, nowMs, random = () => nextRandom(state)) {
   state.stats.lotteryWon = (state.stats.lotteryWon ?? 0) + prize.coins
   state.lastActiveAt = nowMs
   remember(state, prize.coins > 0
-    ? say(state, '🎟️ 刮彩票中了{prize}，+{coins} 金币', { prize: word(state, prize.label), coins: prize.coins })
+    ? say(state, '🎟️ 刮彩票中了{prize}，+{coins} 猪币', { prize: word(state, prize.label), coins: prize.coins })
     : say(state, '🎟️ 刮彩票：谢谢参与'), nowMs)
   return { ok: true, prize: { tier: prize.tier, coins: prize.coins, mood: prize.mood } }
 }
@@ -2117,10 +2117,10 @@ function settleBlackjack(state, nowMs) {
   state.lastActiveAt = nowMs
   const vars = { total: shown.total, coins, bet: hand.bet }
   remember(state, outcome === 'jackpot'
-    ? say(state, '🃏 21 点正好 21！+{coins} 金币', vars)
+    ? say(state, '🃏 21 点正好 21！+{coins} 猪币', vars)
     : outcome === 'win'
-      ? say(state, '🃏 21 点停在 {total} 点，+{coins} 金币', vars)
-      : say(state, '🃏 21 点爆了（{total} 点），输掉 {bet} 金币', vars), nowMs)
+      ? say(state, '🃏 21 点停在 {total} 点，+{coins} 猪币', vars)
+      : say(state, '🃏 21 点爆了（{total} 点），输掉 {bet} 猪币', vars), nowMs)
   return { ok: true, round: { ...shown, done: true, outcome, multiplier, coins } }
 }
 
