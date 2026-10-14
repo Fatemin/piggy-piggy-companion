@@ -17,7 +17,7 @@
 |---|---|---|
 | `tools/build-sprites.mjs` | 两类资产的**唯一生成器**：姿势的 `wears` 声明、装饰的 `WEAR` 表 | 不手改 `assets/` 下生成的文件 |
 | `data.js` `WEAR_SLOTS` / `WEARABLES` / `STAGE_OUTFIT` | 部位、装饰键与部位、解锁条件、各阶段默认穿戴 | 装饰不带任何数值字段 |
-| `core.js` `wearUnlocked` / `wornFor` / `wear` / `wearAuto` | 解锁判定（从已有进度推导）、当前穿戴、穿脱规则 | 穿戴不改金币、属性、冷却等任何玩法数值 |
+| `core.js` `wearUnlocked` / `wornFor` / `wear` / `wearAuto` | 解锁判定（从已有进度推导）、当前穿戴、穿脱规则 | 穿戴不改猪币、属性、冷却等任何玩法数值 |
 | `art.js` `dress` | 把装饰倒进姿势的穿戴槽（纯字符串） | 不读文件、不认识具体姿势 |
 | `index.js` 美术路由 | `/dsh-pig/art/<pose>.svg?wear=<k1>,<k2>` 读文件并调用 `dress` | 只放行 `WEARABLES` 里的键 |
 | `client.js` | 把快照 `pig.outfit.worn` 拼到每个姿势 URL 上 | 不在前端合成 SVG；不自行判断解锁 |
@@ -60,9 +60,9 @@
 | `chainbelt` | ⛓️ 杀马特腰链 | `shop 188`：商店购买 |
 | `pager` | 📟 BP机皮带 | `shop 288`：商店购买 |
 | `muscle` | 💪 肌肉 | `gym 100`：在健身房一共瘦掉 100 kg（`stats.gymLostG >= 100000`，Q0016）；解锁那一刻自动穿上 |
-| `gold` | 🪙 黄金猪 | `coins 10000`：手里同时有过 10000 金币（`max(coins, stats.peakCoins)`，Q0016）；解锁那一刻若「身上」没穿东西就自动穿上 |
+| `gold` | 🪙 黄金猪 | `coins 10000`：手里同时有过 10000 猪币（`max(coins, stats.peakCoins)`，Q0016）；解锁那一刻若「身上」没穿东西就自动穿上 |
 
-商店购买（`core.js` `buy` 对装饰键的分支）：每件只能买一次（已拥有拒绝 `owned`）、未孵化 / 死亡拒绝；扣 `unlock.price` 金币、记入 `wardrobeBought`、计一次 `stats.purchases`，并立刻穿上（同部位的换下）。装饰不进 `SHOP`、`inventory` 与背包，不能“使用”。
+商店购买（`core.js` `buy` 对装饰键的分支）：每件只能买一次（已拥有拒绝 `owned`）、未孵化 / 死亡拒绝；扣 `unlock.price` 猪币、记入 `wardrobeBought`、计一次 `stats.purchases`，并立刻穿上（同部位的换下）。装饰不进 `SHOP`、`inventory` 与背包，不能“使用”。
 
 ### 2.3 穿戴（存档 `outfit`，见 [STORE.SAVE.V6](save-format.md)）
 
@@ -161,7 +161,7 @@
 2. **行为资产恰好一个穿戴槽**，`undressable-poses` 里的除外（零个）；槽里的 `data-occupies` 与 `pose-occupies` 一致。
 3. **行为资产不含 `data-wear=`**：它自带的装备是行为的一部分，只靠 `data-occupies` 让出部位，不冒充装饰。
 4. **装饰资产恰好一个片段**，`data-wear` 与文件名一致，`data-slot` 与 `wear-keys` 一致；`wear-keys` 与 `WEARABLES` 一一对应。
-5. **装饰不改玩法**：`WEARABLES` 条目只有 `key`/`slot`/`label`/`emoji`/`unlock`（数字只有 `shop` 的售价 `unlock.price`，只在购买时扣金币；以及 `gym` / `coins` 的解锁门槛 `unlock.kg` / `unlock.coins`，只用于判断解锁）；穿脱只改 `outfit` 与 `lastActiveAt`。
+5. **装饰不改玩法**：`WEARABLES` 条目只有 `key`/`slot`/`label`/`emoji`/`unlock`（数字只有 `shop` 的售价 `unlock.price`，只在购买时扣猪币；以及 `gym` / `coins` 的解锁门槛 `unlock.kg` / `unlock.coins`，只用于判断解锁）；穿脱只改 `outfit` 与 `lastActiveAt`。
 6. **同一坐标系**：装饰画在猪本体（Noto 🐖，`VIEWBOX 24 -36 336 336`）坐标上；姿势只能移动整只猪（动画作用在分组上），不得重画本体，否则装饰会错位。
 7. **新美术先归类**：设计交接文档（`docs/design/*design-handoff*.md`）必须写明每项新美术属于哪一类；行为资产写明占用部位，装饰资产写明部位与解锁条件。
 

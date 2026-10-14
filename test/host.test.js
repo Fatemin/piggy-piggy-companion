@@ -527,7 +527,7 @@ test('the slash command answers about, shop and status', () => {
     assert.match(run('shop').text, /商店/)
     assert.match(run('').text, /小猪|青年猪|中年猪/)
     assert.equal(run('nonsense').kind, 'error')
-    assert.match(run('').text, /金币/)
+    assert.match(run('').text, /猪币/)
   } finally {
     app.cleanup()
   }

@@ -55,7 +55,7 @@ for (const lang of ['zh', 'en']) {
         const line = reply.text.split('\n').find(l => l.includes(`(${place.key})`))
         assert.ok(line !== undefined, `${place.key} missing from /pig trip`)
         assert.ok(line.includes(t(place.label)), `${place.key} is not labelled in ${lang}: ${line}`)
-        assert.ok(line.includes(t('{price} 金币', { price: quote.cost })) || line.includes(`${quote.cost} `), `${place.key} fare: ${line}`)
+        assert.ok(line.includes(t('{price} 猪币', { price: quote.cost })) || line.includes(`${quote.cost} `), `${place.key} fare: ${line}`)
         assert.equal(quote.cost, 100 + 200 * quote.zones)
         assert.equal(quote.minutes, 60 + 60 * quote.zones)
       }
@@ -224,7 +224,7 @@ for (const lang of ['zh', 'en']) {
     withPig(lang, ({ store, run, t }) => {
       const shop = run('shop').text
       assert.ok(shop.includes(t('【{shelf}】', { shelf: t('装扮') })), shop)
-      assert.ok(shop.includes(`📟 ${t('BP机皮带')}  ${t('{price} 金币', { price: 288 })}`), shop)
+      assert.ok(shop.includes(`📟 ${t('BP机皮带')}  ${t('{price} 猪币', { price: 288 })}`), shop)
 
       const bought = run(`buy ${t('BP机皮带')}`)
       assert.ok(bought.text.includes(t('👗 已经穿上了，衣柜里随时换：/pig wear')), bought.text)
@@ -232,7 +232,7 @@ for (const lang of ['zh', 'en']) {
       assert.ok(run('wear').text.includes(`✅📟${t('BP机皮带')}`), 'worn')
       assert.ok(run('shop').text.includes(`📟 ${t('BP机皮带')}  ${t('已拥有')}`), 'the shelf says it is owned')
       assert.equal(run('buy pager').text, t('👗 {emoji} {item} 已经在衣柜里了，不用再买。', { emoji: '📟', item: t('BP机皮带') }))
-      assert.ok(run('wear').text.includes(t('在商店「装扮」货架买，{price} 金币', { price: 66 })), 'the hint says where to buy it')
+      assert.ok(run('wear').text.includes(t('在商店「装扮」货架买，{price} 猪币', { price: 66 })), 'the hint says where to buy it')
     })
   })
 }

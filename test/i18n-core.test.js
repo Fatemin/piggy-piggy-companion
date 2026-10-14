@@ -233,11 +233,11 @@ test('an English pig: no Chinese anywhere in the snapshot or the command replies
 test('a Japanese pig: the Chinese-only phrases are gone', () => {
   const { seen } = playThrough('ja')
   const all = seen.join('\n')
-  for (const zh of ['金币', '打零工', '青年猪', '长成了', '得了', '还魂丹', '墓碑', '纸盒', '郊游', '小学语文', '提前回来', '已经走了', '没有「',
+  for (const zh of ['猪币', '打零工', '青年猪', '长成了', '得了', '还魂丹', '墓碑', '纸盒', '郊游', '小学语文', '提前回来', '已经走了', '没有「',
     '纪念品', '集齐', '环球旅行家', '更名卡', '特产', '博士毕业', '东京']) {
     assert.ok(!all.includes(zh), `${zh} is still there`)
   }
-  for (const ja of ['わかブタ', 'ちょいバイト', 'コイン', 'よみがえりの薬', 'かぜ', '小学校のこくご',
+  for (const ja of ['わかブタ', 'ちょいバイト', 'ブーコイン', 'よみがえりの薬', 'かぜ', '小学校のこくご',
     '東京', '草津温泉の入浴剤', 'コンプリート', '世界一周トラベラー', '博士課程のこくご・おんがく・ぶじゅつ', '名前変更カード']) {
     assert.ok(all.includes(ja), `${ja} missing`)
   }

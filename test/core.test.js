@@ -750,7 +750,7 @@ test('a shift pays out when the clock passes its end', () => {
   assert.equal(pig.coins, before + JOBS.find(j => j.key === "odd").coins)
   assert.equal(pig.stats.jobs, 1)
   assert.equal(pig.stats.coinsEarned, JOBS.find(j => j.key === "odd").coins)
-  assert.ok(pig.memories.some(m => m.includes('金币')))
+  assert.ok(pig.memories.some(m => m.includes('猪币')))
   assert.ok(pig.pending.some(e => e.kind === 'work'), 'the payout is announced')
 })
 

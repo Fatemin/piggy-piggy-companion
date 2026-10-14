@@ -36,17 +36,17 @@ export default {
     // --- work ---------------------------------------------------------------
     '（带病上工，只有一半）': '（びょうきのまま働いたので半分だけ）',
     '（{trait} {points}）': '（{trait} {points}）',
-    '{emoji} {job}回来，赚了 {coins} 金币{tag}': '{emoji} {job}から帰ってきた。{coins} コインかせいだ{tag}',
-    '{name} 带病打工回来了，只赚到 {coins} 金币 🤒': '{name}はびょうきのままバイトから帰ってきた。{coins} コインしかかせげなかった 🤒',
-    '{name} 打工回来了！赚到 {coins} 金币 💰': '{name}がバイトから帰ってきた！{coins} コインかせいだ 💰',
+    '{emoji} {job}回来，赚了 {coins} 猪币{tag}': '{emoji} {job}から帰ってきた。{coins} ブーコインかせいだ{tag}',
+    '{name} 带病打工回来了，只赚到 {coins} 猪币 🤒': '{name}はびょうきのままバイトから帰ってきた。{coins} ブーコインしかかせげなかった 🤒',
+    '{name} 打工回来了！赚到 {coins} 猪币 💰': '{name}がバイトから帰ってきた！{coins} ブーコインかせいだ 💰',
     // [Q0016] the gym
-    '{emoji} 去健身房{gym}（{price} 金币）': '{emoji} ジムで{gym}（{price} コイン）',
+    '{emoji} 去健身房{gym}（{price} 猪币）': '{emoji} ジムで{gym}（{price} ブーコイン）',
     '{emoji} {gym}回来，瘦了 {kg} kg，现在 {weight}': '{emoji} {gym}から帰ってきた。{kg} kg やせて、いま {weight}',
     '{name} 健身回来了！瘦了 {kg} kg 💦': '{name}がジムから帰ってきた！{kg} kg やせた 💦',
     '{name} 健身回来了，已经瘦到底了 💦': '{name}がジムから帰ってきた。もうこれ以上やせられない 💦',
     '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！': '💪 ジムで合計 {kg} kg やせて、ムキムキになった！',
     '{name} 练成了肌肉猪！💪': '{name}がマッチョなブタになった！💪',
-    '🪙 手里攒到过 {coins} 金币，解锁了「{look}」！': '🪙 コインを {coins} 枚ためて「{look}」が解放された！',
+    '🪙 手里攒到过 {coins} 猪币，解锁了「{look}」！': '🪙 ブーコインを {coins} 枚ためて「{look}」が解放された！',
     '{name} 变成了{look}！✨': '{name}が{look}になった！✨',
     '（{trait} {points}，省了 {minutes} 分钟）': '（{trait} {points}、{minutes} 分短縮）',
     '{emoji} 出门{job}去了{saved}': '{emoji} {job}に出かけた{saved}',
@@ -75,7 +75,7 @@ export default {
     '{name} 集齐了{region}！{emoji} 解锁「{perk}」': '{name}が{region}をコンプリート！{emoji}「{perk}」ゲット',
     '{emoji} 成为「{title}」！三项属性各 +3': '{emoji}「{title}」になった！3つの能力がそれぞれ +3',
     '{name} 走遍了全世界，成为「{title}」{emoji}': '{name}は世界中をまわって「{title}」になった {emoji}',
-    '{emoji} 出发去{trip}（花了 {cost} 金币）': '{emoji} {trip}に出発（{cost} コイン）',
+    '{emoji} 出发去{trip}（花了 {cost} 猪币）': '{emoji} {trip}に出発（{cost} ブーコイン）',
     '{emoji} 从{label}提前回来了，钱退回来了': '{emoji} {label}から早めに帰ってきた。お金はもどってきた',
     '{emoji} 从{label}提前回来了，白跑一趟': '{emoji} {label}から早めに帰ってきた。むだ足だった',
     // --- illness ------------------------------------------------------------
@@ -86,7 +86,7 @@ export default {
     '病情加重：{ill}': '病気が悪化：{ill}',
     '{name} 的病情加重了：{ill}，需要{cure}': '{name}の病気が悪くなった：{ill}。{cure}が必要です',
     // --- shop and bag -------------------------------------------------------
-    '买了 {emoji} {item}（-{price} 金币）': '{emoji} {item}を買った（-{price} コイン）',
+    '买了 {emoji} {item}（-{price} 猪币）': '{emoji} {item}を買った（-{price} ブーコイン）',
     '吃了 {emoji} {item}，病好了': '{emoji} {item}を飲んで、病気が治った',
     '{name} 吃了 {item}，痊愈了 💚': '{name}は{item}を飲んで元気になった 💚',
     '用了 {emoji} {item}': '{emoji} {item}を使った',
@@ -111,12 +111,12 @@ export default {
     '有点孤单': 'ちょっとさみしい',
     '还不错': 'まあまあ',
     // --- [dsh-piggy-claude-code mod] scratch cards --------------------------
-    '🎟️ 刮彩票中了{prize}，+{coins} 金币': '🎟️ スクラッチで{prize}！ +{coins} コイン',
+    '🎟️ 刮彩票中了{prize}，+{coins} 猪币': '🎟️ スクラッチで{prize}！ +{coins} ブーコイン',
     '🎟️ 刮彩票：谢谢参与': '🎟️ スクラッチ：はずれ',
     // --- [ST0015] blackjack ------------------------------------------------
-    '🃏 21 点正好 21！+{coins} 金币': '🃏 ブラックジャックでぴったり21！ +{coins} コイン',
-    '🃏 21 点停在 {total} 点，+{coins} 金币': '🃏 ブラックジャック {total} でストップ、+{coins} コイン',
-    '🃏 21 点爆了（{total} 点），输掉 {bet} 金币': '🃏 ブラックジャックでバースト（{total}）、{bet} コイン負け',
+    '🃏 21 点正好 21！+{coins} 猪币': '🃏 ブラックジャックでぴったり21！ +{coins} ブーコイン',
+    '🃏 21 点停在 {total} 点，+{coins} 猪币': '🃏 ブラックジャック {total} でストップ、+{coins} ブーコイン',
+    '🃏 21 点爆了（{total} 点），输掉 {bet} 猪币': '🃏 ブラックジャックでバースト（{total}）、{bet} ブーコイン負け',
   },
   en: {
     // --- the default name (only at egg time; a name is never translated after)
@@ -146,17 +146,17 @@ export default {
     // --- work ---------------------------------------------------------------
     '（带病上工，只有一半）': ' (worked sick, half pay)',
     '（{trait} {points}）': ' ({trait} {points})',
-    '{emoji} {job}回来，赚了 {coins} 金币{tag}': '{emoji} {job} done, earned {coins} coins{tag}',
-    '{name} 带病打工回来了，只赚到 {coins} 金币 🤒': '{name} worked while sick and only earned {coins} coins 🤒',
-    '{name} 打工回来了！赚到 {coins} 金币 💰': '{name} is back from work! Earned {coins} coins 💰',
+    '{emoji} {job}回来，赚了 {coins} 猪币{tag}': '{emoji} {job} done, earned {coins} oinks{tag}',
+    '{name} 带病打工回来了，只赚到 {coins} 猪币 🤒': '{name} worked while sick and only earned {coins} oinks 🤒',
+    '{name} 打工回来了！赚到 {coins} 猪币 💰': '{name} is back from work! Earned {coins} oinks 💰',
     // [Q0016] the gym
-    '{emoji} 去健身房{gym}（{price} 金币）': '{emoji} Off to the gym: {gym} ({price} coins)',
+    '{emoji} 去健身房{gym}（{price} 猪币）': '{emoji} Off to the gym: {gym} ({price} oinks)',
     '{emoji} {gym}回来，瘦了 {kg} kg，现在 {weight}': '{emoji} Back from {gym}: {kg} kg lighter, now {weight}',
     '{name} 健身回来了！瘦了 {kg} kg 💦': '{name} is back from the gym! {kg} kg lighter 💦',
     '{name} 健身回来了，已经瘦到底了 💦': '{name} is back from the gym, as light as it can get 💦',
     '💪 在健身房一共瘦了 {kg} kg，练出了一身肌肉！': '💪 {kg} kg lost at the gym in all: a body full of muscle!',
     '{name} 练成了肌肉猪！💪': '{name} is a muscle pig now! 💪',
-    '🪙 手里攒到过 {coins} 金币，解锁了「{look}」！': '🪙 Held {coins} coins at once: “{look}” unlocked!',
+    '🪙 手里攒到过 {coins} 猪币，解锁了「{look}」！': '🪙 Held {coins} oinks at once: “{look}” unlocked!',
     '{name} 变成了{look}！✨': '{name} turned into a {look}! ✨',
     '（{trait} {points}，省了 {minutes} 分钟）': ' ({trait} {points}, {minutes} min saved)',
     '{emoji} 出门{job}去了{saved}': '{emoji} Off to work: {job}{saved}',
@@ -185,7 +185,7 @@ export default {
     '{name} 集齐了{region}！{emoji} 解锁「{perk}」': '{name} completed {region}! {emoji} Unlocked "{perk}"',
     '{emoji} 成为「{title}」！三项属性各 +3': '{emoji} Now a {title}! All three traits +3',
     '{name} 走遍了全世界，成为「{title}」{emoji}': '{name} has seen the whole world and is now a {title} {emoji}',
-    '{emoji} 出发去{trip}（花了 {cost} 金币）': '{emoji} Off on a trip: {trip} ({cost} coins)',
+    '{emoji} 出发去{trip}（花了 {cost} 猪币）': '{emoji} Off on a trip: {trip} ({cost} oinks)',
     '{emoji} 从{label}提前回来了，钱退回来了': '{emoji} Came back early ({label}), money refunded',
     '{emoji} 从{label}提前回来了，白跑一趟': '{emoji} Came back early ({label}), all for nothing',
     // --- illness ------------------------------------------------------------
@@ -196,7 +196,7 @@ export default {
     '病情加重：{ill}': 'Got worse: {ill}',
     '{name} 的病情加重了：{ill}，需要{cure}': '{name} got worse: {ill}. Needs {cure}',
     // --- shop and bag -------------------------------------------------------
-    '买了 {emoji} {item}（-{price} 金币）': 'Bought {emoji} {item} (-{price} coins)',
+    '买了 {emoji} {item}（-{price} 猪币）': 'Bought {emoji} {item} (-{price} oinks)',
     '吃了 {emoji} {item}，病好了': 'Took {emoji} {item}, all better',
     '{name} 吃了 {item}，痊愈了 💚': '{name} took {item} and is all better 💚',
     '用了 {emoji} {item}': 'Used {emoji} {item}',
@@ -221,11 +221,11 @@ export default {
     '有点孤单': 'A bit lonely',
     '还不错': 'Doing fine',
     // --- [dsh-piggy-claude-code mod] scratch cards --------------------------
-    '🎟️ 刮彩票中了{prize}，+{coins} 金币': '🎟️ Scratch card: {prize}, +{coins} coins',
+    '🎟️ 刮彩票中了{prize}，+{coins} 猪币': '🎟️ Scratch card: {prize}, +{coins} oinks',
     '🎟️ 刮彩票：谢谢参与': '🎟️ Scratch card: no luck',
     // --- [ST0015] blackjack ------------------------------------------------
-    '🃏 21 点正好 21！+{coins} 金币': '🃏 Blackjack: exactly 21! +{coins} coins',
-    '🃏 21 点停在 {total} 点，+{coins} 金币': '🃏 Blackjack: stood on {total}, +{coins} coins',
-    '🃏 21 点爆了（{total} 点），输掉 {bet} 金币': '🃏 Blackjack: bust at {total}, lost {bet} coins',
+    '🃏 21 点正好 21！+{coins} 猪币': '🃏 Blackjack: exactly 21! +{coins} oinks',
+    '🃏 21 点停在 {total} 点，+{coins} 猪币': '🃏 Blackjack: stood on {total}, +{coins} oinks',
+    '🃏 21 点爆了（{total} 点），输掉 {bet} 猪币': '🃏 Blackjack: bust at {total}, lost {bet} oinks',
   },
 }

@@ -253,7 +253,7 @@ export function renderStatus(state, nowMs) {
     RULE,
     ...careBars(lang, state),
     tr(lang, '💚 健康  {bar}  {health}/{max}', { bar: bar(healthPercent(state)), health: state.health, max: MAX.health }),
-    tr(lang, '🪙 金币  {coins}', { coins: state.coins }),
+    tr(lang, '🪙 猪币  {coins}', { coins: state.coins }),
     tr(lang, '⚖️  体重  {weight}', { weight: formatWeight(state.weightG) }),
     xpLine(lang, state),
     traitsLine(lang, state),
@@ -283,7 +283,7 @@ export function renderHatch(state, nowMs) {
     tr(lang, '✨ {emoji} {name} 蹦了出来（{stage}）', { emoji: stage.emoji, name: state.name, stage: tr(lang, stage.label) }),
     `   ${quote(lang, stage.line)}`,
     '',
-    tr(lang, '初始盘缠：🪙 {coins} 金币。', { coins: state.coins }),
+    tr(lang, '初始盘缠：🪙 {coins} 猪币。', { coins: state.coins }),
     tr(lang, '正常干活就能养活它；右下角的猪点一下就能喂食、洗澡、送去打工。'),
   ].join('\n')
 }
@@ -331,7 +331,7 @@ export function renderWorkReport(state, nowMs, job) {
     '',
     tr(lang, '💼 工作    {job}', { job: tr(lang, job.label) }),
     tr(lang, '⏱  时长    {minutes} 分钟', { minutes: job.minutes }),
-    tr(lang, '🪙 报酬    {coins} 金币', { coins: job.coins }),
+    tr(lang, '🪙 报酬    {coins} 猪币', { coins: job.coins }),
     tr(lang, '🍚 消耗    饱食 {satiety} · 清洁 {cleanliness}', { satiety: job.satiety, cleanliness: job.cleanliness }),
     '',
     tr(lang, '预计 {seconds} 秒后回来。这期间不能喂食洗澡 —— 它在外面忙着。', { seconds: activitySecondsLeft(state, nowMs) }),
@@ -354,7 +354,7 @@ export function renderStudyReport(state, nowMs, subjects, stage) {
     '',
     tr(lang, '📚 课程    {course}', { course: lessonLabel(lang, stage.key, list.map(subject => subject.key)) }),
     tr(lang, '⏱  时长    {duration}', { duration: durationText(lang, minutes) }),
-    tr(lang, '🪙 学费    {tuition} 金币', { tuition: stage.tuition * n }),
+    tr(lang, '🪙 学费    {tuition} 猪币', { tuition: stage.tuition * n }),
     tr(lang, '📈 收获    {gains} · 经验 +{xp}', { gains: gainsText(lang, list, stage), xp: stage.xp * n }),
     tr(lang, '🍚 消耗    饱食 {satiety} · 心情 {happiness}', { satiety: stage.satiety * n, happiness: stage.happiness * n }),
   ]
@@ -396,7 +396,7 @@ export function renderTripReport(state, nowMs, place) {
     tr(lang, '{name} 拖着小行李箱出发了 {emoji}', { name: state.name, emoji: place.emoji }),
     '',
     tr(lang, '🧳 目的地  {trip}', { trip: where }),
-    tr(lang, '🪙 花费    {cost} 金币', { cost: activity?.cost ?? quote.cost }),
+    tr(lang, '🪙 花费    {cost} 猪币', { cost: activity?.cost ?? quote.cost }),
     tr(lang, '⏱  时长    {duration} · {zones}', { duration: durationText(lang, minutes), zones: zonesText(lang, quote.zones ?? 0) }),
     tr(lang, '🕐 到家    {time}', { time: clockText(lang, activity?.endsAt ?? nowMs + minutes * 60000, nowMs) }),
     tr(lang, '❤️  心情    +{happiness} · 经验 +{xp}', { happiness: quote.happiness ?? 0, xp: quote.xp ?? 0 }),
@@ -417,7 +417,7 @@ export function renderTripList(state, home, commandName = 'pig') {
   const progress = collectionProgress(state)
   const lines = [
     tr(lang, '🌍 环游世界 · 从 {home} 出发', { home: where }),
-    tr(lang, '票价 {base} 金币 + 每个时区 {perZone} · 时长 1 小时 + 每个时区 1 小时', { base: FARE.baseCost, perZone: FARE.costPerZone }),
+    tr(lang, '票价 {base} 猪币 + 每个时区 {perZone} · 时长 1 小时 + 每个时区 1 小时', { base: FARE.baseCost, perZone: FARE.costPerZone }),
     tr(lang, '🧳 纪念品  {have}/{total} · 集齐地区 {regions}/{all}', {
       have: progress.have, total: progress.total, regions: progress.regions, all: progress.allRegions,
     }),
@@ -435,7 +435,7 @@ export function renderTripList(state, home, commandName = 'pig') {
     for (const place of region.places) {
       const quote = tripQuote(state, place.key, home.utc)
       const owned = place.souvenirs.map(souvenir => ((state?.collected?.[souvenir.key] ?? 0) > 0 ? souvenir.emoji : '❔')).join('')
-      lines.push(tr(lang, '  {emoji} {place} ({key})  {cost} 金币 · {duration} · {zones}  {souvenirs}', {
+      lines.push(tr(lang, '  {emoji} {place} ({key})  {cost} 猪币 · {duration} · {zones}  {souvenirs}', {
         emoji: place.emoji, place: tr(lang, place.label), key: place.key, cost: quote.cost,
         duration: durationText(lang, quote.minutes),
         zones: zonesText(lang, quote.zones),
@@ -449,7 +449,7 @@ export function renderTripList(state, home, commandName = 'pig') {
     : tr(lang, '{emoji} 七个地区都集齐，就是「{title}」：三项属性各 +3', title))
   lines.push(
     RULE,
-    tr(lang, '🪙 你有 {coins} 金币', { coins: state?.coins ?? 0 }),
+    tr(lang, '🪙 你有 {coins} 猪币', { coins: state?.coins ?? 0 }),
     tr(lang, '出发：/{cmd} trip <目的地>（中文、日文、英文名或括号里的 key 都行）', { cmd: commandName }),
   )
   return lines.join('\n')
@@ -476,7 +476,7 @@ export function renderBuy(state, result, item) {
   const label = tr(lang, item.label)
   if (result?.ok !== true) {
     if (result?.reason === 'poor') {
-      return tr(lang, '🪙 钱不够：{emoji} {item} 要 {price} 金币，你只有 {coins}。', {
+      return tr(lang, '🪙 钱不够：{emoji} {item} 要 {price} 猪币，你只有 {coins}。', {
         emoji: item.emoji, item: label, price: item.price, coins: state?.coins ?? 0,
       })
     }
@@ -489,14 +489,14 @@ export function renderBuy(state, result, item) {
   }
   if (item.kind === 'wear') {
     return [
-      tr(lang, '🛒 买到了 {emoji} {item}（-{price} 金币）', { emoji: item.emoji, item: label, price: item.price }),
+      tr(lang, '🛒 买到了 {emoji} {item}（-{price} 猪币）', { emoji: item.emoji, item: label, price: item.price }),
       '',
       tr(lang, '🪙 余额    {coins}', { coins: state.coins }),
       tr(lang, '👗 已经穿上了，衣柜里随时换：/pig wear'),
     ].join('\n')
   }
   return [
-    tr(lang, '🛒 买到了 {emoji} {item}（-{price} 金币）', { emoji: item.emoji, item: label, price: item.price }),
+    tr(lang, '🛒 买到了 {emoji} {item}（-{price} 猪币）', { emoji: item.emoji, item: label, price: item.price }),
     '',
     tr(lang, '🪙 余额    {coins}', { coins: state.coins }),
     tr(lang, '🎒 背包    {item} ×{count}', { item: label, count: state.inventory?.[item.key] ?? 0 }),
@@ -534,7 +534,7 @@ export function renderUse(state, result, item) {
   }
   const lines = [tr(lang, '{name} 用了 {emoji} {item}', { name: state.name, emoji: item.emoji, item: label })]
   if (item.kind === 'medicine') lines.push('', tr(lang, '💚 病好了！健康恢复满值。'))
-  else if (item.kind === 'revive') lines.push('', tr(lang, '✨ 回来了！等级、经验和金币都还在。'))
+  else if (item.kind === 'revive') lines.push('', tr(lang, '✨ 回来了！等级、经验和猪币都还在。'))
   else lines.push('', ...careBars(lang, state))
   return lines.join('\n')
 }
@@ -571,7 +571,7 @@ export function renderAbout(commandName, state = null) {
   const lang = langOf(state)
   const cmd = commandName
   const actions = ACTION_ORDER.map(key => `  ${ACTIONS[key].emoji} ${tr(lang, ACTIONS[key].label)}`).join(' · ')
-  const outing = (emoji, label, minutes, coins) => tr(lang, '  {emoji} {label}（{minutes} 分钟 · {coins} 金币）', {
+  const outing = (emoji, label, minutes, coins) => tr(lang, '  {emoji} {label}（{minutes} 分钟 · {coins} 猪币）', {
     emoji, label: tr(lang, label), minutes, coins,
   })
   const jobs = JOBS.map(job => outing(job.emoji, job.label, job.minutes, job.coins)).join('\n')
@@ -581,14 +581,14 @@ export function renderAbout(commandName, state = null) {
     cap: s.cap === null ? tr(lang, '不限次数') : tr(lang, '每门限 {cap} 次', { cap: s.cap }),
   })).join('\n')
   const trips = [
-    tr(lang, '  票价 {base} 金币 + 每个时区 {perZone} · 时长 1 小时 + 每个时区 1 小时', { base: FARE.baseCost, perZone: FARE.costPerZone }),
+    tr(lang, '  票价 {base} 猪币 + 每个时区 {perZone} · 时长 1 小时 + 每个时区 1 小时', { base: FARE.baseCost, perZone: FARE.costPerZone }),
     ...REGIONS.map(region => tr(lang, '  {emoji} {region}：{places}', {
       emoji: region.emoji, region: tr(lang, region.label),
       places: region.places.map(place => `${place.emoji}${tr(lang, place.label)}`).join(' · '),
     })),
     tr(lang, '  每个地区 6 件纪念品，集齐解锁加成；七个地区都集齐成为「{title}」{emoji}', { title: tr(lang, WORLD_BONUS.label), emoji: WORLD_BONUS.emoji }),
   ].join('\n')
-  const shop = SHOP.map(item => tr(lang, '  {emoji} {item}  {price} 金币', {
+  const shop = SHOP.map(item => tr(lang, '  {emoji} {item}  {price} 猪币', {
     emoji: item.emoji, item: tr(lang, item.label), price: String(item.price).padStart(3),
   })).join('\n')
   return [
@@ -613,7 +613,7 @@ export function renderAbout(commandName, state = null) {
     shop,
     '',
     tr(lang, '🤒 生病：饿着或脏着太久会得病，健康上限 5。必须对症下药；'),
-    tr(lang, '      健康归零就没了，用 {item} 救回来（保留等级、金币和收藏）。', { item: tr(lang, REVIVE_ITEM.label) }),
+    tr(lang, '      健康归零就没了，用 {item} 救回来（保留等级、猪币和收藏）。', { item: tr(lang, REVIVE_ITEM.label) }),
     RULE,
     tr(lang, '命令（不想点鼠标时才用）：'),
     `/${cmd} · hatch · feed · bathe · play · pet`,
@@ -622,7 +622,7 @@ export function renderAbout(commandName, state = null) {
     tr(lang, '/{cmd} shop · buy <物品> · use <物品>', { cmd }),
     tr(lang, '/{cmd} weigh · name <名字> · about', { cmd }),
     tr(lang, '/{cmd} wear [装饰|自动|不穿]', { cmd }),
-    tr(lang, '      第一次起名免费，之后每次改名用一张{card}（{price} 金币）', { card: tr(lang, RENAME_CARD.label), price: RENAME_CARD.price }),
+    tr(lang, '      第一次起名免费，之后每次改名用一张{card}（{price} 猪币）', { card: tr(lang, RENAME_CARD.label), price: RENAME_CARD.price }),
     RULE,
     tr(lang, '它不调用模型、不注入上下文、不花一个 token。'),
     tr(lang, '存档在 $DSH_HOME/dsh-pig/state.json。'),
@@ -643,9 +643,9 @@ export function wearHint(lang, unlock) {
     case 'diploma': return tr(lang, '拿到任意一张毕业证后解锁')
     case 'trip': return tr(lang, '旅行回来后解锁')
     case 'region': return tr(lang, '从{region}带回纪念品后解锁', { region: tr(lang, REGIONS.find(region => region.key === unlock.region)?.label ?? unlock.region) })
-    case 'shop': return tr(lang, '在商店「装扮」货架买，{price} 金币', { price: unlock.price })
+    case 'shop': return tr(lang, '在商店「装扮」货架买，{price} 猪币', { price: unlock.price })
     case 'gym': return tr(lang, '在健身房一共瘦掉 {kg} kg 后解锁', { kg: unlock.kg })
-    case 'coins': return tr(lang, '手里攒到过 {coins} 金币后解锁', { coins: unlock.coins })
+    case 'coins': return tr(lang, '手里攒到过 {coins} 猪币后解锁', { coins: unlock.coins })
     default: return ''
   }
 }

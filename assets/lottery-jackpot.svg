@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="24 -36 336 336" width="128" height="128" role="img" aria-label="一等奖">
   <title>一等奖</title>
-  <!-- 行为资产（姿势）：一等奖！高兴得原地转圈，金币哗啦啦往下掉。 本体是项目原有的 Noto 🐖，形状和颜色不变；由 tools/build-sprites.mjs 生成，别手改。 -->
+  <!-- 行为资产（姿势）：一等奖！高兴得原地转圈，猪币哗啦啦往下掉。 本体是项目原有的 Noto 🐖，形状和颜色不变；由 tools/build-sprites.mjs 生成，别手改。 -->
   <style>
     .eye{animation:blink 4.2s infinite;transform-box:fill-box;transform-origin:50% 50%}
     .tail{animation:wag 1.4s ease-in-out infinite;transform-origin:296px 64px}
