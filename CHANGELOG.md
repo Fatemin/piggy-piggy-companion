@@ -5,7 +5,7 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
 
 ---
 
-## [Unreleased]
+## [0.15.1] — 2026-10-19
 
 ### Added
 - **应急食物（ST0020）。** 食物货架最后多了「🥫 应急食物」：**1 猪币**，饱食 **+10**（满格的 10%），不加心情。
@@ -45,10 +45,6 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
   - 所有随机结果（打工工资、纪念品、旅行掉落、自愈、刮彩票）改由存档里猪自己的骰子 `rng` 产生；记忆里的 `[HH:MM]` 按存档的 `utcOffsetMin`（操作发生时的时区）显示。
   - 存档新增可默认的键 `rng`、`utcOffsetMin`，不升存档版本；老存档的骰子由出生时间派生。
   - 新增 `ops.js`：每次改变猪的操作都是一条数据 `{ id, at, tz, op, args }`，`store.js` 的所有改动经由它执行。
-
-## [0.15.1] — 2026-10-02
-
-### Changed
 - **App 改名为 `piggy-piggy-companion`（ST0012）。** 窗口标题、托盘、Mac 的 `.app`、Windows 快捷方式都用 GitHub 项目名（原「DSH Piggy」）。存档目录随之变为 `piggy-piggy-companion`：改名后第一次启动自动把旧「DSH Piggy」目录里的猪（`state.json`、窗口位置）复制过来，新目录已有猪时不动，旧目录原样留作备份。Mac 一键更新会把新版本装成 `piggy-piggy-companion.app` 并删掉旧的 `DSH Piggy.app`（新名字已被占用时原地更新）。
 - **安装包按 GitHub 项目名命名（ST0012）。** `piggy-piggy-companion-<版本>-universal.dmg`、`piggy-piggy-companion-Setup-<版本>.exe`（原 `DSH Piggy-…` / `DSH Piggy Setup …`）；App 名称和存档位置不变。从本版起安装包与 App 都用新名字。
 
