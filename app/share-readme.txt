@@ -8,7 +8,7 @@
 一、安装
 --------------------------------------------
 
-【苹果电脑 Mac】用 “piggy-piggy-companion-0.15.1-universal.dmg”
+【苹果电脑 Mac】用 “piggy-piggy-companion-0.15.2-universal.dmg”
 
   1. 双击这个 .dmg 文件
   2. 在弹出的窗口里，把 “piggy-piggy-companion” 图标拖到 “Applications（应用程序）” 文件夹
@@ -22,7 +22,7 @@
   5. 第一次打开要等几秒钟，然后猪猪就会出现在屏幕右下角，
      屏幕最上方的菜单栏里也会多一个小猪图标。
 
-【Windows 电脑】用 “piggy-piggy-companion-Setup-0.15.1.exe”
+【Windows 电脑】用 “piggy-piggy-companion-Setup-0.15.2.exe”
 
   1. 双击这个 .exe 文件
   2. 如果出现蓝色窗口 “Windows 已保护你的电脑”：
