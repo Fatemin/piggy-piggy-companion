@@ -48,6 +48,8 @@ window.__ModuleLoader__.load({
       dubai: 'away-trip-dubai', cairo: 'away-trip-cairo', nairobi: 'away-trip-nairobi',
       sydney: 'away-trip-sydney', auckland: 'away-trip-auckland', antarctica: 'away-trip-antarctica',
     }
+    // [ST0022] ...and every gym class (data.js GYM_CLASSES); the treadmill is the generic gym.
+    var GYM_ART = { treadmill: 'away-gym', weights: 'away-gym-weights', trainer: 'away-gym-trainer' }
     // [ST0004] What the pig wears goes on every pose's URL (`?wear=bow,glasses`);
     // the art route pours those decorations into the pose (ART.ASSETS.V2).
     // One-shot poses for the care buttons and verdicts.
@@ -4871,6 +4873,9 @@ window.__ModuleLoader__.load({
             // Own keys only: a key like `constructor` must not pick up a prototype member.
             if (Object.prototype.hasOwnProperty.call(PLACE_ART, view.activity.key)) pose = PLACE_ART[view.activity.key]
             else if (Object.prototype.hasOwnProperty.call(TRIP_ART, view.activity.region)) pose = TRIP_ART[view.activity.region]
+          }
+          if (pose !== undefined && view.pig.mood === 'exercising' && view.activity !== null && view.activity.kind === 'gym') {
+            if (Object.prototype.hasOwnProperty.call(GYM_ART, view.activity.key)) pose = GYM_ART[view.activity.key]
           }
           // A grave or a soul wears nothing; the host already sends none for them.
           wearQuery = stage.key !== 'grave' && view.pig.outfit.worn.length > 0 ? '?wear=' + view.pig.outfit.worn.join(',') : ''

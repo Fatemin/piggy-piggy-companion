@@ -7,7 +7,7 @@
  */
 
 import { PLACES, REGIONS, SOUVENIRS, SPECIALTIES, WORLD_BONUS, fareFor, zonesBetween } from '../world.js'
-import { ALL_ITEMS, DIPLOMAS, GYM, PARALLEL_COURSES, RENAME_CARD, WEAR_FOR_SALE, diplomaCount, schoolStageByKey as schoolStage } from '../data.js'
+import { ALL_ITEMS, DIPLOMAS, GYM, GYM_CLASSES, PARALLEL_COURSES, RENAME_CARD, WEAR_FOR_SALE, diplomaCount, schoolStageByKey as schoolStage } from '../data.js'
 import { diplomaView, outfitIsAuto, wardrobeView, wear, wearAuto, wornFor } from '../core.js'
 import { setRandomForTests } from '../core.js'
 import { applyOp } from '../ops.js'
@@ -1130,6 +1130,17 @@ test('every job, school stage, trip region and destination has its sprite', () =
   }
   const client = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
   for (const place of PLACES) assert.ok(client.includes(`${place.key}: 'away-trip-${place.key}'`), `client.js PLACE_ART names ${place.key}`)
+})
+
+// [ST0022] Each gym class has its own pose; the treadmill is the generic gym.
+test('every gym class has its own sprite', () => {
+  const client = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
+  const map = client.match(/var GYM_ART = \{([^}]*)\}/)
+  assert.ok(map, 'client.js has GYM_ART')
+  const poses = new Map([...map[1].matchAll(/(\w+): '([a-z0-9-]+)'/g)].map(m => [m[1], m[2]]))
+  assert.deepEqual([...poses.keys()].sort(), GYM_CLASSES.map(entry => entry.key).sort(), 'GYM_ART names every class')
+  assert.equal(new Set(poses.values()).size, GYM_CLASSES.length, 'no two classes share a pose')
+  for (const pose of poses.values()) assert.ok(existsSync(new URL(`../assets/${pose}.svg`, import.meta.url)), `assets/${pose}.svg`)
 })
 
 test('the travel world is well formed', () => {

@@ -5,6 +5,11 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **健身房三种课各有自己的动画（ST0022）。** 原来三种课都是跑步机：现在跑步机还是 `away-gym`，撸铁是新的 `away-gym-weights`（背上扛着杠铃一下一下深蹲，站直时眯眼脸红、杠铃打颤），私教课是新的 `away-gym-trainer`（跟着私教跳绳，绳子从头顶甩过、跳起时从脚下穿过，秒表在走、哨子在响）。认不出的课程回退到跑步机。
+
 ## [0.15.1] — 2026-10-19
 
 ### Added
