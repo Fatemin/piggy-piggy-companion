@@ -716,7 +716,8 @@ const SPRITES = {
     <path d="M148 222H178V246C178 250 175 252 171 252H155C151 252 148 250 148 246Z" fill="#FFFFFF"/>
     <path d="M178 228C190 228 190 244 178 244" fill="none" stroke="#FFFFFF" stroke-width="5"/>`,
   },
-  // [Q0016] the gym (action 'gym'): one pose for every class.
+  // [Q0016] the gym (action 'gym'). [ST0022] Each class has its own pose
+  // (client.js GYM_ART); this treadmill is also the fallback.
   'away-gym': {
     title: '健身', note: '在跑步机上一颠一颠地跑，传送带往后滑，汗珠往外甩；扶手上的小屏幕一闪一闪地数步数。',
     css: `.jog{animation:jog .4s ease-in-out infinite;transform-origin:190px 298px}
@@ -738,6 +739,59 @@ const SPRITES = {
     <rect x="36" y="288" width="316" height="14" rx="7" fill="#3A3E52"/>
     <clipPath id="gym-belt"><rect x="44" y="288" width="300" height="7" rx="3"/></clipPath>
     <g clip-path="url(#gym-belt)"><g class="belt"><path d="M-36 291H-6M24 291H54M84 291H114M144 291H174M204 291H234M264 291H294M324 291H354" fill="none" stroke="#6B7083" stroke-width="5"/></g></g>`,
+  },
+  // [ST0022] 撸铁 (class 'weights'): a barbell squat. Squatting shortens the pig
+  // by 8%, about 20px at its back, so the bar sinks those 20px with it.
+  'away-gym-weights': {
+    title: '健身 · 撸铁', note: '背上扛着大杠铃一下一下深蹲，站直时憋得眯眼脸红、杠铃微微打颤，汗珠往外甩；脚边放着一只壶铃。',
+    css: `.squat{animation:squat 1.6s ease-in-out infinite;transform-origin:190px 298px}
+    .bar{animation:bar 1.6s ease-in-out infinite}
+    .strain{animation:strain 1.6s steps(1) infinite}
+    .s1{animation:fling 1.6s ease-out infinite}.s2{animation:fling 1.6s ease-out -.8s infinite}
+    @keyframes squat{0%,100%{transform:scale(1.02,.92)}45%,65%{transform:scale(1,1)}}
+    @keyframes bar{0%,100%{transform:translate(0,20px)}45%,65%{transform:translate(0,0)}50%,60%{transform:translate(-1px,-2px)}55%{transform:translate(1px,-1px)}}
+    @keyframes strain{0%{opacity:0}45%{opacity:1}70%{opacity:0}}
+    @keyframes fling{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(26px,-30px)}}`,
+    wrap: 'squat',
+    pig: {
+      eyes: 'happy',
+      blush: cheeks(16, 9, '#FF7F7F', '.45'),
+      face: `${drop(220, 70, 1.3, '#9FD8F0', 's1')}${drop(60, 100, 1.1, '#9FD8F0', 's2')}`,
+    },
+    under: `<rect x="30" y="292" width="328" height="10" rx="5" fill="#5B5F73"/>`,
+    over: `<path d="M38 276C38 254 58 254 58 276" fill="none" stroke="#3A3E52" stroke-width="6"/><circle cx="48" cy="279" r="14" fill="#3A3E52"/>
+    <g class="strain" fill="none" stroke="#E5534B" stroke-width="5" stroke-linecap="round"><path d="M44 110L32 102M42 126H28M44 142L32 150"/></g>
+    <g class="bar"><path d="M24 40H360" fill="none" stroke="#8A8F9E" stroke-width="8" stroke-linecap="round"/>
+    <rect x="28" y="2" width="18" height="76" rx="5" fill="#3A3E52"/><rect x="48" y="14" width="10" height="52" rx="4" fill="#5B5F73"/>
+    <rect x="338" y="2" width="18" height="76" rx="5" fill="#3A3E52"/><rect x="326" y="14" width="10" height="52" rx="4" fill="#5B5F73"/></g>`,
+  },
+  // [ST0022] 私教课 (class 'trainer'): skipping rope on the coach's clock. The
+  // rope is an ellipse round the pig with a dash on it (pathLength 100): the
+  // dash goes over the head back to front and is under the feet at the top of
+  // each hop, both at 50% of the cycle.
+  'away-gym-trainer': {
+    title: '健身 · 私教课', note: '跟着私教跳绳，一蹦一蹦，绳子从头顶甩过、从脚下穿过；教练的秒表一格一格地走，哨子一响一响。',
+    css: `.hop{animation:hop .7s ease-in-out infinite;transform-origin:190px 298px}
+    .rope{animation:rope .7s linear infinite}
+    .shadow{animation:shadow .7s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%}
+    .hand{animation:spin 2.8s steps(8) infinite;transform-origin:52px -6px}
+    .tweet{animation:tweet 1.4s steps(1) infinite}
+    .tail{animation-duration:.35s}
+    .s1{animation:fling 1.4s ease-out infinite}.s2{animation:fling 1.4s ease-out -.7s infinite}
+    @keyframes hop{0%,100%{transform:translateY(0) scale(1.02,.96)}50%{transform:translateY(-30px) scale(1,1)}}
+    @keyframes rope{from{stroke-dashoffset:-55}to{stroke-dashoffset:45}}
+    @keyframes shadow{50%{transform:scale(.7);opacity:.5}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes tweet{0%{opacity:0}50%{opacity:1}}
+    @keyframes fling{0%{opacity:0;transform:translate(0,0)}20%{opacity:1}100%{opacity:0;transform:translate(26px,-30px)}}`,
+    wrap: 'hop',
+    pig: { face: `${drop(220, 70, 1.3, '#9FD8F0', 's1')}${drop(60, 100, 1.1, '#9FD8F0', 's2')}` },
+    under: `<ellipse class="shadow" cx="190" cy="298" rx="130" ry="7" fill="#000000" fill-opacity=".12"/>`,
+    over: `<path class="rope" d="M357 130A165 162 0 0 1 27 130A165 162 0 0 1 357 130" pathLength="100" fill="none" stroke="#E5534B" stroke-width="5" stroke-linecap="round" stroke-dasharray="40 60"/>
+    <rect x="47" y="-34" width="10" height="7" rx="2" fill="#3A3E52"/><circle cx="52" cy="-6" r="20" fill="#FFFFFF" stroke="#3A3E52" stroke-width="5"/>
+    <path class="hand" d="M52 -6V-20" fill="none" stroke="#E5534B" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="-6" r="3" fill="#3A3E52"/>
+    <rect x="294" y="-20" width="26" height="12" rx="4" fill="#F5C24C"/><circle cx="322" cy="-4" r="11" fill="#F5C24C"/><circle cx="322" cy="-4" r="4" fill="#E0A82E"/>
+    <path class="tweet" d="M338 -24L348 -32M342 -10H354M338 4L348 12" fill="none" stroke="#F5C24C" stroke-width="4" stroke-linecap="round"/>`,
   },
   'away-study': {
     title: '上课', note: '戴上圆眼镜，看着前面摊开的书，慢慢歪头想；想通了亮一盏灯泡。',

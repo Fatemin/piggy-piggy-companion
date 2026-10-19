@@ -1036,6 +1036,12 @@ test('away poses follow the job, the school stage and the destination; the outfi
     '/dsh-pig/art/away-trip.svg', 'an unknown region falls back to the plain road')
   assert.equal(await srcFor({ activity: away('gym', 'treadmill'), pig: { ...PIG, stage: young, mood: 'exercising', outfit: { auto: false, worn: ['muscle'] } } }),
     '/dsh-pig/art/away-gym.svg?wear=muscle', '[Q0016] the gym has its treadmill, muscles and all')
+  assert.equal(await srcFor({ activity: away('gym', 'weights'), pig: { ...PIG, stage: young, mood: 'exercising' } }),
+    '/dsh-pig/art/away-gym-weights.svg', '[ST0022] lifting has its barbell')
+  assert.equal(await srcFor({ activity: away('gym', 'trainer'), pig: { ...PIG, stage: young, mood: 'exercising' } }),
+    '/dsh-pig/art/away-gym-trainer.svg', '[ST0022] the personal class has its skipping rope')
+  assert.equal(await srcFor({ activity: away('gym', 'constructor'), pig: { ...PIG, stage: young, mood: 'exercising' } }),
+    '/dsh-pig/art/away-gym.svg', '[ST0022] an unknown class falls back to the treadmill')
 
   const wearing = (...worn) => ({ auto: false, worn })
   assert.equal(await srcFor({ pig: { ...PIG, stage: piglet, mood: 'hungry', moodLevel: 1, outfit: wearing('bow') } }),
