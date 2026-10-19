@@ -666,6 +666,10 @@ export const SHOP = Object.freeze([
   Object.freeze({ key: 'rice', label: '蛋炒饭', emoji: '🍚', price: 24, kind: 'food', satiety: 58, happiness: 10 }),
   Object.freeze({ key: 'cake', label: '奶油蛋糕', emoji: '🎂', price: 40, kind: 'food', satiety: 80, happiness: 18, cleanliness: -8 }),
   Object.freeze({ key: 'noodle', label: '大碗拉面', emoji: '🍜', price: 66, kind: 'food', satiety: 100, happiness: 26, cleanliness: -6 }),
+  // [ST0020] A lifeline for a broke pig: one a day, a tenth of a full belly.
+  // It sits last on the shelf, so feeding reaches for it only when nothing
+  // better is in the bag.
+  Object.freeze({ key: 'ration', label: '应急食物', emoji: '🥫', price: 1, kind: 'food', satiety: 10, happiness: 0, dailyLimit: 1 }),
   // --- bath ---------------------------------------------------------------
   Object.freeze({ key: 'soap', label: '香皂', emoji: '🧼', price: 6, kind: 'bath', cleanliness: 35, happiness: 2 }),
   Object.freeze({ key: 'shower', label: '冲个澡', emoji: '🚿', price: 10, kind: 'bath', cleanliness: 50, happiness: 3 }),

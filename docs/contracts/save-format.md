@@ -25,7 +25,7 @@
 
 <!-- contract:state-keys -->
 ```json
-["activity", "blackjack", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "peakWeightG", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
+["activity", "blackjack", "bornAt", "cleanliness", "coins", "collected", "cooldowns", "courses", "dailyBuys", "dead", "diedAt", "doctorDone", "happiness", "hatched", "health", "illness", "inventory", "lang", "lastActiveAt", "lastFedAt", "lastLotteryAt", "lastSeenAt", "lastTrip", "lessonsByStage", "memories", "name", "outfit", "peakWeightG", "pending", "regionsDone", "riskMinutes", "rng", "satiety", "sleep", "souvenirs", "stage", "stageCourses", "stats", "traits", "utcOffsetMin", "version", "wardrobeBought", "weightG", "worldDone", "xp"]
 ```
 
 | 组 | 键 | 说明 |
@@ -38,6 +38,7 @@
 | 旅行 | `souvenirs`, `collected`, `regionsDone`, `worldDone`, `lastTrip` | |
 | 外观 | `outfit` | `null`（跟着阶段穿）或装饰键数组（玩家搭配，每部位至多一件，按部位顺序）；含义与解锁见 [ART.ASSETS.V2](art-assets.md) §2.3。迁移时只留已登记键 |
 | 衣柜购买 | `wardrobeBought` | 商店「装扮」货架买过的装饰键数组（ST0012，按 `WEAR_FOR_SALE` 顺序）；默认 `[]`，迁移时只留在售装饰键。新增可默认的键，不升版本 |
+| 每日限购（ST0020） | `dailyBuys` | `{day, counts}`：`day` 是主人时区的 `YYYY-MM-DD`，`counts` 是这一天买过的限购商品数（只有带 `dailyLimit` 的商品，见 [GAME.RULES.V1](game-rules.md) §3.11）；默认 `{day: '', counts: {}}`，换日后视为清零。迁移时只留合法日期与限购商品的正整数。新增可默认的键，不升版本 |
 | 进行中 | `activity`, `illness`, `sleep`, `cooldowns`, `riskMinutes` | `activity.key` 引用 [GAME.RULES.V1](game-rules.md) 的表键；`sleep` 为 `{since, auto}` 或 `null`（外出、死亡时迁移成 `null`；`auto` 表示电脑休眠触发） |
 | 记录 | `memories`（最多 8 条）, `pending`（加载时清空）, `stats` | |
 | 时间戳 | `lastFedAt`, `lastLotteryAt`, `lastActiveAt`, `lastSeenAt` | 毫秒时间戳 |

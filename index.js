@@ -49,6 +49,7 @@ import {
   outfitIsAuto,
   wardrobeView,
   wearUnlocked,
+  dailyBuysLeft,
   wornFor,
   langOf,
   hasSoul,
@@ -640,6 +641,9 @@ function shopFor(state) {
     affordable: state === null ? false : state.coins >= item.price,
     needed: state?.illness != null && item.kind === 'medicine' && item.tier === state.illness.stage,
     owned: false,
+    // [ST0020] limited items: how many a day, and how many are left today.
+    dailyLimit: item.dailyLimit ?? null,
+    leftToday: state === null ? null : dailyBuysLeft(state, item),
     ...itemEffects(item, lang),
   }))
   // [ST0012] the 装扮 shelf: decorations, bought once and then owned.
@@ -886,7 +890,13 @@ export function dispatch(store, commandName, rawInput) {
         const items = kind === 'wear' ? WEAR_FOR_SALE : SHOP.filter(item => item.kind === kind)
         if (items.length === 0) return ''
         const owned = item => kind === 'wear' && wearUnlocked(state, wearableByKey(item.key))
-        const lines = items.map(item => `  ${item.emoji} ${tr(lang, item.label)}  ${owned(item) ? tr(lang, '已拥有') : tr(lang, '{price} 猪币', { price: item.price })}`)
+        // [ST0020] a limited item says how many a day, or that today's is gone.
+        const limit = item => {
+          const left = state === null ? null : dailyBuysLeft(state, item)
+          if (!Number.isInteger(item.dailyLimit)) return ''
+          return left === 0 ? tr(lang, ' · 今天已买完') : tr(lang, ' · 每天限 {n} 个', { n: item.dailyLimit })
+        }
+        const lines = items.map(item => `  ${item.emoji} ${tr(lang, item.label)}  ${owned(item) ? tr(lang, '已拥有') : tr(lang, '{price} 猪币', { price: item.price })}${limit(item)}`)
         if (kind === 'card') lines.push(tr(lang, '    改名用：/{cmd} name <名字>（第一次起名免费）', { cmd }))
         if (kind === 'wear') lines.push(tr(lang, '    买了就穿上，衣柜里随时换：/{cmd} wear', { cmd }))
         return [tr(lang, '【{shelf}】', { shelf: tr(lang, KIND_LABEL[kind]) }), ...lines].join('\n')

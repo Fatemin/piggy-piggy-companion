@@ -481,6 +481,9 @@ export function renderBuy(state, result, item) {
       })
     }
     if (result?.reason === 'dead') return tr(lang, '{name} 已经走了…先救回来再买东西。', { name: nameOf(lang, state) })
+    if (result?.reason === 'daily-limit') {
+      return tr(lang, '📅 {emoji} {item} 每天只能买 {n} 个，明天再来吧。', { emoji: item.emoji, item: label, n: result.max ?? item.dailyLimit ?? 1 })
+    }
     if (result?.reason === 'owned') return tr(lang, '👗 {emoji} {item} 已经在衣柜里了，不用再买。', { emoji: item.emoji, item: label })
     if (result?.reason === 'not-for-sale') {
       return tr(lang, '🧳 {emoji} {item} 是旅行限定的特产，商店不卖 —— 只能出门旅行时碰运气带回来。', { emoji: item.emoji, item: label })

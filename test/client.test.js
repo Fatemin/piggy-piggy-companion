@@ -643,6 +643,26 @@ test('the shop tab disables what the pig cannot afford and flags the needed medi
   assert.deepEqual(JSON.parse(post.body), { action: 'buy', item: 'apple' })
 })
 
+// [ST0020] A daily-limited item says so, and greys out once today's is bought.
+test('the shop tab marks the daily ration and greys it out once bought today', async () => {
+  const ration = { key: 'ration', label: '应急食物', emoji: '🥫', price: 1, kind: 'food', tier: null, affordable: true, needed: false, dailyLimit: 1 }
+  const open = async leftToday => {
+    const { registration, dom } = await loadClient({ status: { ...SNAPSHOT, shop: [...SHOP, { ...ration, leftToday }] } })
+    registration.factory(() => {}).apply({})
+    await settle()
+    openPanel(dom)
+    pickTab(dom, 'shop')
+    return { button: findByAttr(contentOf(dom), 'data-buy', 'ration'), text: contentOf(dom).allText() }
+  }
+  const fresh = await open(1)
+  assert.equal(fresh.button.disabled, false)
+  assert.ok(fresh.text.includes('每天限 1 个'), fresh.text)
+  const spent = await open(0)
+  assert.equal(spent.button.disabled, true)
+  assert.equal(spent.button.textContent, '明天再来')
+  assert.ok(spent.text.includes('今天已买完'), spent.text)
+})
+
 test('an older host without a travel world still gets the flat destination list', async () => {
   const { registration, dom, net } = await loadClient()
   registration.factory(() => {}).apply({})

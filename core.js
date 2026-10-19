@@ -631,6 +631,9 @@ export function layEgg(nowMs, lang = defaultLang()) {
     outfit: null,
     // [ST0012] decorations bought on the shop's 装扮 shelf, once each.
     wardrobeBought: [],
+    // [ST0020] what was bought today of the items with a daily limit:
+    // `{ day: 'YYYY-MM-DD', counts: { key: n } }`, the day in the owner's zone.
+    dailyBuys: { day: '', counts: {} },
     riskMinutes: 0,
     lastFedAt: 0,
     // [dsh-piggy-claude-code mod] when the last scratch card was bought.
@@ -709,6 +712,7 @@ export function migrate(raw) {
   state.collected = sanitizeCollected(raw.collected)
   state.regionsDone = Array.isArray(raw.regionsDone) ? REGIONS.map(r => r.key).filter(key => raw.regionsDone.includes(key)) : []
   state.wardrobeBought = Array.isArray(raw.wardrobeBought) ? WEAR_FOR_SALE.map(w => w.key).filter(key => raw.wardrobeBought.includes(key)) : []
+  state.dailyBuys = sanitizeDailyBuys(raw.dailyBuys)
   state.worldDone = raw.worldDone === true
   state.doctorDone = raw.doctorDone === true
   state.lastTrip = sanitizeLastTrip(raw.lastTrip)
@@ -818,6 +822,17 @@ function sanitizeBlackjack(raw) {
 function blackjackRefund(raw) {
   const bet = asObject(raw)?.bet
   return Number.isInteger(bet) && bet > 0 ? bet : 0
+}
+
+/** [ST0020] Today's limited buys: a YYYY-MM-DD day and positive counts of known items. */
+function sanitizeDailyBuys(raw) {
+  const source = asObject(raw)
+  const day = typeof source?.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(source.day) ? source.day : ''
+  const counts = {}
+  for (const [key, n] of Object.entries(asObject(source?.counts) ?? {})) {
+    if (day !== '' && Number.isInteger(itemByKey(key)?.dailyLimit) && Number.isInteger(n) && n > 0) counts[key] = n
+  }
+  return { day, counts }
 }
 
 function sanitizeLastTrip(raw) {
@@ -991,6 +1006,16 @@ function clock(state, nowMs) {
   }
   const d = new Date(nowMs)
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+/** [ST0020] YYYY-MM-DD in the owner's zone when the save knows it, else the machine's. */
+function calendarDay(state, nowMs) {
+  const offset = state?.utcOffsetMin
+  const d = Number.isFinite(offset) ? new Date(nowMs + offset * 60_000) : new Date(nowMs)
+  const [y, m, day] = Number.isFinite(offset)
+    ? [d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate()]
+    : [d.getFullYear(), d.getMonth() + 1, d.getDate()]
+  return `${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 }
 
 function remember(state, text, nowMs) {
@@ -1442,7 +1467,9 @@ function pickSouvenir(state, place) {
 }
 
 /** Ordinary shop consumables a trip can bring back, cheaper ones more often. */
-const SHOP_LOOT = SHOP.filter(item => item.kind === 'food' || item.kind === 'bath')
+// [ST0020] Daily-limited goods stay in the shop: at 1 coin the ration would
+// outweigh every other prize, and a trip would hand out what the limit holds back.
+const SHOP_LOOT = SHOP.filter(item => (item.kind === 'food' || item.kind === 'bath') && item.dailyLimit === undefined)
 function pickShopLoot(state) {
   const weights = SHOP_LOOT.map(item => 1 / Math.max(1, item.price))
   let roll = nextRandom(state) * weights.reduce((a, b) => a + b, 0)
@@ -2018,14 +2045,30 @@ export function buy(state, itemKey, nowMs = Date.now()) {
   // [mod] travel-only specialties never come from the shop.
   if (item.exclusive === true) return { ok: false, reason: 'not-for-sale' }
   if (state.dead && item.key !== REVIVE_ITEM.key) return { ok: false, reason: 'dead' }
+  if (dailyBuysLeft(state, item, nowMs) === 0) return { ok: false, reason: 'daily-limit', max: item.dailyLimit }
   if (state.coins < item.price) return { ok: false, reason: 'poor', price: item.price }
 
   state.coins -= item.price
   state.inventory = { ...(state.inventory ?? {}) }
   state.inventory[item.key] = (state.inventory[item.key] ?? 0) + 1
+  if (Number.isInteger(item.dailyLimit)) {
+    const day = calendarDay(state, nowMs)
+    const counts = state.dailyBuys?.day === day ? state.dailyBuys.counts : {}
+    state.dailyBuys = { day, counts: { ...counts, [item.key]: (counts[item.key] ?? 0) + 1 } }
+  }
   state.stats.purchases += 1
   remember(state, say(state, '买了 {emoji} {item}（-{price} 猪币）', { emoji: item.emoji, item: word(state, item.label), price: item.price }), nowMs)
   return { ok: true, item }
+}
+
+/**
+ * [ST0020] How many more of `item` may be bought today, or null when it has no
+ * daily limit. The count resets when the owner's calendar day turns over.
+ */
+export function dailyBuysLeft(state, item, nowMs = Date.now()) {
+  if (!Number.isInteger(item?.dailyLimit)) return null
+  const today = state?.dailyBuys?.day === calendarDay(state, nowMs) ? state.dailyBuys.counts : {}
+  return Math.max(0, item.dailyLimit - (today[item.key] ?? 0))
 }
 
 /**
