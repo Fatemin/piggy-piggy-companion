@@ -308,3 +308,23 @@ test('[P3] two friends: a pen, an invite, and both pigs head out together', asyn
     w.done()
   }
 })
+
+test('[ST0014] which pen mates show is remembered with the login, and checked', async () => {
+  const w = cloudWorld()
+  try {
+    const mac = w.device('mac')
+    mac.store.hatch()
+    assert.equal(mac.cloud.penShow('self').ok, false, 'nothing to remember before logging in')
+    await mac.login('show@example.com')
+    assert.equal(mac.cloud.status().penShow, 'all', 'everyone by default')
+    assert.equal(mac.cloud.penShow(['a', 'b', 'a', 42, '']).ok, true)
+    assert.deepEqual(mac.cloud.status().penShow, ['a', 'b'])
+    mac.cloud.penShow('self')
+    const again = createCloud({ statePath: mac.statePath, store: mac.store, fetch: async () => { throw new Error('offline') }, setTimer: () => null, clearTimer: () => {} })
+    assert.equal(again.status().penShow, 'self', 'a restarted server reads it back')
+    mac.cloud.penShow('nonsense')
+    assert.equal(mac.cloud.status().penShow, 'all')
+  } finally {
+    w.done()
+  }
+})

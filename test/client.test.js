@@ -2433,3 +2433,102 @@ test('a host without an updater shows nothing about versions and stops asking', 
   assert.equal(lastByClass(contentOf(dom), 'dp-update'), undefined)
   assert.equal(lastByClass(contentOf(dom), 'dp-version'), undefined)
 })
+
+// ===========================================================================
+// [ST0014] 在线: login and the pig pen on a tab of their own; pen mates on the desk
+// ===========================================================================
+
+const friendPig = (name, extra = {}) => ({
+  name, hatched: true, dead: false, asleep: false,
+  stage: { key: 'piglet', size: 72, art: 'piglet', emoji: '🐷', faded: false },
+  mood: 'happy', moodLevel: 0, worn: ['bow'], activity: null, ...extra,
+})
+
+const CLOUD = {
+  phase: 'idle', server: 'https://pig.test', email: 'me@example.com', linked: true, lastSyncAt: 1, lastError: null,
+  waiting: 0, notices: [], conflict: null, penShow: 'all',
+  pen: {
+    name: '小猪圈', code: 'ABC234', limit: 6, invites: [],
+    members: [
+      { id: 'me', you: true, owner: true, pig: friendPig('Me') },
+      { id: 'ann', you: false, owner: false, pig: friendPig('Ann') },
+      { id: 'bo', you: false, owner: false, pig: friendPig('Bo', { mood: 'traveling', activity: { kind: 'trip', key: 'tokyo', label: '东京', emoji: '🗼', endsAt: 9, region: 'eastasia' } }) },
+    ],
+  },
+}
+
+/** Route /pig/cloud to `cloud` (a 404 when null); POSTs go to `onPost`. */
+function cloudNet(cloud, onPost = () => {}) {
+  const posts = []
+  globalThis.fetch = async (url, options) => {
+    if (url === '/pig/cloud') {
+      if (cloud === null) return { ok: false, status: 404, async json() { return { error: 'not found' } } }
+      if (options?.method === 'POST') {
+        const body = JSON.parse(options.body)
+        posts.push(body)
+        cloud = onPost(body, cloud) ?? cloud
+        return { ok: true, status: 200, async json() { return { ok: true, status: cloud } } }
+      }
+      return { ok: true, status: 200, async json() { return cloud } }
+    }
+    if (url === '/pig/update') return { ok: false, status: 404, async json() { return {} } }
+    return { ok: true, status: 200, async json() { return SNAPSHOT } }
+  }
+  return posts
+}
+
+const friendNames = dom => {
+  const strip = lastByClass(dom.body ?? hostOf(dom), 'dp-friends')
+  if (strip === undefined || strip.hidden) return []
+  const names = []
+  strip.walk(node => { if (node.className === 'dp-friend-name') names.push(node.allText().trim()) })
+  return names
+}
+
+test('[ST0014] 在线 sits right of 状态 on a host with the cloud, and holds the login', async () => {
+  const { dom, poll } = await loadWithPoll()
+  cloudNet({ ...CLOUD, phase: 'signed-out', linked: false, email: null, pen: null })
+  await poll()
+  openPanel(dom)
+  // The fake DOM cannot empty the bar, so the repainted icons are the last seven.
+  const keys = barOf(dom).children.map(icon => icon.attributes['data-tab']).slice(-7)
+  assert.deepEqual(keys, ['status', 'online', 'study', 'work', 'shop', 'travel', 'bag'])
+  assert.equal(findLastByAttr(contentOf(dom), 'data-cloud-act', 'open'), undefined, 'the login is no longer on 状态')
+  pickTab(dom, 'online')
+  assert.notEqual(findLastByAttr(contentOf(dom), 'data-cloud-act', 'open'), undefined, 'it is on 在线')
+})
+
+test('[ST0014] a host without the cloud (DSH) shows no 在线 tab', async () => {
+  const { dom, poll } = await loadWithPoll()
+  cloudNet(null)
+  await poll()
+  openPanel(dom)
+  assert.equal(barOf(dom).children.length, 6)
+  assert.equal(findByAttr(barOf(dom), 'data-tab', 'online'), undefined)
+})
+
+test('[ST0014] pen mates are drawn beside the pig: all, some, or just mine', async () => {
+  const { dom, poll } = await loadWithPoll()
+  const posts = cloudNet(CLOUD, (body, now) => (body.action === 'pen-show' ? { ...now, penShow: body.show } : now))
+  await poll()
+  assert.deepEqual(friendNames(dom), ['Ann', 'Bo'], 'everyone, our own pig not twice')
+  const imgs = []
+  lastByClass(hostOf(dom), 'dp-friends').walk(node => { if (node.className === 'dp-friend-img') imgs.push(node.src) })
+  assert.ok(imgs[0].includes('mood-happy') && imgs[0].includes('wear=bow'), imgs[0])
+  assert.ok(imgs[1].includes('away-trip-tokyo'), 'a travelling friend shows its trip pose')
+
+  openPanel(dom)
+  pickTab(dom, 'online')
+  // Hide Ann: 'all' becomes an explicit list.
+  findLastByAttr(contentOf(dom), 'data-pen-show', 'ann').fire('click')
+  await settle(); await settle()
+  assert.deepEqual(posts.at(-1), { action: 'pen-show', show: ['bo'] })
+  assert.deepEqual(friendNames(dom), ['Bo'])
+  findLastByAttr(contentOf(dom), 'data-cloud-act', 'pen-show-self').fire('click')
+  await settle(); await settle()
+  assert.deepEqual(posts.at(-1), { action: 'pen-show', show: 'self' })
+  assert.deepEqual(friendNames(dom), [])
+  findLastByAttr(contentOf(dom), 'data-cloud-act', 'pen-show-all').fire('click')
+  await settle(); await settle()
+  assert.deepEqual(friendNames(dom), ['Ann', 'Bo'])
+})

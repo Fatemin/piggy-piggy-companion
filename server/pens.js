@@ -9,8 +9,10 @@
  * pigs at the same moment: 30% faster, 30% more on the way back (COOP).
  */
 
+import { lifeStageFor, mood, wornFor } from '../core.js'
 import { COOP } from '../data.js'
 import { applyOp } from '../ops.js'
+import { placeByKey } from '../world.js'
 import { fail, json, parseObject } from './http.js'
 import { loadPig, settled } from './sync.js'
 
@@ -27,17 +29,30 @@ const membership = (env, accountId) => env.DB.prepare(
   'SELECT p.id, p.code, p.name, p.owner_id FROM pen_members m JOIN pens p ON p.id = m.pen_id WHERE m.account_id = ?',
 ).bind(accountId).first()
 
-/** What a pen mate may see of a pig: who it is and what it is doing. */
-function publicPig(state) {
+/**
+ * What a pen mate may see of a pig: who it is, what it is doing, and enough
+ * to draw it beside their own (stage, mood, outfit) — no coins, no bag.
+ */
+function publicPig(state, now) {
   if (state === null) return null
   const a = state.activity
+  const life = lifeStageFor(state, now)
+  const current = mood(state, now)
   return {
     name: state.name,
-    stage: state.stage,
     hatched: state.hatched === true,
     dead: state.dead === true,
     asleep: state.sleep !== null && state.sleep !== undefined,
-    activity: a === null ? null : { kind: a.kind, key: a.key, label: a.label, emoji: a.emoji, endsAt: a.endsAt, partner: a.coop?.partner ?? null },
+    // [ST0014] for drawing it: the same fields the panel's own pig comes with.
+    stage: { key: life.key, size: life.size, art: life.art ?? null, emoji: life.emoji, faded: life.faded === true },
+    mood: current.key,
+    moodLevel: current.level ?? 0,
+    worn: wornFor(state),
+    activity: a === null ? null : {
+      kind: a.kind, key: a.key, label: a.label, emoji: a.emoji, endsAt: a.endsAt, partner: a.coop?.partner ?? null,
+      ...(a.kind === 'study' ? { stage: a.stage ?? null } : {}),
+      ...(a.kind === 'trip' ? { region: placeByKey(a.key)?.region ?? null } : {}),
+    },
   }
 }
 
@@ -51,7 +66,7 @@ async function penView(env, accountId, now) {
   const names = {}
   for (const row of rows) {
     const pig = await loadPig(env, row.account_id)
-    const view = publicPig(settled(pig.state, now))
+    const view = publicPig(settled(pig.state, now), now)
     names[row.account_id] = view?.name ?? '?'
     members.push({ id: row.account_id, you: row.account_id === accountId, owner: row.account_id === pen.owner_id, pig: view })
   }
