@@ -5,7 +5,7 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
 
 ---
 
-## [Unreleased]
+## [0.15.2] — 2026-10-19
 
 ### Added
 - **「在线」标签页，猪圈里的猪出现在你的猪旁边（ST0014）。** 「状态」右边新增「🌐 在线」：登录、云同步状态、建猪圈 / 加入猪圈 / 邀请一起出门都移到这里（原来在「语言」下面）。只在 `pig serve`（Swift 桌宠、桌面 App）里出现，DSH 宿主里没有。
