@@ -46,7 +46,7 @@
 | `boxStage` | core | TABLE | 纸盒自己的尺寸与文案，面板不得硬编码 |
 | `actions` | core | DERIVED+LIVE | `feed`/`bathe`/`play`/`pet` 的 `ready`、`waitSeconds`、`blocked` |
 | `jobs` / `subjects` / `stages` / `trips` / `world` | task | DERIVED | 打工、学习、旅行标签页 |
-| `shop` / `inventory` / `bag` / `care` / `lottery` | task | DERIVED | 商店、背包、照料选择、刮刮卡；`care` 只在有猪时出现。`shop` 每项带 `owned`；`kind: 'wear'` 的是「装扮」货架上的装饰（ST0012），买过的 `owned: true`，不进 `inventory` / `bag` |
+| `shop` / `inventory` / `bag` / `care` / `lottery` | task | DERIVED | 商店、背包、照料选择、刮刮卡；`care` 只在有猪时出现。`shop` 每项带 `owned`；`kind: 'wear'` 的是「装扮」货架上的装饰（ST0012），买过的 `owned: true`，不进 `inventory` / `bag`。每日限购的商品（ST0020）带 `dailyLimit` 与 `leftToday`（今天还能买几个），其余为 `null`；买满时 `buy` 拒绝 `daily-limit`（带 `max`） |
 | `blackjack` | task | TABLE+STATE | 21 点（ST0015）：`bets`（可选下注）、`standAt`（停牌最低点数）、`payouts[{total,multiplier}]`、`hand`（没打完的一手 `{bet,cards[{rank,suit}],total,soft}`，没有时 `null`） |
 | `gym` | task | TABLE+STATE | 健身房（Q0016）：`floorKg`（体重下限）、`muscleKg`（累计瘦掉多少解锁肌肉）、`lostKg`（已累计瘦掉）、`muscle`（已解锁）、`atFloor`（已到下限，不能再去）、`classes[{key,label,emoji,minutes,price,lossKg,affordable}]` |
 | `activity` | core | STATE+LIVE | 外出中为对象（`kind`、`key`、`secondsLeft`、`progress` …；上课另带学段 `stage`，旅行另带地区 `region`，面板据此选外出形象），否则 `null` |

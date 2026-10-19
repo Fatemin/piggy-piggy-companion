@@ -80,6 +80,8 @@ export default {
     '    改名用：/{cmd} name <名字>（第一次起名免费）': '    名前を変えるとき用：/{cmd} name <名前>（さいしょの名づけは無料）',
     '    买了就穿上，衣柜里随时换：/{cmd} wear': '    買ったらすぐ身につける。クローゼットでいつでも着がえ：/{cmd} wear',
     '已拥有': '持ってる',
+    ' · 每天限 {n} 个': ' · 1日{n}個まで',
+    ' · 今天已买完': ' · 今日はもう買った',
     // --- naming -------------------------------------------------------------
     '第一次起名免费；以后再改名要用一张{card}（商店 {price} 猪币）。': 'さいしょの名づけは無料。次から名前を変えるには{card}が1枚いるよ（おみせで {price} ブーコイン）。',
     '🪪 用掉了一张{card}，还剩 {left} 张。': '🪪 {card}を1枚使った。のこり {left} 枚。',
@@ -161,6 +163,8 @@ export default {
     '    改名用：/{cmd} name <名字>（第一次起名免费）': '    For renaming: /{cmd} name <name> (the first name is free)',
     '    买了就穿上，衣柜里随时换：/{cmd} wear': '    Worn as soon as it is bought; change in the wardrobe: /{cmd} wear',
     '已拥有': 'owned',
+    ' · 每天限 {n} 个': ' · {n} a day',
+    ' · 今天已买完': ' · sold out today',
     // --- naming -------------------------------------------------------------
     '第一次起名免费；以后再改名要用一张{card}（商店 {price} 猪币）。': 'The first name is free; after that each rename takes a {card} ({price} oinks in the shop).',
     '🪪 用掉了一张{card}，还剩 {left} 张。': '🪪 Used one {card}; {left} left.',

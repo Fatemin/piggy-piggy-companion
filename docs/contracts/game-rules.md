@@ -36,7 +36,7 @@
 
 <!-- contract:shop-keys -->
 ```json
-["apple", "bread", "bone", "rice", "cake", "noodle", "soap", "shower", "shampoo", "bubble", "sauna", "yoyo", "blocks", "plush", "scooter", "carousel", "med1", "med2", "med3", "med4", "soul", "renamecard"]
+["apple", "bread", "bone", "rice", "cake", "noodle", "ration", "soap", "shower", "shampoo", "bubble", "sauna", "yoyo", "blocks", "plush", "scooter", "carousel", "med1", "med2", "med3", "med4", "soul", "renamecard"]
 ```
 
 <!-- contract:item-kinds -->
@@ -102,6 +102,7 @@
 8. 睡觉与外出互斥：睡着时饱食照常下降，心情、清洁按 `SLEEP_RECOVERY_PER_MIN` 回升，疏于照顾累积的生病风险乘 `SLEEP_SICK_RISK_MULTIPLIER`；照顾动作和出门会先叫醒它；电脑唤醒（`auto`）只结束电脑休眠引起的睡眠。
 9. **装扮不进玩法**：`data.js` 的 `WEAR_SLOTS` / `WEARABLES` / `STAGE_OUTFIT` 与 `core.js` 的解锁、穿脱只决定外观，由 [ART.ASSETS.V2](art-assets.md) 约束；除 `shop` 装饰的售价（`unlock.price`，只在购买时扣猪币）与 `gym` / `coins` 装饰的解锁门槛（`unlock.kg` / `unlock.coins`，Q0016）外不得带数值字段，也不得被任何结算读取。
 10. **健身房**（Q0016，`GYM` / `GYM_CLASSES`）：一节课是一次外出（`activity.kind === 'gym'`），先付 `price`、提前叫回全额退款；回来减 `lossG`，体重不低于 `GYM.floorKg`，体重已在下限时拒绝 `too-light`。生命阶段与 `stage` 类装饰解锁按 `max(weightG, peakWeightG)` 算，减重前把当前体重记进 `peakWeightG`，所以健身不会让猪退回更小的阶段；`sizeForWeight` 仍按当前体重，猪会真的变小。累计减掉的克数记 `stats.gymLostG`，到 `GYM.muscleKg`（就是 `muscle` 装饰的 `unlock.kg`）解锁肌肉造型并自动穿上。
+11. **每日限购**（ST0020）：带 `dailyLimit` 的商品（目前只有 `ration` 应急食物，1 猪币、饱食 +10）每个自然日最多买 `dailyLimit` 个，超出拒绝 `daily-limit`。“一天”按主人时区（`utcOffsetMin`，`null` 时用本机时区）的日历日，计数存在存档 `dailyBuys`，换日后清零；只限购买，背包里攒下的照常能用。
 
 ## 4. 变更规则 Change rules
 

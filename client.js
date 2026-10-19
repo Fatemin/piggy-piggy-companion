@@ -242,6 +242,8 @@ window.__ModuleLoader__.load({
         '这是旅行限定，商店不卖': 'これは旅行限定。おみせでは売ってないよ',
         '更名卡要在「状态」里改名时用': '名前変更カードは「ようす」でなまえを変えるときに使うよ',
         '装扮': 'きせかえ', '衣柜装扮，买一次一直有': 'クローゼットのきせかえ。一度買えばずっと使える', '已拥有': '持ってる', '已经在衣柜里了': 'もうクローゼットにあるよ',
+        // [ST0020] the daily-limited emergency ration
+        '每天限 {n} 个': '1日{n}個まで', '今天已买完': '今日はもう買った', '明天再来': 'また明日', '这个每天只能买一个，明天再来': 'これは1日1個まで。また明日ね',
         '这一段一次最多上 {n} 门课': 'ここでは一度に {n} こまでだよ',
         '可以一起上 {n} 门 · 已选 {k}': '{n} こまで一緒にうけられるよ · えらんだ数 {k}',
         '每门限 {cap} 次': '1科目 {cap} 回まで', '本段 {n}/{cap}': 'ここで {n}/{cap}', '已满': 'うけきった',
@@ -484,6 +486,8 @@ window.__ModuleLoader__.load({
         '这是旅行限定，商店不卖': "That's travel-only; the Shop doesn't sell it",
         '更名卡要在「状态」里改名时用': 'Rename cards are spent when renaming on the Status tab',
         '装扮': 'Dress-up', '衣柜装扮，买一次一直有': 'For the wardrobe; buy once, keep for good', '已拥有': 'Owned', '已经在衣柜里了': 'Already in the wardrobe',
+        // [ST0020] the daily-limited emergency ration
+        '每天限 {n} 个': '{n} a day', '今天已买完': 'sold out today', '明天再来': 'Tomorrow', '这个每天只能买一个，明天再来': 'Only one a day; come back tomorrow',
         '这一段一次最多上 {n} 门课': 'Up to {n} lessons at once here',
         '可以一起上 {n} 门 · 已选 {k}': 'Take up to {n} together · {k} picked',
         '每门限 {cap} 次': '{cap} per subject', '本段 {n}/{cap}': 'here {n}/{cap}', '已满': 'done',
@@ -945,6 +949,9 @@ window.__ModuleLoader__.load({
           needed: obj(item).needed === true,
           // [ST0012] a decoration already in the wardrobe: not for sale again.
           owned: obj(item).owned === true,
+          // [ST0020] a daily-limited item: null when it has no limit.
+          dailyLimit: typeof obj(item).dailyLimit === 'number' ? obj(item).dailyLimit : null,
+          leftToday: typeof obj(item).leftToday === 'number' ? obj(item).leftToday : null,
           effects: normalizeEffects(item),
         })).filter(item => item.key !== ''),
         inventory: obj(d.inventory),
@@ -4267,13 +4274,15 @@ window.__ModuleLoader__.load({
             row.appendChild(el('span', null, item.emoji))
             var grow = el('div', 'dp-grow')
             grow.appendChild(el('div', null, item.label))
-            grow.appendChild(el('div', 'dp-dim', item.price + ' 🪙' + (item.needed ? ' · ' + T('现在需要') : '')))
+            var limitNote = item.dailyLimit === null ? '' : ' · ' + (item.leftToday === 0 ? T('今天已买完') : T('每天限 {n} 个', { n: item.dailyLimit }))
+            grow.appendChild(el('div', 'dp-dim', item.price + ' 🪙' + (item.needed ? ' · ' + T('现在需要') : '') + limitNote))
             // [dsh-piggy-claude-code mod] what it does, or the shelves all look alike.
             grow.appendChild(el('div', 'dp-dim', effectLine(item)))
             row.appendChild(grow)
             var buy = button('dp-mini', { 'data-buy': item.key }, function () { send('buy', { item: item.key }) })
-            buy.textContent = item.owned ? T('已拥有') : T('买')
-            buy.disabled = item.owned || !item.affordable
+            var soldOut = item.leftToday === 0
+            buy.textContent = item.owned ? T('已拥有') : soldOut ? T('明天再来') : T('买')
+            buy.disabled = item.owned || soldOut || !item.affordable
             row.appendChild(buy)
             list.appendChild(row)
           })(ordered[i])
@@ -5137,6 +5146,7 @@ window.__ModuleLoader__.load({
               'not-for-sale': '这是旅行限定，商店不卖',
               'use-to-rename': '更名卡要在「状态」里改名时用',
               owned: '已经在衣柜里了',
+              'daily-limit': '这个每天只能买一个，明天再来',
               'bad-name': '名字要 1–16 个字',
               'same-name': '和现在的名字一样',
               asleep: '它已经在睡了',

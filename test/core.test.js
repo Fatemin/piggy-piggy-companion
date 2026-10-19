@@ -35,6 +35,7 @@ import {
   actionReady,
   bar,
   buy,
+  dailyBuysLeft,
   callOffActivity,
   callOffWork,
   canWork,
@@ -1211,6 +1212,22 @@ test('souvenirs favour the missing one, trips bring specialties, and a full regi
   }
 })
 
+test('trips never bring back the daily-limited ration', () => {
+  try {
+    for (let r = 0; r < 1; r += 0.02) {
+      setRandomForTests(() => r)
+      const pig = hatchEgg(T0)
+      pig.coins = 100_000
+      pig.satiety = 100
+      assert.equal(startTrip(pig, 'beijing', T0, 8).ok, true)
+      decay(pig, T0 + 61 * MIN)
+      assert.equal(pig.inventory.ration, undefined, `roll ${r}`)
+    }
+  } finally {
+    setRandomForTests(null)
+  }
+})
+
 test('travel-only specialties cannot be bought, but can be eaten', () => {
   const pig = hatchEgg(T0)
   pig.coins = 5000
@@ -1390,6 +1407,48 @@ test('buying is refused when broke, and for unknown goods', () => {
   assert.equal(poor.reason, 'poor')
   assert.equal(pig.coins, 3, 'nothing was spent')
   assert.equal(buy(pig, 'yacht').reason, 'unknown')
+})
+
+// [ST0020] The emergency ration: 1 coin, a tenth of a full belly, one a day.
+test('the emergency ration costs 1, feeds a tenth of the belly, and sells one a day', () => {
+  const ration = SHOP.find(item => item.key === 'ration')
+  assert.equal(ration.price, 1)
+  assert.equal(ration.kind, 'food')
+  assert.equal(ration.satiety, MAX.satiety / 10)
+  const pig = hatchEgg(T0)
+  pig.utcOffsetMin = 0 // T0 is 22:13 UTC on 2023-11-14
+  pig.coins = 10
+  assert.equal(dailyBuysLeft(pig, ration, T0), 1)
+  assert.equal(buy(pig, 'ration', T0).ok, true)
+  assert.equal(pig.coins, 9)
+  assert.deepEqual(buy(pig, 'ration', T0 + 60_000), { ok: false, reason: 'daily-limit', max: 1 })
+  assert.equal(pig.coins, 9, 'nothing was spent')
+  assert.equal(pig.inventory.ration, 1)
+  assert.equal(dailyBuysLeft(pig, ration, T0), 0)
+  assert.equal(dailyBuysLeft(pig, SHOP.find(item => item.key === 'apple'), T0), null, 'other food has no limit')
+  assert.equal(buy(pig, 'apple', T0).ok, true)
+
+  pig.satiety = 50
+  assert.equal(useItem(pig, 'ration', T0).ok, true)
+  assert.equal(Math.round(pig.satiety), 60)
+
+  // Midnight in the owner's zone opens a new day.
+  assert.equal(buy(pig, 'ration', T0 + 2 * 3_600_000).ok, true)
+  assert.deepEqual(pig.dailyBuys, { day: '2023-11-15', counts: { ration: 1 } })
+})
+
+test('the ration day follows the owner\'s zone and survives a reload', () => {
+  const pig = hatchEgg(T0)
+  pig.utcOffsetMin = 9 * 60 // T0 is 07:13 JST on 2023-11-15
+  pig.coins = 10
+  assert.equal(buy(pig, 'ration', T0).ok, true)
+  assert.equal(buy(pig, 'ration', T0 + 2 * 3_600_000).reason, 'daily-limit', 'still the 15th in Tokyo')
+  const reloaded = migrate(JSON.parse(JSON.stringify(pig)))
+  assert.equal(buy(reloaded, 'ration', T0 + 3_600_000).reason, 'daily-limit')
+  assert.deepEqual(migrate({ dailyBuys: { day: '2023-11-15', counts: { ration: 1, apple: 2, yacht: 1, bad: -1 } } }).dailyBuys,
+    { day: '2023-11-15', counts: { ration: 1 } })
+  assert.deepEqual(migrate({ dailyBuys: { day: 'yesterday', counts: { ration: 1 } } }).dailyBuys, { day: '', counts: {} })
+  assert.deepEqual(migrate({}).dailyBuys, { day: '', counts: {} })
 })
 
 test('snapshot-independent inventory view always lists every item', () => {
