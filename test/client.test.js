@@ -1491,8 +1491,8 @@ test('the wardrobe is a bag shelf beside the consumables and posts what to put o
 test('the wardrobe groups decorations by slot, head to toe', async () => {
   const item = (key, slot, emoji) => ({ key, slot, label: key, emoji, unlocked: true, worn: false, hint: '' })
   const wardrobe = [item('whiskers', 'face', '🧓'), item('scarf', 'waist', '🧣'), item('bow', 'head', '🎀'), item('glasses', 'eyes', '👓'),
-    item('pager', 'waist', '📟'), item('cape', 'back', '🦸'), item('flatcap', 'head', '🧢')]
-  for (const [lang, waist] of [['zh', '🎗️ 腰上'], ['en', '🎗️ Waist']]) {
+    item('pager', 'waist', '📟'), item('cape', 'back', '🦸'), item('cane', 'hand', '🦯'), item('muscle', 'body', '💪'), item('flatcap', 'head', '🧢')]
+  for (const [lang, waist, hand] of [['zh', '🎗️ 腰上', '✋ 手上'], ['en', '🎗️ Waist', '✋ Hand']]) {
     const { dom } = await loadWithPoll({ status: { ...SNAPSHOT, lang, langs: LANGS, pig: { ...PIG, outfit: { auto: false, worn: [] }, wardrobe } }, storage: { 'dsh-pig:bag': 'wardrobe' } })
     openPanel(dom)
     pickTab(dom, 'bag')
@@ -1507,8 +1507,9 @@ test('the wardrobe groups decorations by slot, head to toe', async () => {
       for (const child of node.children ?? []) walk(child)
     }
     walk(contentOf(dom))
-    assert.deepEqual(sections, [['head', ['bow', 'flatcap']], ['eyes', ['glasses']], ['waist', ['scarf', 'pager']], ['face', ['whiskers']], ['back', ['cape']]], lang)
+    assert.deepEqual(sections, [['head', ['bow', 'flatcap']], ['eyes', ['glasses']], ['waist', ['scarf', 'pager']], ['face', ['whiskers']], ['hand', ['cane']], ['body', ['muscle']], ['back', ['cape']]], lang)
     assert.ok(contentOf(dom).allText().includes(waist), `${lang}: ${contentOf(dom).allText()}`)
+    assert.ok(contentOf(dom).allText().includes(hand), `${lang}: [AC0021] the hand slot has its own title`)
   }
 })
 

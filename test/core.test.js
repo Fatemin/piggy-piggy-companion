@@ -216,14 +216,14 @@ test('an elder pig can switch between the elder and the original look', () => {
 
   pig.weightG = 80_000
   assert.equal(canChooseLook(pig), true)
-  assert.deepEqual(wornFor(pig), ['whiskers'], 'elder by default')
+  assert.deepEqual(wornFor(pig), ['whiskers', 'cane'], 'elder by default, [AC0021] walking stick and all')
   assert.equal(setLook(pig, 'original', T0).ok, true)
   assert.equal(lifeStageFor(pig, T0).art, 'stage-elder', 'still the elder pose: the look is the outfit, not the drawing')
-  assert.deepEqual(wornFor(pig), [], 'the beard is off')
+  assert.deepEqual(wornFor(pig), ['cane'], 'the beard is off; the stick was never part of the look')
   assert.equal(setLook(pig, 'nonsense', T0).ok, false)
-  assert.deepEqual(migrate(JSON.parse(JSON.stringify(pig))).outfit, [], 'the choice is saved')
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(pig))).outfit, ['cane'], 'the choice is saved')
   assert.equal(setLook(pig, 'elder', T0).ok, true)
-  assert.deepEqual(wornFor(pig), ['whiskers'])
+  assert.deepEqual(wornFor(pig), ['whiskers', 'cane'])
 })
 
 test('wardrobe: unlocks follow progress the save already keeps', () => {
@@ -245,6 +245,7 @@ test('wardrobe: unlocks follow progress the save already keeps', () => {
   assert.ok(unlocked().includes('sunglasses'), 'a souvenir from the Middle East: the sunglasses')
   pig.weightG = 80_000
   assert.ok(unlocked().includes('whiskers'), 'elder: the beard')
+  assert.ok(unlocked().includes('cane'), '[AC0021] elder: the walking stick')
 })
 
 test('wardrobe: the stage look until the owner dresses the pig, one thing per slot', () => {
@@ -270,7 +271,15 @@ test('wardrobe: the stage look until the owner dresses the pig, one thing per sl
   assert.deepEqual(wear(pig, 'sunglasses', true, T0), { ok: false, reason: 'wear-locked' })
   assert.deepEqual(wear(pig, 'cape', true, T0), { ok: false, reason: 'bad-wear' })
   assert.deepEqual(wearAuto(pig, T0), { ok: true })
-  assert.deepEqual(wornFor(pig), ['whiskers'], 'back to the stage look')
+  assert.deepEqual(wornFor(pig), ['whiskers', 'cane'], 'back to the stage look')
+  // [AC0021] the stick is held in front, drawn after everything else.
+  assert.equal(wear(pig, 'scarf', true, T0).ok, true)
+  assert.equal(wear(pig, 'whiskers', false, T0).ok, true)
+  assert.deepEqual(wornFor(pig), ['scarf', 'cane'], 'the stick stays in its own slot')
+  assert.equal(wear(pig, 'cane', false, T0).ok, true)
+  assert.deepEqual(wornFor(pig), ['scarf'], 'and comes off on its own')
+  assert.equal(wear(pig, 'cane', true, T0).ok, true)
+  assert.deepEqual(wornFor(pig), ['scarf', 'cane'])
 
   pig.dead = true
   assert.deepEqual(wornFor(pig), [], 'a grave wears nothing')

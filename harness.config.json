@@ -224,7 +224,7 @@
           ]
         },
         {
-          "id": "ART.ASSETS.V2",
+          "id": "ART.ASSETS.V3",
           "doc": "docs/contracts/art-assets.md",
           "triggers": [
             "art.js",

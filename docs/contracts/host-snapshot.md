@@ -78,7 +78,7 @@
 | 组 | 字段 | 深度 | freshness |
 |---|---|---|---|
 | 身份 | `name`, `stage{key,label,emoji,size,line,art,faded}` | core | STATE+TABLE |
-| 穿戴 | `outfit{auto,worn[]}`：`worn` 是当前穿戴的装饰键（按部位绘制顺序，面板原样拼到精灵 URL 的 `?wear=`），`auto` 为跟着阶段穿 | core | DERIVED（ST0004，见 [ART.ASSETS.V2](art-assets.md)） |
+| 穿戴 | `outfit{auto,worn[]}`：`worn` 是当前穿戴的装饰键（按部位绘制顺序，面板原样拼到精灵 URL 的 `?wear=`），`auto` 为跟着阶段穿 | core | DERIVED（ST0004，见 [ART.ASSETS.V3](art-assets.md)） |
 | 衣柜 | `wardrobe[{key,slot,label,emoji,unlocked,worn,hint}]`：全部装饰，`hint` 是已翻译的解锁条件 | task | DERIVED |
 | 旧外观开关 | `look`（`'elder'` = 戴着 `whiskers`，否则 `'original'`）、`canChooseLook`（`whiskers` 已解锁）：ST0004 起由衣柜推导，只为旧面板保留 | core | DERIVED |
 | 年龄与成长 | `ageDays`, `ageLabel`, `daysToNextStage`, `kgToNextStage`, `growthPercent`, `weight` | core | LIVE |
@@ -96,7 +96,7 @@
 |---|---|---|
 | `/dsh-pig/state` | GET | 返回快照，`cache-control: no-store`；其他方法 405 + `allow` |
 | `/dsh-pig/act` | POST | JSON 体 `{action, ...}`；未知 `action` → 400 + `allowed` 列表；体过大或非 JSON → 413 |
-| `/dsh-pig/art/<name>.svg` | GET | 只服务 `assets/` 下匹配 `^[a-z][a-z0-9-]{0,31}\.svg$` 的文件，其他一律 404；可带 `?wear=<k1>,<k2>` 给姿势穿上装饰，只认 `WEARABLES` 键，其余丢弃（合成规则见 [ART.ASSETS.V2](art-assets.md) §2.6） |
+| `/dsh-pig/art/<name>.svg` | GET | 只服务 `assets/` 下匹配 `^[a-z][a-z0-9-]{0,31}\.svg$` 的文件，其他一律 404；可带 `?wear=<k1>,<k2>` 给姿势穿上装饰，只认 `WEARABLES` 键，其余丢弃（合成规则见 [ART.ASSETS.V3](art-assets.md) §2.6） |
 
 `OPERATIONS` 表（路由与斜杠命令共用，同一张表防止两者漂移）：
 

@@ -1,8 +1,8 @@
-# ART.ASSETS.V2 · 美术资产：行为资产与装饰资产
+# ART.ASSETS.V3 · 美术资产：行为资产与装饰资产
 
-> contract_id: `ART.ASSETS.V2` · status: `CURRENT`
+> contract_id: `ART.ASSETS.V3` · status: `CURRENT`
 
-> 实施事实基线：ST0004（2026-10-02，装扮功能）；ST0012（发布前修订）把部位 `neck` 改为 `waist`：猪没有脖子，领巾类饰品绑在腰上。V1 尚未发布，故原地修订、不升版本。**V2（Q0016，健身房）**新增部位 `body`（画在身体上、最先画）和第一件 `body` 装饰 `muscle`，按 §4「新部位」升版本；`stage` 解锁改按「到过的最高体重」算（健身会减重）。以后**每一项新美术**在设计阶段就要先归类为行为资产或装饰资产（写进 design handoff），再按本文的接口实现；`test/contracts.test.js` 逐个文件比对 `assets/`。
+> 实施事实基线：ST0004（2026-10-02，装扮功能）；ST0012（发布前修订）把部位 `neck` 改为 `waist`：猪没有脖子，领巾类饰品绑在腰上。V1 尚未发布，故原地修订、不升版本。**V2（Q0016，健身房）**新增部位 `body`（画在身体上、最先画）和第一件 `body` 装饰 `muscle`，按 §4「新部位」升版本；`stage` 解锁改按「到过的最高体重」算（健身会减重）。**V3（AC0021，拐杖）**新增部位 `hand`（拿在猪身前、最后画）和装饰 `cane`：老年猪的拐杖从 `stage-elder` 姿势里拆出来，成为可搭配的装饰。以后**每一项新美术**在设计阶段就要先归类为行为资产或装饰资产（写进 design handoff），再按本文的接口实现；`test/contracts.test.js` 逐个文件比对 `assets/`。
 
 ## 1. 归属 Ownership
 
@@ -28,18 +28,20 @@
 
 `body`（V2）是身体本身：画在身体轮廓内（裁到 `P.body`），在所有部位之前画，所以腰饰、胡子、眼镜、帽子都盖在它上面；只画身体表面的东西（肌肉线条、腹肌），不画穿戴物。
 
+`hand`（V3）是拿在猪身前的东西：画在猪本体坐标里、前腿前面，在所有部位之后画（最上层）；随姿势一起动。
+
 `waist` 是腰部：猪没有脖子，红领巾、围巾这类饰品像绑在身上一样顺着身体绕一圈——沿 `build-sprites.mjs` 的 `WAIST` 腰线斜着画（上端靠头、下端靠屁股、向后鼓出一道弧），裁到身体轮廓内，不碰近耳；圈类同样倾斜，远半圈藏在身后。
 
 <!-- contract:wear-slots -->
 ```json
-["body", "face", "waist", "eyes", "head"]
+["body", "face", "waist", "eyes", "head", "hand"]
 ```
 
 ### 2.2 装饰键 → 部位
 
 <!-- contract:wear-keys -->
 ```json
-{"bow": "head", "flatcap": "head", "mortarboard": "head", "strawhat": "head", "glasses": "eyes", "sunglasses": "eyes", "scarf": "waist", "whiskers": "face", "hulahoop": "waist", "swimring": "waist", "fannypack": "waist", "chainbelt": "waist", "pager": "waist", "muscle": "body", "gold": "body"}
+{"bow": "head", "flatcap": "head", "mortarboard": "head", "strawhat": "head", "glasses": "eyes", "sunglasses": "eyes", "scarf": "waist", "whiskers": "face", "hulahoop": "waist", "swimring": "waist", "fannypack": "waist", "chainbelt": "waist", "pager": "waist", "muscle": "body", "gold": "body", "cane": "hand"}
 ```
 
 解锁条件（`WEARABLES[].unlock`）：除 `shop` 外全部从存档已有进度推导、不存档；`shop` 是商店「装扮」货架上买的，买过的键记在存档 `wardrobeBought`（ST0012，见 [STORE.SAVE.V6](save-format.md)）：
@@ -54,6 +56,7 @@
 | `sunglasses` | 🕶️ 墨镜 | `region mideast`：带回过中东·非洲的纪念品 |
 | `scarf` | 🧣 红领巾 | `lessons primary`：上过小学 |
 | `whiskers` | 🧓 白眉白胡子 | `stage elder`：长成老年猪 |
+| `cane` | 🦯 拐杖 | `stage elder`：长成老年猪（AC0021：原来画死在 `stage-elder` 姿势里） |
 | `hulahoop` | ⭕ 网红呼啦圈 | `shop 66`：商店购买 |
 | `swimring` | 🦆 小黄鸭游泳圈 | `shop 88`：商店购买 |
 | `fannypack` | 👝 多巴胺腰包 | `shop 168`：商店购买 |
@@ -68,7 +71,7 @@
 
 | `outfit` | 含义 |
 |---|---|
-| `null` | 跟着阶段穿 `STAGE_OUTFIT`：小猪 `bow`、青年猪无、中年猪 `flatcap`、老年猪 `whiskers`（与 ST0004 之前烘焙在阶段图里的样子一致） |
+| `null` | 跟着阶段穿 `STAGE_OUTFIT`：小猪 `bow`、青年猪无、中年猪 `flatcap`、老年猪 `whiskers` + `cane`（与 ST0004 / AC0021 之前烘焙在阶段图里的样子一致） |
 | `[key…]` | 玩家自己搭配；每个部位至多一件，按 `wear-slots` 顺序；第一次在衣柜里改动时由当前穿戴物化而来 |
 
 `wornFor` 只返回已解锁的键；纸盒和墓碑什么都不穿。
@@ -84,13 +87,17 @@
 
 其他行为资产的 `data-occupies` 为空：玩家穿戴的全部显示。
 
+占用 `hand`（AC0021）的意思是猪身前那块地方已经被这个姿势用了：桌子、器材、手里拿的东西或跟在前面的小动物（企鹅、袋鼠），拐杖这时先放下。
+
 <!-- contract:pose-occupies -->
 ```json
 {
-  "away-study": ["eyes"],
+  "away-gym": ["hand"],
+  "away-gym-weights": ["hand"],
+  "away-study": ["eyes", "hand"],
   "away-trip": ["head"],
   "away-trip-americas": ["head"],
-  "away-trip-antarctica": ["head"],
+  "away-trip-antarctica": ["head", "hand"],
   "away-trip-auckland": ["head"],
   "away-trip-bangkok": ["head"],
   "away-trip-beijing": ["head"],
@@ -106,7 +113,7 @@
   "away-trip-nairobi": ["head"],
   "away-trip-newdelhi": ["head"],
   "away-trip-newyork": ["head"],
-  "away-trip-oceania": ["head"],
+  "away-trip-oceania": ["head", "hand"],
   "away-trip-paris": ["head"],
   "away-trip-rio": ["head"],
   "away-trip-rome": ["head"],
@@ -114,26 +121,33 @@
   "away-trip-shanghai": ["head"],
   "away-trip-singapore": ["head"],
   "away-trip-southasia": ["head"],
-  "away-trip-sydney": ["head"],
+  "away-trip-sydney": ["head", "hand"],
   "away-trip-tokyo": ["head"],
   "away-trip-ulaanbaatar": ["head"],
   "away-trip-xian": ["head"],
-  "job-aitrainer": ["eyes"],
-  "job-coach": ["waist"],
-  "job-odd": ["head"],
-  "job-office": ["waist"],
-  "job-rider": ["head"],
-  "job-site": ["head"],
-  "job-sorting": ["waist"],
-  "job-tea": ["head"],
-  "job-vtuber": ["head"],
+  "away-work": ["hand"],
+  "job-aitrainer": ["eyes", "hand"],
+  "job-coach": ["waist", "hand"],
+  "job-influencer": ["hand"],
+  "job-label": ["hand"],
+  "job-odd": ["head", "hand"],
+  "job-office": ["waist", "hand"],
+  "job-rider": ["head", "hand"],
+  "job-site": ["head", "hand"],
+  "job-sorting": ["waist", "hand"],
+  "job-stall": ["hand"],
+  "job-tea": ["head", "hand"],
+  "job-vtuber": ["head", "hand"],
+  "lottery-scratch": ["hand"],
   "mood-asleep": ["head"],
   "mood-sick-3": ["head"],
   "react-bathe": ["head"],
-  "react-graduate": ["head"],
-  "study-doctor": ["eyes"],
-  "study-graduate": ["eyes"],
-  "study-primary": ["waist"]
+  "react-eat": ["hand"],
+  "react-graduate": ["head", "hand"],
+  "study-college": ["hand"],
+  "study-doctor": ["eyes", "hand"],
+  "study-graduate": ["eyes", "hand"],
+  "study-primary": ["waist", "hand"]
 }
 ```
 
@@ -171,7 +185,7 @@
 |---|---|
 | 新姿势（行为资产） | `build-sprites.mjs` 的 `SPRITES` 加一项，自带穿戴物时写 `wears: [...]` → 重新生成 → 有占用时更新 `pose-occupies` 块 |
 | 新装饰 | `build-sprites.mjs` 的 `WEAR` 与 `data.js` `WEARABLES` 同时加一项（同键同部位）→ 三语译文 → 更新 `wear-keys` 块与 §2.2 解锁表 → 走设计门 |
-| 新部位 | 本契约升 `V2`：`WEAR_SLOTS`、`build-sprites.mjs` 的 `SLOT_ORDER`、`wear-slots` 块一起改 |
+| 新部位 | 本契约升版本（V2 `body`、V3 `hand`）：`WEAR_SLOTS`、`build-sprites.mjs` 的 `SLOT_ORDER`、`wear-slots` 块一起改 |
 | 新解锁方式 | 在 `core.js` `wearUnlocked` 实现、在 `render.js` `wearHint` 写提示，并在 §2.2 登记；只能从已有进度推导，需要新存档字段时先按 [STORE.SAVE.V6](save-format.md) §4 处理 |
 
 ## 5. 验证 Verification

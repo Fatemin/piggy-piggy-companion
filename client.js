@@ -51,7 +51,7 @@ window.__ModuleLoader__.load({
     // [ST0022] ...and every gym class (data.js GYM_CLASSES); the treadmill is the generic gym.
     var GYM_ART = { treadmill: 'away-gym', weights: 'away-gym-weights', trainer: 'away-gym-trainer' }
     // [ST0004] What the pig wears goes on every pose's URL (`?wear=bow,glasses`);
-    // the art route pours those decorations into the pose (ART.ASSETS.V2).
+    // the art route pours those decorations into the pose (ART.ASSETS.V3).
     // One-shot poses for the care buttons and verdicts.
     var REACT_ART = {
       feed: 'react-eat', bathe: 'react-bathe', play: 'react-play', pet: 'react-pet',
@@ -294,6 +294,7 @@ window.__ModuleLoader__.load({
         '已经瘦到 {kg} kg，不能再减了': 'もう {kg} kg、これ以上はやせられない',
         '瘦 {kg} kg': '-{kg} kg',
         '身上': 'からだ',
+        '手上': 'て',
         '21 点': 'ブラックジャック', '下注 {min} 起 · {n} 点以上才能停': '{min} 🪙 から · {n} 以上でスタンド',
         '{total} 点': '{total}', '{total} 点（A 算 11）': '{total}（A=11）', '爆了': 'バースト',
         '下注 {bet} 🪙': 'ベット {bet} 🪙', '下注 {bet}': '{bet} 賭ける', '上一手': '前回',
@@ -538,6 +539,7 @@ window.__ModuleLoader__.load({
         '已经瘦到 {kg} kg，不能再减了': 'Down to {kg} kg already, it can’t lose any more',
         '瘦 {kg} kg': '-{kg} kg',
         '身上': 'Body',
+        '手上': 'Hand',
         '21 点': 'Blackjack', '下注 {min} 起 · {n} 点以上才能停': 'bets from {min} 🪙 · stand on {n}+',
         '{total} 点': '{total}', '{total} 点（A 算 11）': '{total} (A=11)', '爆了': 'bust',
         '下注 {bet} 🪙': 'Bet {bet} 🪙', '下注 {bet}': 'Bet {bet}', '上一手': 'Last hand',
@@ -670,8 +672,8 @@ window.__ModuleLoader__.load({
     var KIND_TITLE = { food: ['🍎', '食物'], bath: ['🧼', '洗浴'], toy: ['🪀', '玩具'], medicine: ['💊', '药品'], revive: ['✨', '复活'], card: ['🪪', '道具'], wear: ['👗', '装扮'] }
     var KIND_ORDER = ['food', 'bath', 'toy', 'medicine', 'revive', 'card', 'wear']
     // [ST0012] wardrobe sections, head to toe.
-    var WEAR_SLOT_TITLE = { head: ['🎩', '头上'], eyes: ['👓', '眼睛'], waist: ['🎗️', '腰上'], face: ['🧔', '脸上'], body: ['💪', '身上'] }
-    var WEAR_SLOT_ORDER = ['head', 'eyes', 'waist', 'face', 'body']
+    var WEAR_SLOT_TITLE = { head: ['🎩', '头上'], eyes: ['👓', '眼睛'], waist: ['🎗️', '腰上'], face: ['🧔', '脸上'], body: ['💪', '身上'], hand: ['✋', '手上'] }
+    var WEAR_SLOT_ORDER = ['head', 'eyes', 'waist', 'face', 'hand', 'body']
     // [dsh-piggy-claude-code mod] study and work are sorted by the trait they build or use.
     var TRAIT_TITLE = { intel: ['🧠', '智力'], charm: ['✨', '魅力'], strong: ['💪', '武力'] }
     var TRAIT_KEYS = ['intel', 'charm', 'strong']

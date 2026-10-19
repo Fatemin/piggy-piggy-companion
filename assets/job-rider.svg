@@ -35,7 +35,7 @@
     <path fill="#373A32" d="M92 175C87 174 84 178 85 185C85 191 89 196 94 195C99 194 101 188 99 182C98 178 96 175 92 175Z"/>
     <path fill="#373A32" d="M115 180C110 178 107 183 107 189C106 195 109 200 114 200C119 200 122 195 122 189C122 184 119 180 115 180Z"/></g>
     <ellipse class="blush" cx="155" cy="187" rx="12" ry="7" fill="#FFAFAC" opacity=".75"/><ellipse class="blush" cx="60" cy="170" rx="9" ry="5.3" fill="#FFAFAC" opacity=".75"/>
-    <g class="wear" data-occupies="head"></g>
+    <g class="wear" data-occupies="head hand"></g>
     <rect x="212" y="-4" width="104" height="78" rx="10" fill="#FFC83D"/><path d="M212 18H316" fill="none" stroke="#E5A92A" stroke-width="5"/>
     <circle cx="264" cy="44" r="12" fill="#FFFFFF"/><path d="M258 44l5 5 8-9" fill="none" stroke="#E5A92A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M228 70Q208 110 222 160" fill="none" stroke="#E5A92A" stroke-width="9"/>
