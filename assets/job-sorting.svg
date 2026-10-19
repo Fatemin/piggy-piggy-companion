@@ -31,7 +31,7 @@
     <path fill="#373A32" d="M92 175C87 174 84 178 85 185C85 191 89 196 94 195C99 194 101 188 99 182C98 178 96 175 92 175Z"/>
     <path fill="#373A32" d="M115 180C110 178 107 183 107 189C106 195 109 200 114 200C119 200 122 195 122 189C122 184 119 180 115 180Z"/></g>
     <ellipse class="blush" cx="155" cy="187" rx="12" ry="7" fill="#FFAFAC" opacity=".75"/><ellipse class="blush" cx="60" cy="170" rx="9" ry="5.3" fill="#FFAFAC" opacity=".75"/>
-    <g class="wear" data-occupies="waist"></g>
+    <g class="wear" data-occupies="waist hand"></g>
     <path d="M118 212Q150 240 192 226" fill="none" stroke="#4A6FB5" stroke-width="4"/>
     <rect x="140" y="228" width="26" height="32" rx="4" fill="#FFFFFF"/><rect x="144" y="232" width="18" height="10" rx="2" fill="#6FA8DC"/>
     <path d="M145 248h16M145 254h10" fill="none" stroke="#C9CED6" stroke-width="3" stroke-linecap="round"/>

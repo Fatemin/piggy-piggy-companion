@@ -202,12 +202,13 @@ export const LOOKS = Object.freeze(['elder', 'original'])
 // ---------------------------------------------------------------------------
 // [ST0004] Wardrobe. A decoration (装饰资产) is something the pig wears and its
 // owner picks; a pose (行为资产) is what the pig is doing and the game picks.
-// The contract between the two: docs/contracts/art-assets.md (ART.ASSETS.V2).
+// The contract between the two: docs/contracts/art-assets.md (ART.ASSETS.V3).
 // ---------------------------------------------------------------------------
 
 /** Where a decoration sits on the pig, in drawing order (later is on top). */
 /** [Q0016] `body` (drawn on the body itself, under everything) is new in ART.ASSETS.V2. */
-export const WEAR_SLOTS = Object.freeze(['body', 'face', 'waist', 'eyes', 'head'])
+/** [AC0021] `hand` (held in front of the pig, over everything) is new in ART.ASSETS.V3. */
+export const WEAR_SLOTS = Object.freeze(['body', 'face', 'waist', 'eyes', 'head', 'hand'])
 
 /**
  * Every decoration, one slot each; its drawing is assets/wear-<key>.svg.
@@ -235,6 +236,8 @@ export const WEARABLES = Object.freeze([
   WEARABLE({ key: 'sunglasses', slot: 'eyes', label: '墨镜', emoji: '🕶️', unlock: { kind: 'region', region: 'mideast' } }),
   WEARABLE({ key: 'scarf', slot: 'waist', label: '红领巾', emoji: '🧣', unlock: { kind: 'lessons', stage: 'primary' } }),
   WEARABLE({ key: 'whiskers', slot: 'face', label: '白眉白胡子', emoji: '🧓', unlock: { kind: 'stage', stage: 'elder' } }),
+  // [AC0021] The elder's walking stick, once baked into the stage-elder pose.
+  WEARABLE({ key: 'cane', slot: 'hand', label: '拐杖', emoji: '🦯', unlock: { kind: 'stage', stage: 'elder' } }),
   // [ST0012] Waist gear on sale: today's trends and old internet memes.
   WEARABLE({ key: 'hulahoop', slot: 'waist', label: '网红呼啦圈', emoji: '⭕', unlock: { kind: 'shop', price: 66 } }),
   WEARABLE({ key: 'swimring', slot: 'waist', label: '小黄鸭游泳圈', emoji: '🦆', unlock: { kind: 'shop', price: 88 } }),
@@ -265,7 +268,7 @@ export const STAGE_OUTFIT = Object.freeze({
   piglet: Object.freeze(['bow']),
   young: Object.freeze([]),
   middle: Object.freeze(['flatcap']),
-  elder: Object.freeze(['whiskers']),
+  elder: Object.freeze(['whiskers', 'cane']),
 })
 
 /**

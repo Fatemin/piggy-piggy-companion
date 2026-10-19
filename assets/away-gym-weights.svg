@@ -33,7 +33,7 @@
     <path fill="#373A32" d="M115 180C110 178 107 183 107 189C106 195 109 200 114 200C119 200 122 195 122 189C122 184 119 180 115 180Z"/></g>
     <ellipse class="blush" cx="155" cy="187" rx="12" ry="7" fill="#FFAFAC" opacity=".75"/><ellipse class="blush" cx="60" cy="170" rx="9" ry="5.3" fill="#FFAFAC" opacity=".75"/>
     <ellipse cx="155" cy="187" rx="16" ry="9" fill="#FF7F7F" opacity=".45"/><ellipse cx="60" cy="170" rx="12" ry="6.8" fill="#FF7F7F" opacity=".45"/>
-    <g class="wear" data-occupies=""></g>
+    <g class="wear" data-occupies="hand"></g>
     <g class="s1"><path transform="translate(220 70) scale(1.3)" d="M0 0C-4 7-6 11-6 14a6 6 0 0 0 12 0c0-3-2-7-6-14Z" fill="#9FD8F0"/></g><g class="s2"><path transform="translate(60 100) scale(1.1)" d="M0 0C-4 7-6 11-6 14a6 6 0 0 0 12 0c0-3-2-7-6-14Z" fill="#9FD8F0"/></g>
   </g>
   </g>

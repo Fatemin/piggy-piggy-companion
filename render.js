@@ -633,7 +633,7 @@ export function renderAbout(commandName, state = null) {
 }
 
 /** [ST0004] Where a decoration sits, in words. */
-export const WEAR_SLOT_LABEL = Object.freeze({ body: '身上', face: '脸上', waist: '腰上', eyes: '眼睛', head: '头上' })
+export const WEAR_SLOT_LABEL = Object.freeze({ body: '身上', face: '脸上', waist: '腰上', eyes: '眼睛', head: '头上', hand: '手上' })
 
 /** [ST0004] How a decoration is earned, from its `unlock` rule. */
 export function wearHint(lang, unlock) {

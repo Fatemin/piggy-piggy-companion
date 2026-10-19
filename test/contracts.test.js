@@ -194,7 +194,7 @@ test('I18N.TERMS.V1: every player-facing table label is translated', async () =>
 })
 
 // ---------------------------------------------------------------------------
-// ART.ASSETS.V2 — behaviour assets (poses) and decoration assets (wear)
+// ART.ASSETS.V3 — behaviour assets (poses) and decoration assets (wear)
 // ---------------------------------------------------------------------------
 
 const art = blocks('art-assets.md')
@@ -204,7 +204,7 @@ const asset = name => readFileSync(join(ASSETS, `${name}.svg`), 'utf8')
 const wearFiles = svgs.filter(name => name.startsWith('wear-'))
 const poseFiles = svgs.filter(name => !name.startsWith('wear-'))
 
-test('ART.ASSETS.V2: slots and decoration keys match data.js', () => {
+test('ART.ASSETS.V3: slots and decoration keys match data.js', () => {
   assert.deepEqual([...WEAR_SLOTS], art['wear-slots'])
   assert.deepEqual(Object.fromEntries(WEARABLES.map(item => [item.key, item.slot])), art['wear-keys'])
   for (const item of WEARABLES) {
@@ -212,12 +212,12 @@ test('ART.ASSETS.V2: slots and decoration keys match data.js', () => {
   }
 })
 
-test('ART.ASSETS.V2: every file is one kind; no pose x decoration combinations', () => {
+test('ART.ASSETS.V3: every file is one kind; no pose x decoration combinations', () => {
   for (const name of svgs) assert.doesNotMatch(name, /--/, `${name}: combinations are composed at run time`)
   assert.deepEqual(wearFiles, sorted(WEARABLES.map(item => `wear-${item.key}`)), 'one decoration file per wardrobe key')
 })
 
-test('ART.ASSETS.V2: every pose has exactly one wear slot, declaring what its own gear covers', () => {
+test('ART.ASSETS.V3: every pose has exactly one wear slot, declaring what its own gear covers', () => {
   const occupied = {}
   for (const name of poseFiles) {
     const svg = asset(name)
@@ -235,7 +235,7 @@ test('ART.ASSETS.V2: every pose has exactly one wear slot, declaring what its ow
   assert.deepEqual(occupied, art['pose-occupies'])
 })
 
-test('ART.ASSETS.V2: every decoration is one namespaced fragment in its slot', () => {
+test('ART.ASSETS.V3: every decoration is one namespaced fragment in its slot', () => {
   for (const item of WEARABLES) {
     const fragment = wearFragment(asset(`wear-${item.key}`))
     assert.ok(fragment, `wear-${item.key}: has a fragment`)

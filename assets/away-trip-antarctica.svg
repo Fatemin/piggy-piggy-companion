@@ -45,7 +45,7 @@
     <path fill="#373A32" d="M92 175C87 174 84 178 85 185C85 191 89 196 94 195C99 194 101 188 99 182C98 178 96 175 92 175Z"/>
     <path fill="#373A32" d="M115 180C110 178 107 183 107 189C106 195 109 200 114 200C119 200 122 195 122 189C122 184 119 180 115 180Z"/></g>
     <ellipse class="blush" cx="155" cy="187" rx="12" ry="7" fill="#FFAFAC" opacity=".75"/><ellipse class="blush" cx="60" cy="170" rx="9" ry="5.3" fill="#FFAFAC" opacity=".75"/>
-    <g class="wear" data-occupies="head"></g>
+    <g class="wear" data-occupies="head hand"></g>
     <path d="M236 58Q206 110 226 168" fill="none" stroke="#4E7FB0" stroke-width="9"/>
     <rect x="238" y="34" width="84" height="92" rx="26" fill="#6FA8DC" transform="rotate(8 280 80)"/>
     <rect x="248" y="86" width="64" height="32" rx="13" fill="#5A93C8" transform="rotate(8 280 80)"/>

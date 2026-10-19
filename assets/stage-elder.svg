@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="24 -36 336 336" width="128" height="128" role="img" aria-label="老年猪">
   <title>老年猪</title>
-  <!-- 行为资产（姿势）：同一只猪：拄一根小拐杖，偶尔点头打盹（白眉白胡子是装饰 wear-whiskers）。 本体是项目原有的 Noto 🐖，形状和颜色不变；由 tools/build-sprites.mjs 生成，别手改。 -->
+  <!-- 行为资产（姿势）：同一只猪：偶尔点头打盹（白眉白胡子是装饰 wear-whiskers，拐杖是装饰 wear-cane）。 本体是项目原有的 Noto 🐖，形状和颜色不变；由 tools/build-sprites.mjs 生成，别手改。 -->
   <style>
     .eye{animation:blink 4.2s infinite;transform-box:fill-box;transform-origin:50% 50%}
     .tail{animation:wag 1.4s ease-in-out infinite;transform-origin:296px 64px}
@@ -9,9 +9,7 @@
     @keyframes wag{50%{transform:rotate(14deg)}}
     @keyframes flick{0%,80%,100%{transform:rotate(0)}85%{transform:rotate(-12deg)}90%{transform:rotate(4deg)}}
     .nod{animation:nod 6s ease-in-out infinite;transform-origin:190px 298px}
-    .cane{animation:tap 4s ease-in-out infinite;transform-origin:44px 298px}
     @keyframes nod{0%,60%,100%{transform:rotate(0)}72%{transform:rotate(-3deg) translateY(3px)}84%{transform:rotate(0)}}
-    @keyframes tap{50%{transform:rotate(-3deg)}}
     @media (prefers-reduced-motion:reduce){*{animation:none!important}}
   </style>
   <g class="nod">
@@ -30,5 +28,4 @@
     <g class="wear" data-occupies=""></g>
   </g>
   </g>
-  <path class="cane" d="M40 298V226C40 206 66 206 66 226" fill="none" stroke="#A8764C" stroke-width="10"/>
 </svg>
