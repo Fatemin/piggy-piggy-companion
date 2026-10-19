@@ -17,6 +17,27 @@ private final class PetPanel: NSPanel {
 /// WebView that reacts to the first click even when its window is not key.
 private final class PetWebView: WKWebView {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    /// [ST0014] ⌘X/C/V/A/Z in the panel's text fields. A menu-bar app has no
+    /// Edit menu, which is what normally turns these keys into cut:/copy:/
+    /// paste: for the focused field, so they did nothing at all.
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if event.type == .keyDown, flags == .command || flags == [.command, .shift] {
+            let action: Selector?
+            switch (event.charactersIgnoringModifiers?.lowercased(), flags.contains(.shift)) {
+            case ("x", false): action = #selector(NSText.cut(_:))
+            case ("c", false): action = #selector(NSText.copy(_:))
+            case ("v", false): action = #selector(NSText.paste(_:))
+            case ("a", false): action = #selector(NSText.selectAll(_:))
+            case ("z", false): action = Selector(("undo:"))
+            case ("z", true): action = Selector(("redo:"))
+            default: action = nil
+            }
+            if let action, NSApp.sendAction(action, to: nil, from: self) { return true }
+        }
+        return super.performKeyEquivalent(with: event)
+    }
 }
 
 /// The floating pig: a transparent window (an ordinary one, not always on top) showing the unmodified
