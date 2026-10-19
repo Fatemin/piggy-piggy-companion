@@ -103,6 +103,9 @@ window.__ModuleLoader__.load({
 
     var TABS = [
       { key: 'status', label: '状态', emoji: '📋' },
+      // [ST0014] login, the pig pen and which pen mates show; only on hosts
+      // that run the cloud sync (see visibleTabs).
+      { key: 'online', label: '在线', emoji: '🌐' },
       { key: 'study', label: '学习', emoji: '📚' },
       { key: 'work', label: '打工', emoji: '💼' },
       { key: 'shop', label: '商店', emoji: '🛒' },
@@ -361,6 +364,10 @@ window.__ModuleLoader__.load({
         '用了云端的猪，这台电脑的猪已经备份': 'クラウドのブタにしました。このパソコンのブタはバックアップ済みです',
         '已退出登录，猪留在这台电脑上': 'ログアウトしました。ブタはこのパソコンに残っています',
         '另一台电脑上先发生了别的事，刚才的操作没有生效': 'ほかのパソコンで先に別のことが起きたので、さっきの操作は取り消されました',
+        // [ST0014] 在线 tab
+        '在线': 'オンライン', '朋友加入后，可以选择让它们的猪出现在你的猪旁边。': '友だちが入ったら、そのブタをあなたのブタの横に出すか選べます。',
+        '全部': 'ぜんぶ', '只有自己': '自分だけ', '{n} 只': '{n} 匹', '桌面上显示：{who}': 'デスクに表示：{who}',
+        '只看自己': '自分だけ', '全部显示': 'ぜんぶ表示', '显示中': '表示中', '不显示': '非表示',
         // [ST0014 P3] pig pen
         '猪圈': 'ブタ小屋', '和朋友的猪一起出门：快 30%、收获多 30%': '友だちのブタといっしょにおでかけ：30% 速く、30% 多くもらえる',
         '建一个': 'つくる', '加入': '入る', '6 位邀请码': '6 文字の招待コード', '邀请码 {code}': '招待コード {code}',
@@ -606,6 +613,10 @@ window.__ModuleLoader__.load({
         '用了云端的猪，这台电脑的猪已经备份': 'Took the cloud pig; the one on this computer is backed up',
         '已退出登录，猪留在这台电脑上': 'Signed out. The pig stays on this computer',
         '另一台电脑上先发生了别的事，刚才的操作没有生效': 'Something else happened first on another computer, so that last action did not count',
+        // [ST0014] 在线 tab
+        '在线': 'Online', '朋友加入后，可以选择让它们的猪出现在你的猪旁边。': "Once friends join, you can choose to show their pigs next to yours.",
+        '全部': 'everyone', '只有自己': 'just mine', '{n} 只': '{n} pigs', '桌面上显示：{who}': 'On the desk: {who}',
+        '只看自己': 'Just mine', '全部显示': 'Show all', '显示中': 'Shown', '不显示': 'Hidden',
         // [ST0014 P3] pig pen
         '猪圈': 'Pig pen', '和朋友的猪一起出门：快 30%、收获多 30%': "Head out with friends' pigs: 30% faster, 30% more",
         '建一个': 'Make one', '加入': 'Join', '6 位邀请码': '6-letter code', '邀请码 {code}': 'code {code}',
@@ -736,6 +747,8 @@ window.__ModuleLoader__.load({
         notices: arr(raw.notices).filter(isObj).map(function (n) { return { op: str(n.op, ''), reason: str(n.reason, ''), at: num(n.at, 0) } }),
         conflict: conflict !== null && conflict.cloud !== null && conflict.local !== null ? conflict : null,
         pen: normalizePen(raw.pen),
+        // 'all' · 'self' · a list of account ids
+        penShow: raw.penShow === 'self' || Array.isArray(raw.penShow) ? (raw.penShow === 'self' ? 'self' : arr(raw.penShow).filter(function (id) { return typeof id === 'string' })) : 'all',
       }
     }
 
@@ -749,13 +762,27 @@ window.__ModuleLoader__.load({
         members: arr(raw.members).filter(isObj).map(function (m) {
           var pig = isObj(m.pig) ? m.pig : null
           var a = pig !== null && isObj(pig.activity) ? pig.activity : null
+          var stage = pig !== null && isObj(pig.stage) ? pig.stage : null
           return {
+            id: str(m.id, ''),
             you: m.you === true,
             owner: m.owner === true,
             name: pig === null ? '?' : str(pig.name, '?'),
+            hatched: pig !== null && pig.hatched !== false,
             dead: pig !== null && pig.dead === true,
             asleep: pig !== null && pig.asleep === true,
-            activity: a === null ? null : { kind: str(a.kind, ''), key: str(a.key, ''), label: str(a.label, ''), emoji: str(a.emoji, ''), partner: str(a.partner, '') },
+            // [ST0014] for drawing it beside ours; an older server sends none.
+            stage: stage === null ? null : {
+              key: str(stage.key, ''), size: Math.max(24, Math.min(400, num(stage.size, 56))),
+              art: str(stage.art, null), emoji: str(stage.emoji, '🐖'), faded: stage.faded === true,
+            },
+            mood: pig === null ? '' : str(pig.mood, ''),
+            moodLevel: pig === null ? 0 : num(pig.moodLevel, 0),
+            worn: pig === null ? [] : arr(pig.worn).filter(function (k) { return typeof k === 'string' && /^[a-z0-9-]+$/.test(k) }),
+            activity: a === null ? null : {
+              kind: str(a.kind, ''), key: str(a.key, ''), label: str(a.label, ''), emoji: str(a.emoji, ''), partner: str(a.partner, ''),
+              stage: str(a.stage, ''), region: str(a.region, ''),
+            },
           }
         }),
         invites: arr(raw.invites).filter(isObj).map(function (i) {
@@ -1370,6 +1397,19 @@ window.__ModuleLoader__.load({
       'transition:width .8s var(--ac-ease),height .8s var(--ac-ease)}',
       '@media (prefers-reduced-motion:reduce){.dp-pig-img,.dp-pig-emoji{transition:none}}',
       '.dp-pig-emoji{font-size:var(--pig-size);line-height:1;transition:font-size .8s var(--ac-ease)}',
+      // [ST0014] pen mates beside our pig: smaller, bobbing out of step, named.
+      '.dp-friends{display:flex;align-items:flex-end;gap:8px;margin:0 8px 0 0}',
+      '[data-dsh-pig] .dp-friends[hidden]{display:none}',
+      '.dp-friend{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:default;',
+      'filter:drop-shadow(0 3px 5px rgba(61,52,40,.22));animation:dp-bob 2.3s ease-in-out infinite}',
+      '.dp-friend:nth-child(2n){animation-delay:-.9s}',
+      '.dp-friend[data-faded="true"]{opacity:.78}',
+      '.dp-friend-img{width:var(--friend-size);height:var(--friend-size);display:block}',
+      '.dp-friend-emoji{font-size:var(--friend-size);line-height:1}',
+      '.dp-friend-name{font-size:9.5px;font-weight:700;color:var(--ac-text-2);background:rgba(255,250,235,.88);',
+      'border-radius:999px;padding:0 6px;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+      '.dp-pen-eye[aria-pressed="false"]{opacity:.62}',
+      '.dp-pen-show{margin-top:6px}',
       // A drawn sprite animates itself (CSS inside the SVG), so the mood bob,
       // the sepia/hue filters and the reaction spin would only fight it.
       '[data-dsh-pig]:not([data-poke]) .dp-pig[data-art]:not([data-react]),',
@@ -1443,7 +1483,8 @@ window.__ModuleLoader__.load({
       'border-bottom:2px solid var(--ac-border-light)}',
 
       /* ---------- icon bar: the library sidebar, laid on its side ---------- */
-      '.dp-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:8px;',
+      // [ST0014] one row however many tabs there are (six, 在线, 调试).
+      '.dp-bar{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:8px;',
       'background:var(--ac-bg-content);border-top:2px solid var(--ac-border-light);',
       'border-bottom:2px solid var(--ac-border-light)}',
       '.dp-ico{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;',
@@ -2236,6 +2277,12 @@ window.__ModuleLoader__.load({
       bubble.hidden = true
       scene.appendChild(bubble)
 
+      // [ST0014] Pen mates chosen in 在线, drawn smaller to our pig's left.
+      var friends = el('div', 'dp-friends')
+      friends.hidden = true
+      scene.appendChild(friends)
+      var friendsKey = ''
+
       // What the pig is doing while it is out: a prop to work/read/travel with,
       // and a line showing how far through it is. Sits to the pig's left, so the
       // pig itself never shifts when it appears.
@@ -2287,7 +2334,10 @@ window.__ModuleLoader__.load({
 
       /** The tabs on show right now: the normal six, plus 调试 when dev mode is on. */
       function visibleTabs() {
-        return devMode ? TABS.concat([DEV_TAB]) : TABS
+        // [ST0014] 在线 only once the host has said it runs the cloud sync.
+        // (`cloud` is still undefined while the bar is first built.)
+        var list = !cloud ? TABS.filter(function (entry) { return entry.key !== 'online' }) : TABS
+        return devMode ? list.concat([DEV_TAB]) : list
       }
 
       /** Rebuild the icon bar. Called whenever dev mode flips. */
@@ -2315,7 +2365,7 @@ window.__ModuleLoader__.load({
         })(tab)
       }
 
-      for (var t = 0; t < TABS.length; t += 1) buildIcon(TABS[t])
+      for (var t = 0, initial = visibleTabs(); t < initial.length; t += 1) buildIcon(initial[t])
 
       /** Re-caption the icon bar in the current language. */
       function relabelBar() {
@@ -2602,6 +2652,38 @@ window.__ModuleLoader__.load({
       var baseArt = null
       /** '--piglet' / '--middle' / '--elder' while the stage dresses every pose, else ''. */
       var wearQuery = ''
+
+      /**
+       * The pose a drawn pig shows: its mood's, in three strengths for the
+       * leveled moods, and while it is out the pose of that very job, school,
+       * place or machine. Undefined for an undrawn stage or a grave. Shared by
+       * our pig and the pen mates drawn beside it (ST0014).
+       */
+      function poseFor(stage, moodKey, moodLevel, activity) {
+        var pose = stage.art !== null && stage.key !== 'grave' ? MOOD_ART[moodKey] : undefined
+        // Sick, hungry, dirty and lonely come in three strengths.
+        if (pose !== undefined && LEVELED_MOODS[moodKey] === true) {
+          pose += '-' + Math.min(3, Math.max(1, moodLevel || 2))
+        }
+        if (pose === undefined || activity === null || activity === undefined) return pose
+        // A career shows the pig at that job rather than at a generic desk.
+        if (moodKey === 'working' && activity.kind === 'work') {
+          var job = view.jobs.filter(j => j.key === activity.key)[0]
+          if (job !== undefined && job.art !== null) pose = 'job-' + job.art
+        }
+        if (moodKey === 'studying' && activity.kind === 'study') {
+          if (STUDY_ART[activity.stage] !== undefined) pose = STUDY_ART[activity.stage]
+        }
+        if (moodKey === 'traveling' && activity.kind === 'trip') {
+          // Own keys only: a key like `constructor` must not pick up a prototype member.
+          if (Object.prototype.hasOwnProperty.call(PLACE_ART, activity.key)) pose = PLACE_ART[activity.key]
+          else if (Object.prototype.hasOwnProperty.call(TRIP_ART, activity.region)) pose = TRIP_ART[activity.region]
+        }
+        if (moodKey === 'exercising' && activity.kind === 'gym') {
+          if (Object.prototype.hasOwnProperty.call(GYM_ART, activity.key)) pose = GYM_ART[activity.key]
+        }
+        return pose
+      }
 
       /** Show a drawn sprite by name, or fall back to the emoji. */
       function showArt(art, emoji) {
@@ -3356,7 +3438,6 @@ window.__ModuleLoader__.load({
         }
         wrap.appendChild(row)
         if (update !== null) wrap.appendChild(versionRow())
-        if (cloud !== null) wrap.appendChild(cloudBox())
         return wrap
       }
 
@@ -3456,6 +3537,102 @@ window.__ModuleLoader__.load({
         if (minutes < 1) return T('刚刚同步')
         if (minutes < 60) return T('{n} 分钟前同步', { n: minutes })
         return T('{n} 小时前同步', { n: Math.floor(minutes / 60) })
+      }
+
+      /** [ST0014] Is this pen mate drawn beside our pig? */
+      function penShown(id) {
+        if (cloud === null) return false
+        if (cloud.penShow === 'all') return true
+        if (cloud.penShow === 'self') return false
+        return cloud.penShow.indexOf(id) >= 0
+      }
+
+      /** [ST0014] The pen mates to draw: shown, hatched, and drawable by an up-to-date server. */
+      function friendsToDraw() {
+        if (cloud === null || !cloud.linked || cloud.pen === null) return []
+        return cloud.pen.members.filter(function (m) { return !m.you && m.hatched && m.stage !== null && penShown(m.id) })
+      }
+
+      /**
+       * [ST0014] Draw the chosen pen mates to our pig's left: their own pose
+       * and outfit, at most two thirds of their size (and never bigger than a
+       * plump pig), a name underneath. Rebuilt only when something changed,
+       * so the sprites do not flicker on every poll.
+       */
+      function renderFriends() {
+        var list = friendsToDraw()
+        var drawn = list.map(function (m) {
+          var pose = poseFor(m.stage, m.mood, m.moodLevel, m.activity)
+          var art = pose !== undefined ? pose : m.stage.art
+          var wear = m.stage.key !== 'grave' && m.worn.length > 0 ? '?wear=' + m.worn.join(',') : ''
+          return { id: m.id, name: m.name, art: art, src: art === null ? null : ART_URL + art + '.svg' + wear, emoji: m.stage.emoji, size: Math.round(Math.min(96, m.stage.size * 0.66)), faded: m.stage.faded, away: m.activity !== null }
+        })
+        var key = JSON.stringify(drawn)
+        if (key === friendsKey) return
+        friendsKey = key
+        Array.prototype.slice.call(friends.children).forEach(function (child) { child.remove() })
+        friends.hidden = drawn.length === 0
+        for (var i = 0; i < drawn.length; i += 1) {
+          var d = drawn[i]
+          var one = el('div', 'dp-friend')
+          one.style.setProperty('--friend-size', d.size + 'px')
+          one.setAttribute('data-faded', d.faded ? 'true' : 'false')
+          one.title = d.name
+          if (d.src !== null) {
+            var img = document.createElement('img')
+            img.className = 'dp-friend-img'
+            img.alt = ''
+            img.src = d.src
+            one.appendChild(img)
+          } else {
+            one.appendChild(el('span', 'dp-friend-emoji', d.emoji))
+          }
+          one.appendChild(el('span', 'dp-friend-name', d.name))
+          friends.appendChild(one)
+        }
+      }
+
+      /** [ST0014] 在线: the cloud login, then the pig pen and who shows on the desk. */
+      function onlineTab() {
+        if (cloud === null) {
+          content.appendChild(el('div', 'dp-empty', T('连接不上宿主')))
+          return
+        }
+        content.appendChild(cloudBox())
+      }
+
+      /** [ST0014] Who of the pen shows beside our pig: a line, two shortcuts and a toggle per pig. */
+      function penShowControls(pen) {
+        var others = pen.members.filter(function (m) { return !m.you })
+        var wrap = el('div', 'dp-pen-show')
+        if (others.length === 0) {
+          wrap.appendChild(el('div', 'dp-note', T('朋友加入后，可以选择让它们的猪出现在你的猪旁边。')))
+          return wrap
+        }
+        var shownCount = others.filter(function (m) { return penShown(m.id) }).length
+        var said = cloud.penShow === 'all' ? T('全部')
+          : shownCount === 0 ? T('只有自己')
+          : T('{n} 只', { n: shownCount })
+        var head = el('div', 'dp-row dp-version')
+        head.appendChild(el('span', null, '👀 ' + T('桌面上显示：{who}', { who: said })))
+        var self = button('dp-mini', { 'data-cloud-act': 'pen-show-self', 'aria-pressed': String(shownCount === 0) }, function () { cloudAct('pen-show', { show: 'self' }) })
+        self.textContent = T('只看自己')
+        self.disabled = cloudBusy
+        head.appendChild(self)
+        var every = button('dp-mini', { 'data-cloud-act': 'pen-show-all', 'aria-pressed': String(cloud.penShow === 'all') }, function () { cloudAct('pen-show', { show: 'all' }) })
+        every.textContent = T('全部显示')
+        every.disabled = cloudBusy
+        head.appendChild(every)
+        wrap.appendChild(head)
+        return wrap
+      }
+
+      /** [ST0014] Show or hide one pen mate; 'all' turns into an explicit list first. */
+      function togglePenShow(id) {
+        var others = cloud.pen.members.filter(function (m) { return !m.you }).map(function (m) { return m.id })
+        var current = others.filter(penShown)
+        var next = current.indexOf(id) >= 0 ? current.filter(function (x) { return x !== id }) : current.concat([id])
+        cloudAct('pen-show', { show: next.length === 0 ? 'self' : (next.length === others.length ? 'all' : next) })
       }
 
       /** [ST0014 P3] An outing's name in the panel's language, from the tables the snapshot sent. */
@@ -3560,9 +3737,20 @@ window.__ModuleLoader__.load({
           grow.appendChild(el('div', null, m.name + (m.you ? ' ' + T('（你）') : '')))
           grow.appendChild(el('div', 'dp-dim', doing))
           item.appendChild(grow)
+          // [ST0014] show this pig beside ours, or not.
+          if (!m.you && m.id !== '') {
+            (function (member) {
+              var on = penShown(member.id)
+              var eye = button('dp-mini dp-pen-eye', { 'data-pen-show': member.id, 'aria-pressed': String(on) }, function () { togglePenShow(member.id) })
+              eye.textContent = on ? T('显示中') : T('不显示')
+              eye.disabled = cloudBusy
+              item.appendChild(eye)
+            })(m)
+          }
           list.appendChild(item)
         }
         wrap.appendChild(list)
+        wrap.appendChild(penShowControls(pen))
 
         for (var k = 0; k < pen.invites.length; k += 1) {
           (function (inv) {
@@ -4705,6 +4893,7 @@ window.__ModuleLoader__.load({
         content.textContent = ''
         renameInput = null
         for (var k = 0; k < TABS.length; k += 1) {
+          if (icons[TABS[k].key] === undefined) continue // 在线 on a host without the cloud
           icons[TABS[k].key].setAttribute('data-active', TABS[k].key === tab ? 'true' : 'false')
         }
         if (host.getAttribute('data-open') !== 'true') return
@@ -4777,6 +4966,14 @@ window.__ModuleLoader__.load({
           sleeping.appendChild(el('div', null, T('睡着时只会变饿，心情和清洁会慢慢恢复')))
           if (view.pig.sleepAuto) sleeping.appendChild(el('div', 'dp-dim', T('跟着电脑一起睡的，电脑醒来它就起床')))
           content.appendChild(sleeping)
+        }
+
+        // [ST0014] logging in works before there is a pig (a new computer can
+        // take the cloud's pig instead of opening a box).
+        if (tab === 'online') {
+          onlineTab()
+          fitPanel()
+          return
         }
 
         if (view.pig === null) {
@@ -4856,29 +5053,7 @@ window.__ModuleLoader__.load({
           lastStage = null
         } else {
           const stage = view.pig.stage
-          // A drawn stage shows its sprite — or, for a living pig, the pose of
-          // its current mood; everything else is the emoji.
-          var pose = stage.art !== null && stage.key !== 'grave' ? MOOD_ART[view.pig.mood] : undefined
-          // Sick, hungry, dirty and lonely come in three strengths.
-          if (pose !== undefined && LEVELED_MOODS[view.pig.mood] === true) {
-            pose += '-' + Math.min(3, Math.max(1, view.pig.moodLevel || 2))
-          }
-          // A career shows the pig at that job rather than at a generic desk.
-          if (pose !== undefined && view.pig.mood === 'working' && view.activity !== null && view.activity.kind === 'work') {
-            var job = view.jobs.filter(j => j.key === view.activity.key)[0]
-            if (job !== undefined && job.art !== null) pose = 'job-' + job.art
-          }
-          if (pose !== undefined && view.pig.mood === 'studying' && view.activity !== null && view.activity.kind === 'study') {
-            if (STUDY_ART[view.activity.stage] !== undefined) pose = STUDY_ART[view.activity.stage]
-          }
-          if (pose !== undefined && view.pig.mood === 'traveling' && view.activity !== null && view.activity.kind === 'trip') {
-            // Own keys only: a key like `constructor` must not pick up a prototype member.
-            if (Object.prototype.hasOwnProperty.call(PLACE_ART, view.activity.key)) pose = PLACE_ART[view.activity.key]
-            else if (Object.prototype.hasOwnProperty.call(TRIP_ART, view.activity.region)) pose = TRIP_ART[view.activity.region]
-          }
-          if (pose !== undefined && view.pig.mood === 'exercising' && view.activity !== null && view.activity.kind === 'gym') {
-            if (Object.prototype.hasOwnProperty.call(GYM_ART, view.activity.key)) pose = GYM_ART[view.activity.key]
-          }
+          var pose = poseFor(stage, view.pig.mood, view.pig.moodLevel, view.activity)
           // A grave or a soul wears nothing; the host already sends none for them.
           wearQuery = stage.key !== 'grave' && view.pig.outfit.worn.length > 0 ? '?wear=' + view.pig.outfit.worn.join(',') : ''
           showArt(pose !== undefined ? pose : stage.art, stage.emoji)
@@ -5017,7 +5192,11 @@ window.__ModuleLoader__.load({
 
       function setCloud(raw) {
         var before = JSON.stringify(cloud)
+        var hadRoute = cloud !== null
         cloud = normalizeCloud(raw)
+        // [ST0014] the 在线 tab appears once the host has answered.
+        if (hadRoute !== (cloud !== null)) paintBar()
+        renderFriends()
         if (cloud !== null) {
           // A refused op from another device: say it once.
           for (var i = 0; i < cloud.notices.length; i += 1) {
@@ -5282,8 +5461,10 @@ window.__ModuleLoader__.load({
 
       // Left click is a pat on the head. The menu is on the context menu, so a
       // stray click can no longer open or close the panel by accident.
-      scene.addEventListener('pointerup', function () {
+      scene.addEventListener('pointerup', function (event) {
         if (endDrag()) return
+        // [ST0014] a pen mate's pig is not ours to pat.
+        if (event?.target?.closest?.('.dp-friends')) return
         // An unhatched save is a box, whether or not one exists yet.
         if (view.hatched !== true) {
           pokeBox()
