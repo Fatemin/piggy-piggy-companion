@@ -5,11 +5,16 @@ import WebKit
 private final class PetPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
+    /// [ST0026] Brought in front: the desk's pen follows, just under the pig.
+    var onFront: (() -> Void)?
 
     /// [Q0016] No longer always on top: other windows may cover the pig, and
     /// a click on whatever shows of it brings it back in front.
     override func sendEvent(_ event: NSEvent) {
-        if event.type == .leftMouseDown || event.type == .rightMouseDown { orderFrontRegardless() }
+        if event.type == .leftMouseDown || event.type == .rightMouseDown {
+            orderFrontRegardless()
+            onFront?()
+        }
         super.sendEvent(event)
     }
 }
@@ -54,6 +59,16 @@ final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     /// The panel's ⤢ button: the host opens the big window.
     var onOpenPanel: (() -> Void)?
+    /// [ST0026] 在线's pen buttons: fence one in on the desk, or take it down.
+    var onPenDraw: (() -> Void)?
+    var onPenClear: (() -> Void)?
+    /// [ST0026] The page (re)loaded: the host tells it about the pen.
+    var onLoaded: (() -> Void)?
+    /// [ST0026] The pig was clicked to the front.
+    var onFront: (() -> Void)? {
+        get { (window as? PetPanel)?.onFront }
+        set { (window as? PetPanel)?.onFront = newValue }
+    }
     /// Where the pig is: the window's bottom-right corner (the window's size
     /// may change between versions). The old key held the 340-wide window's origin.
     private static let anchorKey = "petWindowAnchor"
@@ -102,6 +117,11 @@ final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
     func reload() {
         webView.reload()
+    }
+
+    /// [ST0026] Tell the page whether a pen is fenced in on the desk (`info` is a JS object literal).
+    func announcePen(_ info: String) {
+        webView.evaluateJavaScript("window.__pigPen && window.__pigPen(\(info))", completionHandler: nil)
     }
 
     func show() {
@@ -163,6 +183,7 @@ final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
     /// renders (closed, then with the menu open) and the click-through verdicts
     /// to that directory. Lets the widget be checked without screen recording.
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        onLoaded?()
         guard let dir = ProcessInfo.processInfo.environment["PIGGY_DEBUG_SNAPSHOT"], !dir.isEmpty else { return }
         Task { @MainActor in await self.selfCheck(into: URL(fileURLWithPath: dir, isDirectory: true)) }
     }
@@ -221,6 +242,10 @@ final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
             saveOrigin()
         case "openPanel":
             onOpenPanel?()
+        case "penDraw":
+            onPenDraw?()
+        case "penClear":
+            onPenClear?()
         default:
             break
         }
@@ -269,7 +294,7 @@ final class PetWindow: NSObject, WKScriptMessageHandler, WKNavigationDelegate {
 
 /// WKUserContentController retains its handlers; this breaks the cycle.
 @MainActor
-private final class WeakMessageHandler: NSObject, WKScriptMessageHandler {
+final class WeakMessageHandler: NSObject, WKScriptMessageHandler {
     weak var target: WKScriptMessageHandler?
     init(_ target: WKScriptMessageHandler) { self.target = target }
     func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {

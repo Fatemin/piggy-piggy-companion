@@ -206,7 +206,10 @@ export function apply(ctx, config = {}) {
         handler: async (req, res) => {
           if (req.method !== 'GET') return sendJson(res, 405, { error: 'method not allowed; use GET' }, { allow: 'GET' })
           try {
-            sendJson(res, 200, snapshot(store), { 'cache-control': 'no-store' })
+            // [ST0026] `?peek=1` (the desk's pen, reading the job table) leaves
+            // the announcements for the panel that is waiting to show them.
+            const peek = /[?&]peek=1(?:&|$)/.test(String(req.url ?? ''))
+            sendJson(res, 200, snapshot(store, { drain: !peek }), { 'cache-control': 'no-store' })
           } catch (error) {
             sendJson(res, 500, { error: error instanceof Error ? error.message : String(error) })
           }

@@ -45,6 +45,8 @@ final class PigServer {
 
     var baseURL: URL { URL(string: "http://127.0.0.1:\(port)/")! }
     var deskURL: URL { baseURL.appendingPathComponent("desk") }
+    /// [ST0026] The desk's pig pen: the same page, pen mates only.
+    var penURL: URL { URL(string: "desk?pen=1", relativeTo: baseURL)!.absoluteURL }
     var panelURL: URL { baseURL }
     var artURL: URL { root.appendingPathComponent("assets/stage-young.svg") }
 

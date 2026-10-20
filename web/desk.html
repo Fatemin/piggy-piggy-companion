@@ -21,6 +21,12 @@
   //   __pigPlace(r, b) — where the window stops at a screen edge, the host
   //                     moves the pig inside it instead (right/bottom in px).
   //   openPanel       — the panel's ⤢ button asks the host for the big window.
+  //   __pigPen(info)  — [ST0026] whether a pen is fenced in on the desk
+  //                     ({ set, width, height }); penDraw / penClear ask the
+  //                     host to fence one in (dragging across the desk) or
+  //                     take it down.
+  //   ?pen=1          — [ST0026] this page is that pen: a click-through window
+  //                     over it where pen mates roam; no pig of ours.
   //
   // The window is larger than the pig and its panel (the panel can be resized),
   // and everything transparent in it is click-through.
@@ -28,6 +34,7 @@
   window.__ModuleLoader__ = { load: e => { entry = e } }
 
   const native = window.webkit?.messageHandlers?.pig ?? null
+  const penYard = new URLSearchParams(location.search).get('pen') === '1'
 
   window.__pigHit = (x, y) => {
     const el = document.elementFromPoint(x, y)
@@ -38,10 +45,14 @@
     document.querySelector('[data-dsh-pig]')?.dispatchEvent(new CustomEvent('dsh-pig:place', { detail: { right, bottom } }))
   }
 
+  window.__pigPen = info => {
+    document.querySelector('[data-dsh-pig]')?.dispatchEvent(new CustomEvent('dsh-pig:pen', { detail: info }))
+  }
+
   // Capture phase on window runs before client.js's own listeners on the pig.
   let drag = null
   addEventListener('pointerdown', event => {
-    if (native === null || event.button !== 0) return
+    if (native === null || penYard || event.button !== 0) return
     const scene = event.target.closest?.('.dp-scene')
     if (!scene) return
     drag = { scene, x: event.screenX, y: event.screenY, moved: false }
@@ -76,8 +87,10 @@
 <script src="/client.js"></script>
 <script>
   if (entry !== null) {
-    entry.factory(() => {}).apply(native === null ? {} : {
+    entry.factory(() => {}).apply(penYard ? { layout: 'pen' } : native === null ? {} : {
       openPanel: () => native.postMessage({ type: 'openPanel' }),
+      penDraw: () => native.postMessage({ type: 'penDraw' }),
+      penClear: () => native.postMessage({ type: 'penClear' }),
     })
   }
 </script>

@@ -6,6 +6,9 @@ import Cocoa
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let server = PigServer()
     private let pet = PetWindow()
+    /// [ST0026] The desk's pig pen, and the overlay that fences one in.
+    private let pen = PenYard()
+    private var picker: PenPicker?
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let statusLineItem = NSMenuItem(title: "🐖 …", action: nil, keyEquivalent: "")
     private var toggleItem: NSMenuItem?
@@ -21,8 +24,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
             pet.onOpenPanel = { [weak self] in self?.openInBrowser() }
+            pet.onPenDraw = { [weak self] in self?.pickPen() }
+            pet.onPenClear = { [weak self] in self?.setPen(nil) }
+            pet.onLoaded = { [weak self] in self?.announcePen() }
+            pet.onFront = { [weak self] in self?.showPen() }
             pet.load(server.deskURL)
+            pen.load(server.penURL)
             pet.show()
+            showPen()
             await refreshPeek()
             peekTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
                 Task { @MainActor in await self?.refreshPeek() }
@@ -102,14 +111,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func togglePet() {
-        if pet.isVisible { pet.hide() } else { pet.show() }
+        if pet.isVisible {
+            pet.hide()
+            pen.hide()
+        } else {
+            pet.show()
+            showPen()
+        }
         refreshToggleTitle()
     }
 
     @objc private func resetPosition() {
         pet.resetPosition()
         pet.show()
+        showPen()
         refreshToggleTitle()
+    }
+
+    // MARK: the desk's pen (ST0026)
+
+    /// The pen sits just under the pig, and only while the pig is out.
+    private func showPen() {
+        if pet.isVisible { pen.show(below: pet.window) } else { pen.hide() }
+    }
+
+    private func announcePen() {
+        pet.announcePen(pen.pageInfo)
+    }
+
+    /// Lay the overlay over the desk; the box dragged out there becomes the pen.
+    private func pickPen() {
+        guard picker == nil else { return }
+        let next = PenPicker(baseURL: server.baseURL, lang: lang, current: pen.rect) { [weak self] rect in
+            guard let self else { return }
+            self.picker = nil
+            if let rect { self.setPen(rect) }
+        }
+        picker = next
+        next.show()
+    }
+
+    private func setPen(_ rect: NSRect?) {
+        pen.set(rect)
+        showPen()
+        announcePen()
     }
 
     @objc private func openInBrowser() {
@@ -118,6 +163,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func reload() {
         pet.reload()
+        pen.reload()
     }
 
     @objc private func chooseLanguage(_ sender: NSMenuItem) {

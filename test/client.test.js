@@ -2532,3 +2532,122 @@ test('[ST0014] pen mates are drawn beside the pig: all, some, or just mine', asy
   await settle(); await settle()
   assert.deepEqual(friendNames(dom), ['Ann', 'Bo'])
 })
+
+// ===========================================================================
+// [ST0026] The pen on the desk: pen mates roam there instead of beside our pig
+// ===========================================================================
+
+/** The pen mates in the desk's pen: id → how it stands, what it does, what it shows. */
+function roamersOf(dom) {
+  const found = {}
+  dom.body.walk(node => {
+    const id = node.attributes?.['data-roamer']
+    if (id === undefined) return
+    const imgs = []
+    node.walk(child => { if (child.className === 'dp-friend-img') imgs.push(child.src) })
+    const name = node.children.find(child => child.className === 'dp-friend-name')
+    found[id] = { roam: node.attributes['data-roam'], move: node.attributes['data-move'], img: imgs[0] ?? null, name: name?.textContent }
+  })
+  return found
+}
+
+test('[ST0026] the desk pen: a pen mate with nothing to do roams, one out stays put in its pose', async () => {
+  const { registration, dom } = await loadClient()
+  let poll = null
+  globalThis.window.setInterval = fn => { poll = fn; return 1 }
+  cloudNet(CLOUD)
+  const seen = []
+  const inner = globalThis.fetch
+  globalThis.fetch = (url, options) => { seen.push(url); return inner(url, options) }
+  registration.factory(() => {}).apply({ layout: 'pen' })
+  await settle(); await settle()
+
+  assert.equal(hostOf(dom), undefined, 'no pig of ours in the pen')
+  const yard = findByClass(dom.body, 'dp-yard')
+  assert.notEqual(yard, undefined)
+  assert.equal(findByClass(yard, 'dp-yard-fence').hidden, false, 'a fence while someone lives here')
+  const pigs = roamersOf(dom)
+  assert.deepEqual(Object.keys(pigs).sort(), ['ann', 'bo'], 'our own pig is not one of them')
+  assert.equal(pigs.ann.roam, 'free')
+  assert.equal(pigs.ann.name, 'Ann')
+  assert.ok(pigs.ann.img.includes('mood-happy') && pigs.ann.img.includes('wear=bow'), pigs.ann.img)
+  assert.equal(pigs.bo.roam, 'busy')
+  assert.equal(pigs.bo.move, 'still')
+  assert.ok(pigs.bo.img.includes('away-trip-tokyo'), 'travelling, it shows its trip')
+  assert.ok(seen.includes('/dsh-pig/state?peek=1'), 'the job table, read without draining')
+  assert.ok(!seen.includes('/dsh-pig/state'), 'never the draining read: that is the panel\'s')
+
+  // Back from Tokyo: it roams too. Asleep: it stays put.
+  cloudNet({ ...CLOUD, pen: { ...CLOUD.pen, members: [CLOUD.pen.members[0], { ...CLOUD.pen.members[1], pig: friendPig('Ann', { asleep: true, mood: 'asleep' }) }, { ...CLOUD.pen.members[2], pig: friendPig('Bo') }] } })
+  await poll(); await settle()
+  assert.equal(roamersOf(dom).bo.roam, 'free')
+  assert.equal(roamersOf(dom).ann.roam, 'busy')
+  assert.ok(roamersOf(dom).ann.img.includes('mood-asleep'))
+
+  // Hidden from the desk in 在线: gone from the pen. Signed out: the pen is empty.
+  cloudNet({ ...CLOUD, penShow: ['bo'] })
+  await poll(); await settle()
+  assert.deepEqual(Object.keys(roamersOf(dom)), ['bo'])
+  cloudNet({ ...CLOUD, phase: 'signed-out', linked: false, pen: null })
+  await poll(); await settle()
+  assert.deepEqual(roamersOf(dom), {})
+  assert.equal(findByClass(yard, 'dp-yard-fence').hidden, true)
+})
+
+test('[ST0026] what a pen mate gets up to: all eight moves, only the calm ones when poorly', () => {
+  return loadClient().then(({ registration }) => {
+    const { pickRoamMove } = registration.factory(() => {})
+    const picks = calm => {
+      const out = new Set()
+      for (let i = 0; i < 1000; i += 1) out.add(pickRoamMove(() => i / 1000, calm))
+      return [...out].sort()
+    }
+    assert.deepEqual(picks(false), ['belly', 'dash', 'lie', 'rest', 'roll-x', 'roll-y', 'sit', 'walk'])
+    assert.deepEqual(picks(true), ['lie', 'rest', 'sit', 'walk'])
+    assert.equal(pickRoamMove(() => 0.999999, false), 'rest')
+  })
+})
+
+test('[ST0026] with a pen on the desk, pen mates leave our pig\'s side; 在线 fences one in and takes it down', async () => {
+  const { registration, dom } = await loadClient()
+  let poll = null
+  globalThis.window.setInterval = fn => { poll = fn; return 1 }
+  const asked = []
+  registration.factory(() => {}).apply({ penDraw: () => asked.push('draw'), penClear: () => asked.push('clear') })
+  await settle()
+  cloudNet(CLOUD)
+  await poll(); await settle()
+  assert.deepEqual(friendNames(dom), ['Ann', 'Bo'])
+
+  openPanel(dom)
+  pickTab(dom, 'online')
+  assert.equal(findLastByAttr(contentOf(dom), 'data-desk-pen', 'draw'), undefined, 'not until the host says it can fence one in')
+  hostOf(dom).fire('dsh-pig:pen', { detail: { set: false } })
+  assert.ok(contentOf(dom).allText().includes('桌面上还没有猪圈'))
+  assert.equal(findLastByAttr(contentOf(dom), 'data-desk-pen', 'clear'), undefined, 'nothing to take down yet')
+  findLastByAttr(contentOf(dom), 'data-desk-pen', 'draw').fire('click')
+  assert.deepEqual(asked, ['draw'])
+
+  hostOf(dom).fire('dsh-pig:pen', { detail: { set: true, width: 640.4, height: 360 } })
+  assert.deepEqual(friendNames(dom), [], 'they roam in the pen now')
+  assert.ok(contentOf(dom).allText().includes('桌面猪圈 640×360'))
+  findLastByAttr(contentOf(dom), 'data-desk-pen', 'clear').fire('click')
+  assert.deepEqual(asked, ['draw', 'clear'])
+
+  hostOf(dom).fire('dsh-pig:pen', { detail: { set: false } })
+  assert.deepEqual(friendNames(dom), ['Ann', 'Bo'], 'back beside our pig')
+})
+
+test('[ST0026] a host that cannot fence in a pen shows no pen buttons, whatever it says', async () => {
+  const { registration, dom } = await loadClient()
+  let poll = null
+  globalThis.window.setInterval = fn => { poll = fn; return 1 }
+  registration.factory(() => {}).apply({})
+  await settle()
+  cloudNet(CLOUD)
+  await poll(); await settle()
+  hostOf(dom).fire('dsh-pig:pen', { detail: { set: true, width: 300, height: 200 } })
+  openPanel(dom)
+  pickTab(dom, 'online')
+  assert.equal(findLastByAttr(contentOf(dom), 'data-desk-pen', 'draw'), undefined)
+})
