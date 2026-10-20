@@ -1712,8 +1712,8 @@ function deck(cards, dealt = []) {
 
 const A = 0, FIVE = 4, SEVEN = 6, NINE = 8, TEN = 9, KING = 12, QUEEN_H = 24, NINE_H = 21
 
-test('blackjack: the table is 18→1.1 up to 21→10, bets from 100, stand on 18', () => {
-  assert.deepEqual(BLACKJACK.payouts.map(row => [row.total, row.multiplier]), [[18, 1.1], [19, 1.3], [20, 1.8], [21, 10]])
+test('blackjack: the table is 18→1 up to 21→5, bets from 100, stand on 18', () => {
+  assert.deepEqual(BLACKJACK.payouts.map(row => [row.total, row.multiplier]), [[18, 1], [19, 1.2], [20, 1.5], [21, 5]])
   assert.equal(Math.min(...BLACKJACK.bets), 100)
   assert.equal(BLACKJACK.standAt, 18)
   assert.deepEqual(blackjackTotal([A, KING]), { total: 21, soft: true })
@@ -1722,15 +1722,15 @@ test('blackjack: the table is 18→1.1 up to 21→10, bets from 100, stand on 18
   assert.deepEqual(blackjackTotal([A, A + 13, NINE]), { total: 21, soft: true })
 })
 
-test('blackjack: a natural 21 is paid 10× on the deal', () => {
+test('blackjack: a natural 21 is paid 5× on the deal', () => {
   const pig = hatchEgg(T0)
   pig.coins = 1000
   const out = dealBlackjack(pig, 100, T0, deck([A, KING]))
   assert.equal(out.ok, true)
   assert.equal(out.round.done, true)
   assert.equal(out.round.outcome, 'jackpot')
-  assert.equal(out.round.coins, 1000)
-  assert.equal(pig.coins, 1000 - 100 + 1000)
+  assert.equal(out.round.coins, 500)
+  assert.equal(pig.coins, 1000 - 100 + 500)
   assert.equal(pig.blackjack, null)
   assert.deepEqual(out.round.cards, [{ rank: 'A', suit: '♠' }, { rank: 'K', suit: '♠' }])
 })
@@ -1752,13 +1752,13 @@ test('blackjack: under 18 the pig must draw; a stand pays by the total', () => {
   const stood = standBlackjack(pig, T0)
   assert.equal(stood.ok, true)
   assert.equal(stood.round.outcome, 'win')
-  assert.equal(stood.round.multiplier, 1.1)
-  assert.equal(pig.coins, 800 + 220)
+  assert.equal(stood.round.multiplier, 1)
+  assert.equal(pig.coins, 800 + 200)
   assert.equal(pig.stats.blackjacks, 1)
   assert.equal(standBlackjack(pig, T0).reason, 'no-hand')
 })
 
-test('blackjack: over 21 is bust and the bet is gone; drawing to exactly 21 pays 10×', () => {
+test('blackjack: over 21 is bust and the bet is gone; drawing to exactly 21 pays 5×', () => {
   const pig = hatchEgg(T0)
   pig.coins = 1000
   dealBlackjack(pig, 100, T0, deck([TEN, FIVE]))
@@ -1772,7 +1772,7 @@ test('blackjack: over 21 is bust and the bet is gone; drawing to exactly 21 pays
   const twentyOne = hitBlackjack(pig, T0, deck([NINE_H], pig.blackjack.cards))
   assert.equal(twentyOne.round.total, 21)
   assert.equal(twentyOne.round.outcome, 'jackpot')
-  assert.equal(pig.coins, 900 - 500 + 5000)
+  assert.equal(pig.coins, 900 - 500 + 2500)
 })
 
 test('blackjack: refusals — bets off the table, too poor, out of the house, dead', () => {

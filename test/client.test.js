@@ -2180,7 +2180,7 @@ const findAllByAttr = (root, attr, value) => {
 }
 const BLACKJACK_TABLE = {
   bets: [100, 200, 500], standAt: 18,
-  payouts: [{ total: 18, multiplier: 1.1 }, { total: 19, multiplier: 1.3 }, { total: 20, multiplier: 1.8 }, { total: 21, multiplier: 10 }],
+  payouts: [{ total: 18, multiplier: 1 }, { total: 19, multiplier: 1.2 }, { total: 20, multiplier: 1.5 }, { total: 21, multiplier: 5 }],
   hand: null,
 }
 
@@ -2192,7 +2192,7 @@ test('blackjack: the shop offers the bets the pig can afford, and a bet POSTs th
   openCasino(dom)
   const deals = findAllByAttr(contentOf(dom), 'data-blackjack', 'deal')
   assert.deepEqual(deals.map(b => [b.attributes['data-bet'], b.disabled]), [['100', false], ['200', false], ['500', true]])
-  assert.ok(contentOf(dom).allText().includes('21 点 ×10'), contentOf(dom).allText())
+  assert.ok(contentOf(dom).allText().includes('21 点 ×5'), contentOf(dom).allText())
   deals[0].fire('click')
   await settle()
   assert.deepEqual(postsOf(net).at(-1), { action: 'blackjack', move: 'deal', bet: 100 })
@@ -2215,7 +2215,7 @@ test('blackjack: an open hand shows its cards; stand waits for 18', async () => 
 
 test('blackjack: a hand that ends says how, and stays on the table until the next deal', async () => {
   const status = { ...SNAPSHOT, blackjack: { ...BLACKJACK_TABLE, hand: { bet: 100, cards: [{ rank: '10', suit: '♠' }, { rank: '9', suit: '♦' }], total: 19, soft: false } } }
-  const round = { bet: 100, cards: [{ rank: '10', suit: '♠' }, { rank: '9', suit: '♦' }, { rank: '2', suit: '♣' }], total: 21, soft: false, done: true, outcome: 'jackpot', multiplier: 10, coins: 1000 }
+  const round = { bet: 100, cards: [{ rank: '10', suit: '♠' }, { rank: '9', suit: '♦' }, { rank: '2', suit: '♣' }], total: 21, soft: false, done: true, outcome: 'jackpot', multiplier: 5, coins: 500 }
   const { dom } = await loadWithPoll({ status, actResult: { ...SNAPSHOT, blackjack: BLACKJACK_TABLE, ok: true, round } })
   openPanel(dom)
   pickTab(dom, 'shop')
@@ -2223,7 +2223,7 @@ test('blackjack: a hand that ends says how, and stays on the table until the nex
   findByAttr(contentOf(dom), 'data-blackjack', 'hit').fire('click')
   await settle()
   await settle()
-  assert.ok(findByClass(hostOf(dom), 'dp-bubble').allText().includes('1000'))
+  assert.ok(findByClass(hostOf(dom), 'dp-bubble').allText().includes('500'))
   assert.ok(lastByClass(hostOf(dom), 'dp-bj').allText().includes('2♣'), 'the last hand is still shown')
 })
 

@@ -2195,7 +2195,7 @@ export function dealBlackjack(state, bet, nowMs, random = () => nextRandom(state
   return blackjackTurn(state, nowMs)
 }
 
-/** Draw one more card; over 21 loses the bet, exactly 21 pays 10×. */
+/** Draw one more card; over 21 loses the bet, exactly 21 pays 5×. */
 export function hitBlackjack(state, nowMs, random = () => nextRandom(state)) {
   if (state === null) return { ok: false, reason: 'absent' }
   decay(state, nowMs)
