@@ -328,3 +328,35 @@ test('[ST0014] which pen mates show is remembered with the login, and checked', 
     w.done()
   }
 })
+
+test('[ST0014] with HTTPS_PROXY set, cloud requests go through the proxy', async () => {
+  const { createServer } = await import('node:http')
+  const { execFile } = await import('node:child_process')
+  const asked = []
+  // A proxy that only records what it was asked to tunnel to.
+  const proxy = createServer().on('connect', (req, socket) => {
+    asked.push(req.url)
+    socket.end('HTTP/1.1 502 Bad Gateway\r\n\r\n')
+  })
+  await new Promise(resolve => proxy.listen(0, '127.0.0.1', resolve))
+  const dir = mkdtempSync(join(tmpdir(), 'dsh-pig-proxy-'))
+  try {
+    const script = `
+      const { createCloud } = await import(${JSON.stringify(new URL('../lib/cloud.js', import.meta.url).href)})
+      const store = { state: null, replaceFromCloud() {} }
+      const cloud = createCloud({ statePath: ${JSON.stringify(join(dir, 'state.json'))}, store, setTimer: () => null, clearTimer: () => {} })
+      const reply = await cloud.requestCode({ server: 'https://pig.invalid', email: 'me@example.com' })
+      console.log(reply.reason)
+    `
+    const env = { ...process.env, HTTPS_PROXY: `http://127.0.0.1:${proxy.address().port}`, NO_PROXY: '' }
+    delete env.https_proxy
+    const out = await new Promise((resolve, reject) => {
+      execFile(process.execPath, ['--input-type=module', '-e', script], { env, timeout: 20_000 }, (error, stdout, stderr) => (error ? reject(new Error(stderr || error.message)) : resolve(stdout.trim())))
+    })
+    assert.deepEqual(asked, ['pig.invalid:443'], 'the request was tunnelled through the proxy')
+    assert.equal(out, 'offline', 'and a dead end there reads as offline, as before')
+  } finally {
+    proxy.close()
+    rmSync(dir, { recursive: true, force: true })
+  }
+})

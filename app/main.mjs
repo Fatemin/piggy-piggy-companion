@@ -8,7 +8,7 @@
  * window shows the unmodified upstream panel from it.
  */
 
-import { app, BrowserWindow, ipcMain, Menu, nativeImage, powerMonitor, screen, Tray } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, nativeImage, net, powerMonitor, screen, Tray } from 'electron'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -78,12 +78,20 @@ function readJson(file, fallback) {
   try { return JSON.parse(readFileSync(file, 'utf8')) } catch { return fallback }
 }
 
+/**
+ * [ST0014] Requests to the cloud and to GitHub go through Chromium's network
+ * stack, which follows the system proxy (and PAC) like the browser does;
+ * Node's own fetch ignores it, so a friend behind a proxy could not log in.
+ */
+const systemFetch = (url, init) => net.fetch(url, init)
+
 async function openServer(statePath) {
+  const cloudOptions = { fetch: systemFetch }
   try {
-    return await startServer({ port: PREFERRED_PORT, statePath, update: updater })
+    return await startServer({ port: PREFERRED_PORT, statePath, update: updater, cloudOptions })
   } catch (error) {
     if (error?.code !== 'EADDRINUSE') throw error
-    return startServer({ port: 0, statePath, update: updater })
+    return startServer({ port: 0, statePath, update: updater, cloudOptions })
   }
 }
 

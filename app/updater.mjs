@@ -16,7 +16,7 @@
  * offers the download page instead.
  */
 
-import { app, shell } from 'electron'
+import { app, net, shell } from 'electron'
 import { spawn } from 'node:child_process'
 import { accessSync, constants, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -50,6 +50,8 @@ export function createUpdater() {
     status = 'checking'
     try {
       latest = await fetchLatest({
+        // [ST0014] Chromium's network stack: follows the system proxy.
+        fetchImpl: (url, init) => net.fetch(url, init),
         current: app.getVersion(),
         repo: process.env.PIGGY_UPDATE_REPO || undefined,
         feed: process.env.PIGGY_UPDATE_FEED || undefined,
@@ -72,7 +74,7 @@ export function createUpdater() {
     // Leftovers from an earlier attempt.
     rmSync(dir, { recursive: true, force: true })
     try {
-      const file = await download(release.asset, dir, { onProgress: fraction => { progress = fraction } })
+      const file = await download(release.asset, dir, { onProgress: fraction => { progress = fraction }, fetchImpl: (url, init) => net.fetch(url, init) })
       status = 'installing'
       if (process.platform === 'win32') {
         spawn(file, ['--updated', '/S', '--force-run'], { detached: true, stdio: 'ignore' }).unref()

@@ -8,6 +8,7 @@ All notable changes to `dsh-pig`. Versions follow the plugin's own
 ## [Unreleased]
 
 ### Changed
+- **云同步和检查更新走系统代理（ST0014）。** 开着代理（Windows / Mac 的系统代理、PAC）上网的朋友，在浏览器里能打开云端地址，桌面 App 登录时却提示「连不上云端」：App 连云端和 GitHub 用的是 Node 自己的网络请求，不读系统代理。现在桌面 App 改用 Electron 的网络模块（和浏览器一样遵守系统代理），云同步和检查、下载更新都走它。命令行和 Swift 桌宠用的 `pig serve` 则读取 `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` / `NO_PROXY` 环境变量。
 - **21 点赔率下调（ST0025）。** 停牌赔付从 18 点 ×1.1、19 点 ×1.3、20 点 ×1.8、21 点 ×10 改为 **18 点 ×1、19 点 ×1.2、20 点 ×1.5、21 点 ×5**。按最优打法算，每把平均拿回的钱从下注额的约 2.07 倍降到约 1.29 倍。
 
 ---
