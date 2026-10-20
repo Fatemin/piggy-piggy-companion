@@ -469,10 +469,11 @@ export function lotteryPrize(roll) {
 //
 // No dealer: the hand alone decides. Below `standAt` the pig has to draw; over
 // 21 is bust and the bet is gone. A stand pays the bet times its total's
-// multiplier, and exactly 21 (on the deal or after drawing) pays 10×, so the
+// multiplier, and exactly 21 (on the deal or after drawing) pays 5×, so the
 // small totals pay little and the whole game is pushing toward 21. Played
-// well it returns about 2× the bet on average, about 40% of hands bust and
-// about 14% land on 21 (the owner's call, ST0015).
+// well it returns about 1.29× the bet on average, about 39% of hands bust and
+// about 14% land on 21 (the owner's call: ST0015 paid 1.1/1.3/1.8/10 for
+// about 2.07×; ST0025 cut it to 1.0/1.2/1.5/5).
 //
 // Cards come from one shuffled 52-card deck per hand; `card` is 0–51, rank
 // `card % 13` (0 = A, 10–12 = J Q K) and suit `Math.floor(card / 13)`.
@@ -482,10 +483,10 @@ export const BLACKJACK = Object.freeze({
   bets: Object.freeze([100, 200, 500]),
   standAt: 18,
   payouts: Object.freeze([
-    Object.freeze({ total: 18, multiplier: 1.1 }),
-    Object.freeze({ total: 19, multiplier: 1.3 }),
-    Object.freeze({ total: 20, multiplier: 1.8 }),
-    Object.freeze({ total: 21, multiplier: 10 }),
+    Object.freeze({ total: 18, multiplier: 1 }),
+    Object.freeze({ total: 19, multiplier: 1.2 }),
+    Object.freeze({ total: 20, multiplier: 1.5 }),
+    Object.freeze({ total: 21, multiplier: 5 }),
   ]),
   // Mood after the hand: hitting 21, any other paid stand, and a bust.
   happiness: Object.freeze({ jackpot: 20, win: 5, bust: -5 }),
