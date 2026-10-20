@@ -131,6 +131,12 @@ test('server serves the shell, the client and upstream routes', async () => {
     const desk = await (await fetch(new URL('desk', server.url))).text()
     assert.match(desk, /__pigHit/)
     assert.match(desk, /background: transparent/)
+    // [ST0026] the desk's pen: the host's bridge for it, and the overlay that fences one in.
+    assert.match(desk, /__pigPen/)
+    assert.match(desk, /layout: 'pen'/)
+    const pick = await fetch(new URL('pen-pick?lang=ja', server.url))
+    assert.equal(pick.status, 200)
+    assert.match(await pick.text(), /penPicked/)
 
     const peek = await (await fetch(new URL('pig/peek', server.url))).json()
     assert.match(peek.line, /🍚\d+/)
@@ -139,6 +145,27 @@ test('server serves the shell, the client and upstream routes', async () => {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ input: 'status' }),
     })).json()
     assert.equal(cmd.kind, 'success')
+  } finally {
+    await server.close()
+  }
+})
+
+test('[ST0026] the desk pen reads the state with ?peek=1, which leaves the announcements to the panel', async () => {
+  const file = hatched(tempState())
+  // A shift that ended a minute ago: the server settles it and queues "back from work".
+  const save = readSave(file)
+  const now = Date.now()
+  save.activity = { kind: 'work', key: 'odd', label: '打零工', emoji: '🧹', startedAt: now - 2 * 60_000, endsAt: now - 60_000 }
+  save.lastSeenAt = now - 2 * 60_000
+  writeFileSync(file, JSON.stringify(save))
+  const server = await startServer({ port: 0, statePath: file })
+  try {
+    const read = async path => (await (await fetch(new URL(path, server.url))).json()).pending.map(p => p.text)
+    const news = await read('dsh-pig/state?peek=1')
+    assert.ok(news.length > 0, 'the shift was settled')
+    assert.deepEqual(await read('dsh-pig/state?peek=1'), news, 'peeking drains nothing')
+    assert.deepEqual(await read('dsh-pig/state'), news, 'the panel still gets it')
+    assert.deepEqual(await read('dsh-pig/state'), [], 'once')
   } finally {
     await server.close()
   }

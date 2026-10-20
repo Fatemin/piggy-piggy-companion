@@ -9,7 +9,7 @@
  */
 
 import { app, BrowserWindow, ipcMain, Menu, nativeImage, net, powerMonitor, screen, Tray } from 'electron'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -37,6 +37,12 @@ let tray = null
 let quitting = false
 let trayLang = null
 let panelWin = null
+// [ST0026] The desk's pig pen (a click-through window where pen mates roam),
+// the overlay that fences one in, and where the pen is (null: none).
+let penWin = null
+let pickWin = null
+let pickArea = null
+let penRect = null
 // Shown and driven from the panel, through the server's /pig/update route.
 const updater = createUpdater()
 
@@ -214,13 +220,19 @@ function createWindow(url) {
   // The page keeps its own copy of the pig's spot, but on its own origin,
   // which changes when the preferred port is taken; ours wins.
   win.webContents.on('did-finish-load', () => { if (pigSpot !== null) placePigInWindow(pigSpot.right, pigSpot.bottom) })
+  // [ST0026] ...and it hears whether a pen is fenced in on the desk.
+  win.webContents.on('did-finish-load', announcePen)
+  // Clicked to the front: the pen follows, just under the pig.
+  win.on('focus', () => { if (penWin !== null && win.isVisible()) { penWin.moveTop(); win.moveTop() } })
   win.loadURL(url)
   // A self-check is one shot: report, then leave.
   if (process.env.PIGGY_DEBUG_SNAPSHOT) win.webContents.once('did-finish-load', () => selfCheck(process.env.PIGGY_DEBUG_SNAPSHOT).finally(() => app.quit()))
 }
 
 ipcMain.on('pig', (event, message) => {
-  if (win === null || event.sender !== win.webContents || typeof message !== 'object' || message === null) return
+  if (typeof message !== 'object' || message === null) return
+  if (pickWin !== null && event.sender === pickWin.webContents) return pickerMessage(message)
+  if (win === null || event.sender !== win.webContents) return
   switch (message.type) {
     case 'hit':
       win.setIgnoreMouseEvents(message.hit !== true, { forward: true })
@@ -243,6 +255,13 @@ ipcMain.on('pig', (event, message) => {
       break
     case 'openPanel':
       openPanelWindow()
+      break
+    // [ST0026] 在线's pen buttons.
+    case 'penDraw':
+      openPenPicker()
+      break
+    case 'penClear':
+      setPen(null)
       break
     // The panel just opened: take focus so clicking anywhere else blurs the
     // window and the panel closes itself.
@@ -281,12 +300,132 @@ function openPanelWindow() {
   panelWin.loadURL(server.url + '?standalone=1')
 }
 
+// ---- the desk's pig pen (ST0026) ---------------------------------------------------
+
+const isRect = r => r !== null && typeof r === 'object' && ['x', 'y', 'width', 'height'].every(key => Number.isFinite(r[key])) && r.width > 0 && r.height > 0
+
+/** The pen as last fenced in, unless its display has gone away since. */
+function savedPen() {
+  const saved = readJson(userFile('pen.json'), null)
+  if (!isRect(saved)) return null
+  const rect = { x: Math.round(saved.x), y: Math.round(saved.y), width: Math.round(saved.width), height: Math.round(saved.height) }
+  const overlaps = ({ workArea: a }) => rect.x < a.x + a.width && rect.x + rect.width > a.x && rect.y < a.y + a.height && rect.y + rect.height > a.y
+  return screen.getAllDisplays().some(overlaps) ? rect : null
+}
+
+/** Tell the pig's page whether a pen is fenced in, and how big. */
+function announcePen() {
+  if (win === null) return
+  const info = penRect === null ? { set: false } : { set: true, width: penRect.width, height: penRect.height }
+  win.webContents.executeJavaScript(`window.__pigPen?.(${JSON.stringify(info)})`).catch(() => {})
+}
+
+/** The pen's window: transparent, never clicked, just under the pig. */
+function openPenWindow() {
+  penWin = new BrowserWindow({
+    ...penRect,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
+    resizable: false,
+    movable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    focusable: false,
+    skipTaskbar: true,
+    alwaysOnTop: false,
+    show: false,
+    webPreferences: { contextIsolation: true },
+  })
+  penWin.setVisibleOnAllWorkspaces(true)
+  penWin.setIgnoreMouseEvents(true)
+  penWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  penWin.on('closed', () => { penWin = null })
+  penWin.once('ready-to-show', () => { if (win?.isVisible()) showPig() })
+  penWin.loadURL(server.url + 'desk?pen=1')
+}
+
+/** Fence in a pen (or take it down with null), remember it, and tell the pig. */
+function setPen(rect) {
+  penRect = rect
+  try {
+    if (rect === null) unlinkSync(userFile('pen.json'))
+    else writeFileSync(userFile('pen.json'), JSON.stringify(rect))
+  } catch { /* nothing to remove, or not worth failing over */ }
+  if (rect === null) penWin?.destroy()
+  else if (penWin === null) openPenWindow()
+  else {
+    penWin.setBounds(rect)
+    if (win?.isVisible()) showPig()
+  }
+  announcePen()
+}
+
+/** Lay the overlay over the work area of the display the mouse is on. */
+function openPenPicker() {
+  if (pickWin !== null) return pickWin.focus()
+  const area = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea
+  const query = new URLSearchParams({ lang: currentLang() })
+  if (penRect !== null) {
+    query.set('x', String(penRect.x - area.x))
+    query.set('y', String(penRect.y - area.y))
+    query.set('w', String(penRect.width))
+    query.set('h', String(penRect.height))
+  }
+  pickWin = new BrowserWindow({
+    ...area,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
+    resizable: false,
+    movable: false,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    alwaysOnTop: true,
+    show: false,
+    webPreferences: { preload: join(HERE, 'preload.cjs'), contextIsolation: true },
+  })
+  pickWin.setAlwaysOnTop(true, 'screen-saver')
+  pickWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  pickWin.on('closed', () => { pickWin = null })
+  pickWin.once('ready-to-show', () => { pickWin.show(); pickWin.focus() })
+  pickArea = area
+  pickWin.loadURL(server.url + 'pen-pick?' + query)
+}
+
+/** What the overlay says: a box dragged out (in its own coordinates), or never mind. */
+function pickerMessage(message) {
+  const area = pickArea
+  if (message.type === 'penPicked' && isRect(message)) {
+    const rect = { x: Math.round(area.x + message.x), y: Math.round(area.y + message.y), width: Math.round(message.width), height: Math.round(message.height) }
+    pickWin.destroy()
+    setPen(rect)
+  } else if (message.type === 'penCancel') {
+    pickWin.destroy()
+  }
+}
+
 // ---- tray / menu-bar icon -------------------------------------------------------
 
 /** [Q0016] Show the pig without taking focus, and in front: it is no longer always on top. */
 function showPig() {
+  // [ST0026] The pen comes too, just under the pig.
+  if (penWin !== null) {
+    penWin.showInactive()
+    penWin.moveTop()
+  }
   win.showInactive()
   win.moveTop()
+}
+
+function hidePig() {
+  win.hide()
+  penWin?.hide()
 }
 
 function trayMenu() {
@@ -294,7 +433,7 @@ function trayMenu() {
   const lang = currentLang()
   const t = zh => tr(lang, zh)
   return Menu.buildFromTemplate([
-    { label: visible ? t('隐藏猪猪') : t('显示猪猪'), click: () => { visible ? win.hide() : showPig(); refreshTray(true) } },
+    { label: visible ? t('隐藏猪猪') : t('显示猪猪'), click: () => { visible ? hidePig() : showPig(); refreshTray(true) } },
     { label: t('猪猪回到右下角'), click: () => { win.setPosition(...Object.values(defaultPosition())); placePigInWindow(PIG_HOME.right, PIG_HOME.bottom); savePosition(); showPig() } },
     { label: t('打开大面板'), click: openPanelWindow },
     { type: 'separator' },
@@ -421,6 +560,8 @@ if (!app.requestSingleInstanceLock()) {
     if (!process.env.PIG_LANG) process.env.PIG_LANG = app.getLocale()
     server = await openServer(userFile('state.json'))
     createWindow(server.url + 'desk')
+    penRect = savedPen()
+    if (penRect !== null) openPenWindow()
     createTray()
     followSystemSleep()
     updater.start()

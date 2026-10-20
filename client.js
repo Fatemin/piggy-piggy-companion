@@ -368,6 +368,10 @@ window.__ModuleLoader__.load({
         '在线': 'オンライン', '朋友加入后，可以选择让它们的猪出现在你的猪旁边。': '友だちが入ったら、そのブタをあなたのブタの横に出すか選べます。',
         '全部': 'ぜんぶ', '只有自己': '自分だけ', '{n} 只': '{n} 匹', '桌面上显示：{who}': 'デスクに表示：{who}',
         '只看自己': '自分だけ', '全部显示': 'ぜんぶ表示', '显示中': '表示中', '不显示': '非表示',
+        // [ST0026] the pen on the desk
+        '桌面猪圈 {w}×{h}': 'デスクのブタ小屋 {w}×{h}', '桌面上还没有猪圈': 'デスクにはまだブタ小屋がありません',
+        '在桌面上圈一块': 'デスクに囲う', '重新圈': '囲いなおす', '拆掉': 'こわす',
+        '在桌面上拖出一块地方，没事做的朋友的猪就在里面跑来跑去、打滚、躺着。': 'デスクの上をドラッグして囲むと、ひまな友だちのブタがその中で走りまわったり、ころがったり、寝そべったりします。',
         // [ST0014 P3] pig pen
         '猪圈': 'ブタ小屋', '和朋友的猪一起出门：快 30%、收获多 30%': '友だちのブタといっしょにおでかけ：30% 速く、30% 多くもらえる',
         '建一个': 'つくる', '加入': '入る', '6 位邀请码': '6 文字の招待コード', '邀请码 {code}': '招待コード {code}',
@@ -617,6 +621,10 @@ window.__ModuleLoader__.load({
         '在线': 'Online', '朋友加入后，可以选择让它们的猪出现在你的猪旁边。': "Once friends join, you can choose to show their pigs next to yours.",
         '全部': 'everyone', '只有自己': 'just mine', '{n} 只': '{n} pigs', '桌面上显示：{who}': 'On the desk: {who}',
         '只看自己': 'Just mine', '全部显示': 'Show all', '显示中': 'Shown', '不显示': 'Hidden',
+        // [ST0026] the pen on the desk
+        '桌面猪圈 {w}×{h}': 'Desk pen {w}×{h}', '桌面上还没有猪圈': 'No pen on the desk yet',
+        '在桌面上圈一块': 'Fence one in', '重新圈': 'Redraw', '拆掉': 'Take down',
+        '在桌面上拖出一块地方，没事做的朋友的猪就在里面跑来跑去、打滚、躺着。': "Drag out a patch of the desk, and friends' pigs with nothing to do run about, roll and lounge in it.",
         // [ST0014 P3] pig pen
         '猪圈': 'Pig pen', '和朋友的猪一起出门：快 30%、收获多 30%': "Head out with friends' pigs: 30% faster, 30% more",
         '建一个': 'Make one', '加入': 'Join', '6 位邀请码': '6-letter code', '邀请码 {code}': 'code {code}',
@@ -1410,6 +1418,35 @@ window.__ModuleLoader__.load({
       'border-radius:999px;padding:0 6px;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
       '.dp-pen-eye[aria-pressed="false"]{opacity:.62}',
       '.dp-pen-show{margin-top:6px}',
+      '.dp-pen-area{margin-top:6px}',
+      // [ST0026] the desk's pen: a click-through yard in a window of its own,
+      // pen mates roaming in it. Each one is a box placed by script, a face
+      // that mirrors it when heading right, and a body that does the move.
+      '.dp-yard{position:fixed;inset:0;pointer-events:none;overflow:hidden;--ac-text-2:#9f927d;',
+      'font-family:Nunito,"Noto Sans SC",-apple-system,"PingFang SC","Hiragino Sans GB",sans-serif;font-weight:500}',
+      '.dp-yard-fence{position:absolute;inset:3px;border:2px dashed rgba(150,110,70,.3);border-radius:18px}',
+      '.dp-yard-fence[hidden]{display:none}',
+      '.dp-roamer{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:2px;',
+      'filter:drop-shadow(0 3px 5px rgba(61,52,40,.22));will-change:transform}',
+      '.dp-roamer[hidden]{display:none}',
+      '.dp-roamer[data-faded="true"]{opacity:.78}',
+      '.dp-roamer-face{transition:transform .18s}',
+      '.dp-roamer-body{transform-origin:50% 60%}',
+      '.dp-roamer[data-move="walk"] .dp-roamer-body{animation:dp-yard-trot .5s ease-in-out infinite}',
+      '.dp-roamer[data-move="dash"] .dp-roamer-body{animation:dp-yard-trot .26s ease-in-out infinite}',
+      // 横向: head over heels across the pen. 纵向: over onto its back and up again, up or down the pen.
+      '.dp-roamer[data-move="roll-x"] .dp-roamer-body{animation:dp-yard-roll .7s linear infinite}',
+      '.dp-roamer[data-move="roll-y"] .dp-roamer-body{animation:dp-yard-tumble .8s linear infinite}',
+      // Sitting rocks back onto its haunches (the pig faces left, so the right edge is its rump).
+      '.dp-roamer[data-move="sit"] .dp-roamer-body{transform-origin:85% 100%;animation:dp-yard-sit 2.6s ease-in-out infinite}',
+      '.dp-roamer[data-move="lie"] .dp-roamer-body{transform-origin:50% 100%;animation:dp-yard-lie 3.6s ease-in-out infinite}',
+      '.dp-roamer[data-move="belly"] .dp-roamer-body{transform-origin:50% 50%;animation:dp-yard-belly 1.1s ease-in-out infinite}',
+      '@keyframes dp-yard-trot{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}',
+      '@keyframes dp-yard-roll{0%{transform:rotate(0deg)}100%{transform:rotate(-360deg)}}',
+      '@keyframes dp-yard-tumble{0%{transform:scaleY(1)}25%{transform:scaleY(0)}50%{transform:scaleY(-1)}75%{transform:scaleY(0)}100%{transform:scaleY(1)}}',
+      '@keyframes dp-yard-sit{0%,100%{transform:rotate(14deg)}50%{transform:rotate(17deg)}}',
+      '@keyframes dp-yard-lie{0%,100%{transform:scale(1.06,.74)}50%{transform:scale(1.08,.71)}}',
+      '@keyframes dp-yard-belly{0%,100%{transform:rotate(180deg)}50%{transform:rotate(172deg)}}',
       // A drawn sprite animates itself (CSS inside the SVG), so the mood bob,
       // the sepia/hue filters and the reaction spin would only fight it.
       '[data-dsh-pig]:not([data-poke]) .dp-pig[data-art]:not([data-react]),',
@@ -2073,6 +2110,369 @@ window.__ModuleLoader__.load({
       return wrap
     }
 
+    /**
+     * The pose a drawn pig shows: its mood's, in three strengths for the
+     * leveled moods, and while it is out the pose of that very job, school,
+     * place or machine. Undefined for an undrawn stage or a grave. `jobs` is
+     * a snapshot's job table, for a career's own pose. Shared by our pig, the
+     * pen mates drawn beside it (ST0014) and those in the desk's pen (ST0026).
+     */
+    function poseOf(stage, moodKey, moodLevel, activity, jobs) {
+      var pose = stage.art !== null && stage.key !== 'grave' ? MOOD_ART[moodKey] : undefined
+      // Sick, hungry, dirty and lonely come in three strengths.
+      if (pose !== undefined && LEVELED_MOODS[moodKey] === true) {
+        pose += '-' + Math.min(3, Math.max(1, moodLevel || 2))
+      }
+      if (pose === undefined || activity === null || activity === undefined) return pose
+      // A career shows the pig at that job rather than at a generic desk.
+      if (moodKey === 'working' && activity.kind === 'work') {
+        var job = arr(jobs).filter(j => j.key === activity.key)[0]
+        if (job !== undefined && job.art !== null) pose = 'job-' + job.art
+      }
+      if (moodKey === 'studying' && activity.kind === 'study') {
+        if (STUDY_ART[activity.stage] !== undefined) pose = STUDY_ART[activity.stage]
+      }
+      if (moodKey === 'traveling' && activity.kind === 'trip') {
+        // Own keys only: a key like `constructor` must not pick up a prototype member.
+        if (Object.prototype.hasOwnProperty.call(PLACE_ART, activity.key)) pose = PLACE_ART[activity.key]
+        else if (Object.prototype.hasOwnProperty.call(TRIP_ART, activity.region)) pose = TRIP_ART[activity.region]
+      }
+      if (moodKey === 'exercising' && activity.kind === 'gym') {
+        if (Object.prototype.hasOwnProperty.call(GYM_ART, activity.key)) pose = GYM_ART[activity.key]
+      }
+      return pose
+    }
+
+    /** [ST0014] Is this pen mate drawn on our desk? */
+    function penShownIn(cloud, id) {
+      if (cloud === null) return false
+      if (cloud.penShow === 'all') return true
+      if (cloud.penShow === 'self') return false
+      return cloud.penShow.indexOf(id) >= 0
+    }
+
+    /** [ST0014] The pen mates to draw: shown, hatched, and drawable by an up-to-date server. */
+    function friendsIn(cloud) {
+      if (cloud === null || !cloud.linked || cloud.pen === null) return []
+      return cloud.pen.members.filter(function (m) { return !m.you && m.hatched && m.stage !== null && penShownIn(cloud, m.id) })
+    }
+
+    /**
+     * [ST0014] How a pen mate is drawn: its own pose and outfit, at most two
+     * thirds of its size (and never bigger than a plump pig), and its name.
+     */
+    function friendLook(m, jobs) {
+      var pose = poseOf(m.stage, m.mood, m.moodLevel, m.activity, jobs)
+      var art = pose !== undefined ? pose : m.stage.art
+      var wear = m.stage.key !== 'grave' && m.worn.length > 0 ? '?wear=' + m.worn.join(',') : ''
+      return { id: m.id, name: m.name, art: art, src: art === null ? null : ART_URL + art + '.svg' + wear, emoji: m.stage.emoji, size: Math.round(Math.min(96, m.stage.size * 0.66)), faded: m.stage.faded, away: m.activity !== null }
+    }
+
+    // [ST0026] What a pen mate with nothing to do gets up to in the desk's pen,
+    // and how often: amble somewhere, dash back and forth, roll across the pen
+    // (横向) or tumble up and down it (纵向), sit, lie down, lie belly-up, or
+    // just stand there a moment.
+    var ROAM_MOVES = [
+      { key: 'walk', weight: 30 }, { key: 'dash', weight: 12 }, { key: 'roll-x', weight: 9 }, { key: 'roll-y', weight: 8 },
+      { key: 'sit', weight: 14 }, { key: 'lie', weight: 10 }, { key: 'belly', weight: 7 }, { key: 'rest', weight: 10 },
+    ]
+    // A poorly, sleepy or hungry pig (or a player who asked for less motion) only potters.
+    var CALM_MOVES = { walk: true, sit: true, lie: true, rest: true }
+    var CALM_MOODS = { sick: true, sleepy: true, hungry: true }
+    var PEN_MOUNTED = 'data-dsh-pen'
+
+    /** [ST0026] A pen mate's next move; `rand` is Math.random, or a test's stand-in. */
+    function pickRoamMove(rand, calm) {
+      var moves = ROAM_MOVES.filter(function (m) { return !calm || CALM_MOVES[m.key] === true })
+      var total = moves.reduce(function (sum, m) { return sum + m.weight }, 0)
+      var left = rand() * total
+      for (var i = 0; i < moves.length; i += 1) {
+        left -= moves[i].weight
+        if (left < 0) return moves[i].key
+      }
+      return moves[moves.length - 1].key
+    }
+
+    /** [ST0026] Has this pen mate nothing on: not out, not asleep, not gone? Then it roams. */
+    function roamsFree(m) {
+      return m.activity === null && !m.asleep && !m.dead && m.mood !== 'asleep' && m.stage.key !== 'grave'
+    }
+
+    /**
+     * [ST0026] The desk's pig pen (`ctx.layout === 'pen'`): a click-through
+     * window of its own, which the desktop host lays over the area the player
+     * fenced in on the desk. The pen mates chosen in 在线 live here instead of
+     * beside our pig. One with nothing to do roams about it; one that is out,
+     * asleep or gone stays where it is, in its own pose. Reads /pig/cloud, and
+     * now and then the job table from a /dsh-pig/state that drains nothing.
+     */
+    function mountPen() {
+      if (document.querySelector('[' + PEN_MOUNTED + ']') !== null) return () => {}
+      var style = document.createElement('style')
+      style.textContent = CSS
+      document.head.appendChild(style)
+      var yard = el('div', 'dp-yard')
+      yard.setAttribute(PEN_MOUNTED, '')
+      // A faint fence, only while someone lives here.
+      var fence = el('div', 'dp-yard-fence')
+      fence.hidden = true
+      yard.appendChild(fence)
+      document.body.appendChild(yard)
+
+      var calmAll = false
+      try { calmAll = window.matchMedia('(prefers-reduced-motion: reduce)').matches === true } catch (error) { /* no matchMedia */ }
+      var raf = typeof window.requestAnimationFrame === 'function' ? window.requestAnimationFrame.bind(window) : null
+      var roamers = {}
+      var jobs = []
+      var polls = 0
+      var frame = null
+      var last = 0
+      var stopped = false
+
+      var between = function (low, high) { return low + Math.random() * (high - low) }
+
+      /** Where a pig's feet may go: its sprite and name stay inside the pen. */
+      function bounds(r) {
+        var w = num(yard.clientWidth, 0) || num(window.innerWidth, 0)
+        var h = num(yard.clientHeight, 0) || num(window.innerHeight, 0)
+        var half = r.size / 2 + 6
+        var x0 = Math.min(half, w / 2)
+        var y0 = Math.min(r.size + 6, h / 2)
+        return { x0: x0, x1: Math.max(x0, w - half), y0: y0, y1: Math.max(y0, h - 20), empty: w <= 0 || h <= 0 }
+      }
+
+      /**
+       * Somewhere in the pen to start from — once the pen has a size: a
+       * window still being laid out would put every pig in the same corner.
+       */
+      function settleIn(r) {
+        var b = bounds(r)
+        if (b.empty) return false
+        r.x = between(b.x0, b.x1)
+        r.y = between(b.y0, b.y1)
+        r.placed = true
+        r.roamerBox.hidden = false
+        return true
+      }
+
+      var clamp = function (v, low, high) { return Math.max(low, Math.min(high, v)) }
+
+      function setMove(r, move) {
+        r.move = move
+        r.roamerBox.setAttribute('data-move', move)
+      }
+
+      function place(r) {
+        r.roamerBox.style.transform = 'translate(' + Math.round(r.x - r.size / 2) + 'px,' + Math.round(r.y - r.size) + 'px)'
+        r.roamerBox.style.zIndex = String(Math.round(r.y))
+        // The pig is drawn facing left; heading right, it is mirrored.
+        r.face.style.transform = r.facing > 0 ? 'scaleX(-1)' : 'none'
+      }
+
+      /** Start the next thing a free pig does. */
+      function begin(r, now) {
+        var b = bounds(r)
+        var s = Math.max(24, r.size)
+        var move = pickRoamMove(Math.random, calmAll || r.calm)
+        r.goal = null
+        r.legs = []
+        if (move === 'walk') {
+          var angle = Math.random() * Math.PI * 2
+          var reach = s * between(1.5, 4)
+          r.goal = { x: clamp(r.x + Math.cos(angle) * reach, b.x0, b.x1), y: clamp(r.y + Math.sin(angle) * reach * 0.6, b.y0, b.y1) }
+          r.speed = s * 0.9
+        } else if (move === 'dash') {
+          // Back and forth along one line, three to six times, at a gallop.
+          var a = clamp(r.x - s * between(1.2, 3), b.x0, b.x1)
+          var z = clamp(r.x + s * between(1.2, 3), b.x0, b.x1)
+          var y = clamp(r.y + between(-6, 6), b.y0, b.y1)
+          var legs = 3 + Math.floor(Math.random() * 4)
+          var first = Math.random() < 0.5
+          for (var i = 0; i < legs; i += 1) r.legs.push({ x: (i % 2 === 0) === first ? a : z, y: y })
+          r.goal = r.legs.shift()
+          r.speed = s * 3.4
+        } else if (move === 'roll-x') {
+          // Head first across the pen, turning wheels; back the other way at a wall.
+          var dir = r.facing
+          var gx = clamp(r.x + dir * s * between(1.5, 3), b.x0, b.x1)
+          if (Math.abs(gx - r.x) < s * 0.5) gx = clamp(r.x - dir * s * between(1.5, 3), b.x0, b.x1)
+          r.goal = { x: gx, y: r.y }
+          r.speed = s * 1.8
+        } else if (move === 'roll-y') {
+          // Over and over onto its back, up or down the pen.
+          var up = r.y - b.y0 > b.y1 - r.y
+          r.goal = { x: r.x, y: clamp(r.y + (up ? -1 : 1) * s * between(0.8, 1.8), b.y0, b.y1) }
+          r.speed = s * 1.2
+        } else {
+          r.until = now + (move === 'sit' ? between(3000, 7000)
+            : move === 'lie' ? between(5000, 10000)
+            : move === 'belly' ? between(2200, 4000)
+            : between(900, 2600))
+        }
+        // A pen too small to go anywhere: stand a while instead.
+        if (r.goal !== null && Math.hypot(r.goal.x - r.x, r.goal.y - r.y) < 2 && r.legs.length === 0) {
+          r.goal = null
+          move = 'rest'
+          r.until = now + between(900, 2600)
+        }
+        setMove(r, move)
+      }
+
+      function step(r, dt, now) {
+        if (!r.placed && !settleIn(r)) return
+        var b = bounds(r)
+        // The pen may have been redrawn smaller.
+        r.x = clamp(r.x, b.x0, b.x1)
+        r.y = clamp(r.y, b.y0, b.y1)
+        if (!r.free) return
+        if (r.goal === null) {
+          if (now >= r.until) begin(r, now)
+          if (r.goal === null) return
+        }
+        var dx = r.goal.x - r.x
+        var dy = r.goal.y - r.y
+        var dist = Math.hypot(dx, dy)
+        // Facing where it goes, except tumbling up or down, which keeps its heading.
+        if (Math.abs(dx) > 0.5 && r.move !== 'roll-y') r.facing = dx > 0 ? 1 : -1
+        var reach = r.speed * dt
+        if (dist > reach) {
+          r.x += dx / dist * reach
+          r.y += dy / dist * reach
+          return
+        }
+        r.x = r.goal.x
+        r.y = r.goal.y
+        r.goal = r.legs.length > 0 ? r.legs.shift() : null
+        if (r.goal === null) {
+          // Catch its breath before the next thing.
+          setMove(r, 'rest')
+          r.until = now + between(300, 1200)
+        }
+      }
+
+      function tick(now) {
+        frame = null
+        if (stopped) return
+        var dt = last === 0 ? 0 : Math.min(0.1, (now - last) / 1000)
+        last = now
+        for (var id in roamers) {
+          step(roamers[id], dt, now)
+          place(roamers[id])
+        }
+        schedule()
+      }
+
+      function schedule() {
+        if (raf === null || stopped || frame !== null || Object.keys(roamers).length === 0) return
+        frame = raf(tick)
+      }
+
+      function draw(r, look) {
+        r.roamerBox.style.setProperty('--friend-size', look.size + 'px')
+        r.roamerBox.style.width = look.size + 'px'
+        r.roamerBox.setAttribute('data-faded', look.faded ? 'true' : 'false')
+        r.roamerBox.title = look.name
+        Array.prototype.slice.call(r.body.children).forEach(function (child) { child.remove() })
+        if (look.src !== null) {
+          var img = document.createElement('img')
+          img.className = 'dp-friend-img'
+          img.alt = ''
+          img.src = look.src
+          r.body.appendChild(img)
+        } else {
+          r.body.appendChild(el('span', 'dp-friend-emoji', look.emoji))
+        }
+        r.label.textContent = look.name
+        r.size = look.size
+      }
+
+      function newRoamer(id) {
+        var roamerBox = el('div', 'dp-roamer')
+        roamerBox.setAttribute('data-roamer', id)
+        var face = el('div', 'dp-roamer-face')
+        var body = el('div', 'dp-roamer-body')
+        face.appendChild(body)
+        roamerBox.appendChild(face)
+        var label = el('span', 'dp-friend-name')
+        roamerBox.appendChild(label)
+        yard.appendChild(roamerBox)
+        // Out of sight until it has somewhere to stand (settleIn).
+        roamerBox.hidden = true
+        return { id: id, roamerBox: roamerBox, face: face, body: body, label: label, size: 48, look: '', x: 0, y: 0, placed: false, facing: Math.random() < 0.5 ? -1 : 1, goal: null, legs: [], speed: 0, until: 0, move: '', free: false, calm: false }
+      }
+
+      /** Bring the yard in line with the pen mates on show. */
+      function sync(list) {
+        var seen = {}
+        for (var i = 0; i < list.length; i += 1) {
+          var m = list[i]
+          if (m.id === '') continue
+          seen[m.id] = true
+          var r = roamers[m.id]
+          var fresh = r === undefined
+          if (fresh) r = roamers[m.id] = newRoamer(m.id)
+          var look = friendLook(m, jobs)
+          var key = JSON.stringify(look)
+          if (key !== r.look) {
+            r.look = key
+            draw(r, look)
+          }
+          if (fresh) settleIn(r)
+          var free = roamsFree(m)
+          r.calm = CALM_MOODS[m.mood] === true
+          if (free !== r.free || fresh) {
+            r.free = free
+            r.goal = null
+            r.legs = []
+            r.until = 0
+            // Out, asleep or gone: it stays put in its own pose.
+            setMove(r, free ? 'rest' : 'still')
+          }
+          r.roamerBox.setAttribute('data-roam', free ? 'free' : 'busy')
+          place(r)
+        }
+        for (var id in roamers) {
+          if (seen[id]) continue
+          roamers[id].roamerBox.remove()
+          delete roamers[id]
+        }
+        fence.hidden = Object.keys(roamers).length === 0
+        schedule()
+      }
+
+      async function loadJobs() {
+        try {
+          var res = await fetch(STATE_URL + '?peek=1', { cache: 'no-store' })
+          if (!res.ok) return
+          jobs = arr(obj(await res.json()).jobs).map(function (job) { return { key: str(obj(job).key, ''), art: str(obj(job).art, null) } })
+        } catch (error) { /* careers show the generic desk until the next try */ }
+      }
+
+      async function poll() {
+        if (stopped) return
+        // The job table hardly changes: once a minute is plenty.
+        if (polls % 15 === 0) await loadJobs()
+        polls += 1
+        try {
+          var res = await fetch(CLOUD_URL, { cache: 'no-store' })
+          if (stopped) return
+          if (res.status === 404) return sync([])
+          if (res.ok) sync(friendsIn(normalizeCloud(await res.json())))
+        } catch (error) { /* the next poll asks again */ }
+      }
+
+      poll()
+      var pollTimer = window.setInterval(poll, POLL_MS)
+
+      return function dispose() {
+        stopped = true
+        window.clearInterval(pollTimer)
+        if (frame !== null && typeof window.cancelAnimationFrame === 'function') window.cancelAnimationFrame(frame)
+        yard.remove()
+        style.remove()
+      }
+    }
+
     function apply(ctx) {
       // A client plugin that throws while activating can take the whole web boot
       // down with it, so the pig never lets an exception escape.
@@ -2089,8 +2489,13 @@ window.__ModuleLoader__.load({
       // widget (default) or the big two-column panel, and whether it can open
       // that big panel from the floating one (the ⤢ button).
       var options = isObj(ctx) ? ctx : {}
+      // [ST0026] the desk's pig pen window: pen mates only, no pig of ours.
+      if (options.layout === 'pen') return mountPen()
       var split = options.layout === 'split'
       var openBigPanel = typeof options.openPanel === 'function' ? options.openPanel : null
+      // [ST0026] a desktop host can fence in a pen on the desk for pen mates to roam.
+      var drawPen = typeof options.penDraw === 'function' ? options.penDraw : null
+      var clearPen = typeof options.penClear === 'function' ? options.penClear : null
       if (document.querySelector('[' + MOUNTED + ']') !== null) {
         console.warn('[dsh-pig] 已存在实例，跳过重复挂载')
         return () => {}
@@ -2282,6 +2687,10 @@ window.__ModuleLoader__.load({
       friends.hidden = true
       scene.appendChild(friends)
       var friendsKey = ''
+      // [ST0026] The desk's pen as the desktop host last told us: null on a
+      // host without one, else { set, width, height }. While one is fenced
+      // in, the pen mates roam in it (a window of its own) instead.
+      var deskPen = null
 
       // What the pig is doing while it is out: a prop to work/read/travel with,
       // and a line showing how far through it is. Sits to the pig's left, so the
@@ -2653,36 +3062,9 @@ window.__ModuleLoader__.load({
       /** '--piglet' / '--middle' / '--elder' while the stage dresses every pose, else ''. */
       var wearQuery = ''
 
-      /**
-       * The pose a drawn pig shows: its mood's, in three strengths for the
-       * leveled moods, and while it is out the pose of that very job, school,
-       * place or machine. Undefined for an undrawn stage or a grave. Shared by
-       * our pig and the pen mates drawn beside it (ST0014).
-       */
+      /** Our pig's pose (see poseOf), careers looked up in our snapshot's job table. */
       function poseFor(stage, moodKey, moodLevel, activity) {
-        var pose = stage.art !== null && stage.key !== 'grave' ? MOOD_ART[moodKey] : undefined
-        // Sick, hungry, dirty and lonely come in three strengths.
-        if (pose !== undefined && LEVELED_MOODS[moodKey] === true) {
-          pose += '-' + Math.min(3, Math.max(1, moodLevel || 2))
-        }
-        if (pose === undefined || activity === null || activity === undefined) return pose
-        // A career shows the pig at that job rather than at a generic desk.
-        if (moodKey === 'working' && activity.kind === 'work') {
-          var job = view.jobs.filter(j => j.key === activity.key)[0]
-          if (job !== undefined && job.art !== null) pose = 'job-' + job.art
-        }
-        if (moodKey === 'studying' && activity.kind === 'study') {
-          if (STUDY_ART[activity.stage] !== undefined) pose = STUDY_ART[activity.stage]
-        }
-        if (moodKey === 'traveling' && activity.kind === 'trip') {
-          // Own keys only: a key like `constructor` must not pick up a prototype member.
-          if (Object.prototype.hasOwnProperty.call(PLACE_ART, activity.key)) pose = PLACE_ART[activity.key]
-          else if (Object.prototype.hasOwnProperty.call(TRIP_ART, activity.region)) pose = TRIP_ART[activity.region]
-        }
-        if (moodKey === 'exercising' && activity.kind === 'gym') {
-          if (Object.prototype.hasOwnProperty.call(GYM_ART, activity.key)) pose = GYM_ART[activity.key]
-        }
-        return pose
+        return poseOf(stage, moodKey, moodLevel, activity, view.jobs)
       }
 
       /** Show a drawn sprite by name, or fall back to the emoji. */
@@ -3539,34 +3921,21 @@ window.__ModuleLoader__.load({
         return T('{n} 小时前同步', { n: Math.floor(minutes / 60) })
       }
 
-      /** [ST0014] Is this pen mate drawn beside our pig? */
+      /** [ST0014] Is this pen mate drawn on our desk? */
       function penShown(id) {
-        if (cloud === null) return false
-        if (cloud.penShow === 'all') return true
-        if (cloud.penShow === 'self') return false
-        return cloud.penShow.indexOf(id) >= 0
-      }
-
-      /** [ST0014] The pen mates to draw: shown, hatched, and drawable by an up-to-date server. */
-      function friendsToDraw() {
-        if (cloud === null || !cloud.linked || cloud.pen === null) return []
-        return cloud.pen.members.filter(function (m) { return !m.you && m.hatched && m.stage !== null && penShown(m.id) })
+        return penShownIn(cloud, id)
       }
 
       /**
        * [ST0014] Draw the chosen pen mates to our pig's left: their own pose
        * and outfit, at most two thirds of their size (and never bigger than a
        * plump pig), a name underneath. Rebuilt only when something changed,
-       * so the sprites do not flicker on every poll.
+       * so the sprites do not flicker on every poll. [ST0026] While the desk
+       * has a pen drawn, they live in there instead.
        */
       function renderFriends() {
-        var list = friendsToDraw()
-        var drawn = list.map(function (m) {
-          var pose = poseFor(m.stage, m.mood, m.moodLevel, m.activity)
-          var art = pose !== undefined ? pose : m.stage.art
-          var wear = m.stage.key !== 'grave' && m.worn.length > 0 ? '?wear=' + m.worn.join(',') : ''
-          return { id: m.id, name: m.name, art: art, src: art === null ? null : ART_URL + art + '.svg' + wear, emoji: m.stage.emoji, size: Math.round(Math.min(96, m.stage.size * 0.66)), faded: m.stage.faded, away: m.activity !== null }
-        })
+        var list = deskPen !== null && deskPen.set ? [] : friendsIn(cloud)
+        var drawn = list.map(function (m) { return friendLook(m, view.jobs) })
         var key = JSON.stringify(drawn)
         if (key === friendsKey) return
         friendsKey = key
@@ -3624,6 +3993,30 @@ window.__ModuleLoader__.load({
         every.disabled = cloudBusy
         head.appendChild(every)
         wrap.appendChild(head)
+        return wrap
+      }
+
+      /**
+       * [ST0026] The pen on the desk: its size, and fencing one in by dragging
+       * across the desk (the host takes over the screen for that), again, or
+       * taking it down so the pen mates stand beside our pig once more.
+       */
+      function deskPenControls() {
+        var wrap = el('div', 'dp-pen-area')
+        var head = el('div', 'dp-row dp-version')
+        head.appendChild(el('span', null, '🏡 ' + (deskPen.set
+          ? T('桌面猪圈 {w}×{h}', { w: deskPen.width, h: deskPen.height })
+          : T('桌面上还没有猪圈'))))
+        var draw = button('dp-mini', { 'data-desk-pen': 'draw' }, function () { drawPen() })
+        draw.textContent = deskPen.set ? T('重新圈') : T('在桌面上圈一块')
+        head.appendChild(draw)
+        if (deskPen.set && clearPen !== null) {
+          var clear = button('dp-mini', { 'data-desk-pen': 'clear' }, function () { clearPen() })
+          clear.textContent = T('拆掉')
+          head.appendChild(clear)
+        }
+        wrap.appendChild(head)
+        if (!deskPen.set) wrap.appendChild(el('div', 'dp-note', T('在桌面上拖出一块地方，没事做的朋友的猪就在里面跑来跑去、打滚、躺着。')))
         return wrap
       }
 
@@ -3751,6 +4144,7 @@ window.__ModuleLoader__.load({
         }
         wrap.appendChild(list)
         wrap.appendChild(penShowControls(pen))
+        if (deskPen !== null && drawPen !== null) wrap.appendChild(deskPenControls())
 
         for (var k = 0; k < pen.invites.length; k += 1) {
           (function (inv) {
@@ -5436,6 +5830,16 @@ window.__ModuleLoader__.load({
         writeStore(POSITION_KEY, JSON.stringify({ right: userRight, bottom: userBottom }))
         fitPanel()
       })
+      // [ST0026] The desktop host says whether a pen is fenced in on the desk
+      // (on load, and whenever it is drawn or taken down).
+      host.addEventListener('dsh-pig:pen', function (event) {
+        var at = isObj(event.detail) ? event.detail : {}
+        deskPen = { set: at.set === true, width: Math.round(num(at.width, 0)), height: Math.round(num(at.height, 0)) }
+        renderFriends()
+        if (cloudHasFocus()) return
+        renderContent()
+        renderSide()
+      })
       var boxPokes = 0
 
       /**
@@ -5662,6 +6066,7 @@ window.__ModuleLoader__.load({
     exports.apply = apply
     // For tests and tooling, like the host's `dictionaries`.
     exports.I18N = I18N
+    exports.pickRoamMove = pickRoamMove
     exports.tr = tr
     return module.exports
   },

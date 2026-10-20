@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dsh-piggy pen</title>
+<style>
+  /* [ST0026] Fencing in the desk's pig pen. The desktop host lays this page
+     over the whole desk (its work area) and takes the mouse: drag out a box,
+     and the host turns it into the pen. Esc or a right click puts it away. */
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    background: rgba(36, 28, 18, .22); cursor: crosshair;
+    font: 600 14px Nunito, "Noto Sans SC", -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif;
+    -webkit-user-select: none; user-select: none;
+  }
+  .hint {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+    padding: 10px 18px; border-radius: 999px; background: rgba(255, 250, 235, .96); color: #794f27;
+    box-shadow: 0 8px 24px rgba(61, 52, 40, .18); white-space: nowrap; pointer-events: none;
+  }
+  .hint small { color: #9f927d; font-weight: 500; margin-left: 10px; }
+  .hint[data-nudge] { animation: nudge .4s ease-in-out; }
+  @keyframes nudge { 25% { margin-left: -8px } 75% { margin-left: 8px } }
+  .box {
+    position: fixed; box-sizing: border-box; border: 2px dashed #9a6b3c; border-radius: 16px;
+    background: rgba(255, 250, 235, .28); pointer-events: none;
+  }
+  .box[hidden] { display: none; }
+  .box.old { border-color: rgba(255, 250, 235, .75); background: transparent; }
+  .size {
+    position: absolute; right: 8px; bottom: 8px; padding: 2px 10px; border-radius: 999px;
+    background: rgba(255, 250, 235, .94); color: #794f27; font-size: 12px;
+  }
+  .old .size { color: #9f927d; }
+</style>
+</head>
+<body>
+<div class="hint" id="hint"></div>
+<div class="box old" id="old" hidden><span class="size" id="old-size"></span></div>
+<div class="box" id="box" hidden><span class="size" id="size"></span></div>
+<script>
+  const STRINGS = {
+    zh: { drag: '按住拖动，圈出朋友的猪玩耍的地方', cancel: 'Esc 或右键取消', small: '再圈大一点', now: '现在的猪圈' },
+    ja: { drag: 'ドラッグして、友だちのブタが遊ぶ場所を囲んでください', cancel: 'Esc か右クリックでやめる', small: 'もう少し大きく囲んでください', now: '今のブタ小屋' },
+    en: { drag: "Drag to fence in where friends' pigs can play", cancel: 'Esc or right-click to cancel', small: 'A little bigger, please', now: 'current pen' },
+  }
+  // Smaller than this and a pig has no room to roll over.
+  const MIN_W = 200
+  const MIN_H = 120
+  const query = new URLSearchParams(location.search)
+  const t = STRINGS[query.get('lang')] ?? STRINGS.zh
+  const native = window.webkit?.messageHandlers?.pig ?? null
+  const say = message => { if (native !== null) native.postMessage(message) }
+  const $ = id => document.getElementById(id)
+
+  const hint = $('hint')
+  hint.textContent = t.drag
+  const small = document.createElement('small')
+  small.textContent = t.cancel
+  hint.appendChild(small)
+
+  /** Draw `el` over the box from (x0, y0) to (x1, y1), its size in `label`. */
+  function show(el, label, x0, y0, x1, y1, prefix = '') {
+    const x = Math.min(x0, x1)
+    const y = Math.min(y0, y1)
+    const w = Math.abs(x1 - x0)
+    const h = Math.abs(y1 - y0)
+    Object.assign(el.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' })
+    el.hidden = false
+    label.textContent = prefix + Math.round(w) + ' × ' + Math.round(h)
+    return { x: Math.round(x), y: Math.round(y), width: Math.round(w), height: Math.round(h) }
+  }
+
+  // The pen there is now, if any, in this window's coordinates.
+  const old = ['x', 'y', 'w', 'h'].map(key => Number(query.get(key)))
+  if (old.every(Number.isFinite) && old[2] > 0 && old[3] > 0) {
+    show($('old'), $('old-size'), old[0], old[1], old[0] + old[2], old[1] + old[3], t.now + ' · ')
+  }
+
+  let start = null
+  let picked = null
+  addEventListener('pointerdown', event => {
+    if (event.button !== 0) return
+    start = { x: event.clientX, y: event.clientY }
+    picked = null
+    document.body.setPointerCapture?.(event.pointerId)
+  })
+  addEventListener('pointermove', event => {
+    if (start === null) return
+    picked = show($('box'), $('size'), start.x, start.y, event.clientX, event.clientY)
+  })
+  addEventListener('pointerup', event => {
+    if (start === null || event.button !== 0) return
+    start = null
+    if (picked === null || picked.width < MIN_W || picked.height < MIN_H) {
+      $('box').hidden = true
+      hint.removeAttribute('data-nudge')
+      void hint.offsetWidth
+      hint.setAttribute('data-nudge', '')
+      hint.firstChild.textContent = t.small
+      return
+    }
+    say({ type: 'penPicked', ...picked })
+  })
+  addEventListener('contextmenu', event => {
+    event.preventDefault()
+    say({ type: 'penCancel' })
+  })
+  addEventListener('keydown', event => {
+    if (event.key === 'Escape') say({ type: 'penCancel' })
+  })
+  // Gone to another app: put the overlay away rather than leave it over everything.
+  addEventListener('blur', () => say({ type: 'penCancel' }))
+</script>
+</body>
+</html>
